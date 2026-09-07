@@ -141,6 +141,9 @@ function App() {
   if (screen === 'menu') {
     return (
       <div className="w-full h-full relative overflow-hidden">
+        {/* Canvas her zaman render edilmeli */}
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" style={{ display: 'none' }} />
+        
         {/* Animasyonlu arka plan */}
         <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-indigo-900">
           <div className="absolute inset-0 opacity-30">
@@ -253,6 +256,9 @@ function App() {
   if (screen === 'gameover') {
     return (
       <div className="w-full h-full relative overflow-hidden">
+        {/* Canvas her zaman render edilmeli */}
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" style={{ display: 'none' }} />
+        
         {/* Animasyonlu arka plan */}
         <div className="absolute inset-0 bg-gradient-to-br from-red-900 via-purple-900 to-indigo-900">
           <div className="absolute inset-0 opacity-20">
