@@ -68,24 +68,37 @@ export class Renderer {
     ctx.restore();
   }
 
-  /** Arka plan gradyanı — daha canlı ve renkli */
+  /** Arka plan — Wormate.io tarzı koyu mavi gece teması */
   private drawBackground(w: number, h: number): void {
     const { ctx } = this;
+    
+    // Koyu mavi gradient — Wormate.io tarzı
     const grad = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w);
-    grad.addColorStop(0, '#2a1a3e');
-    grad.addColorStop(0.5, '#1a1a2e');
-    grad.addColorStop(1, '#0f0f1a');
+    grad.addColorStop(0, '#0a1628');
+    grad.addColorStop(0.5, '#061020');
+    grad.addColorStop(1, '#020810');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
+
+    // Yıldız efekti — sabit pozisyonlu
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    for (let i = 0; i < 50; i++) {
+      const x = (i * 137.5) % w;
+      const y = (i * 241.3) % h;
+      const size = (i % 3) + 1;
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
-  /** Referans grid çizgileri — daha canlı */
+  /** Grid çizgileri — Wormate.io tarzı ince mavi çizgiler */
   private drawGrid(
     camera: { x: number; y: number; zoom: number },
     cw: number, ch: number
   ): void {
     const { ctx } = this;
-    const gridSize = 50;
+    const gridSize = 60;
     const viewW = cw / camera.zoom;
     const viewH = ch / camera.zoom;
 
@@ -94,9 +107,9 @@ export class Renderer {
     const startY = Math.floor((camera.y - viewH / 2) / gridSize) * gridSize;
     const endY = Math.ceil((camera.y + viewH / 2) / gridSize) * gridSize;
 
-    // Ana grid — daha belirgin
-    ctx.strokeStyle = 'rgba(100, 150, 255, 0.08)';
-    ctx.lineWidth = 1;
+    // İnce mavi grid — Wormate.io tarzı
+    ctx.strokeStyle = 'rgba(50, 100, 200, 0.15)';
+    ctx.lineWidth = 0.5;
     ctx.beginPath();
 
     for (let x = startX; x <= endX; x += gridSize) {
@@ -108,81 +121,60 @@ export class Renderer {
       ctx.lineTo(endX, y);
     }
     ctx.stroke();
-
-    // Büyük grid — her 5 karede bir
-    const bigGridSize = gridSize * 5;
-    const bigStartX = Math.floor((camera.x - viewW / 2) / bigGridSize) * bigGridSize;
-    const bigEndX = Math.ceil((camera.x + viewW / 2) / bigGridSize) * bigGridSize;
-    const bigStartY = Math.floor((camera.y - viewH / 2) / bigGridSize) * bigGridSize;
-    const bigEndY = Math.ceil((camera.y + viewH / 2) / bigGridSize) * bigGridSize;
-
-    ctx.strokeStyle = 'rgba(150, 200, 255, 0.12)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-
-    for (let x = bigStartX; x <= bigEndX; x += bigGridSize) {
-      ctx.moveTo(x, bigStartY);
-      ctx.lineTo(x, bigEndY);
-    }
-    for (let y = bigStartY; y <= bigEndY; y += bigGridSize) {
-      ctx.moveTo(bigStartX, y);
-      ctx.lineTo(bigEndX, y);
-    }
-    ctx.stroke();
   }
 
-  /** Dünya sınır dairesi — daha dramatik ve belirgin */
+  /** Dünya sınırı — Wormate.io tarzı kırmızı parlayan duvar */
   private drawWorldBorder(): void {
     const { ctx } = this;
-    const pulse = Math.sin(this.time * 0.002) * 0.3 + 0.7;
+    const pulse = Math.sin(this.time * 0.003) * 0.4 + 0.6;
 
     // Dış alan — karanlık bölge (sınırın dışı)
     ctx.save();
     ctx.beginPath();
     ctx.rect(0, 0, WORLD_SIZE, WORLD_SIZE);
     ctx.arc(WORLD_CENTER.x, WORLD_CENTER.y, WORLD_RADIUS, 0, Math.PI * 2, true);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
     ctx.fill();
     ctx.restore();
 
-    // Dış glow — çok katmanlı
-    for (let i = 0; i < 3; i++) {
+    // Dış glow — kırmızı-turuncu parlayan
+    for (let i = 0; i < 4; i++) {
       ctx.beginPath();
-      ctx.arc(WORLD_CENTER.x, WORLD_CENTER.y, WORLD_RADIUS + i * 4, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255, 80, 80, ${(0.15 - i * 0.04) * pulse})`;
-      ctx.lineWidth = 6 - i;
+      ctx.arc(WORLD_CENTER.x, WORLD_CENTER.y, WORLD_RADIUS + i * 5, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255, 50, 50, ${(0.2 - i * 0.04) * pulse})`;
+      ctx.lineWidth = 8 - i * 2;
       ctx.stroke();
     }
 
-    // Ana sınır çizgisi
+    // Ana sınır çizgisi — parlak kırmızı
     ctx.beginPath();
     ctx.arc(WORLD_CENTER.x, WORLD_CENTER.y, WORLD_RADIUS, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(255, 60, 60, ${0.8 * pulse})`;
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = `rgba(255, 80, 80, ${0.9 * pulse})`;
+    ctx.lineWidth = 4;
     ctx.stroke();
 
-    // İç parlama
+    // İç parlama — turuncu
     ctx.beginPath();
-    ctx.arc(WORLD_CENTER.x, WORLD_CENTER.y, WORLD_RADIUS - 2, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(255, 150, 150, ${0.3 * pulse})`;
-    ctx.lineWidth = 1.5;
+    ctx.arc(WORLD_CENTER.x, WORLD_CENTER.y, WORLD_RADIUS - 3, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255, 150, 50, ${0.4 * pulse})`;
+    ctx.lineWidth = 2;
     ctx.stroke();
   }
 
-  /** Yemek çizimi — kurabiye/şeker/donut/cupcake */
+  /** Yemek çizimi — Wormate.io tarzı basit ama parlak tatlılar */
   private drawFood(food: FoodItem): void {
     const { ctx } = this;
-    const pulse = Math.sin(food.pulsePhase) * 0.2 + 1;
+    const pulse = Math.sin(food.pulsePhase) * 0.15 + 1;
     const r = food.radius * pulse;
 
     ctx.save();
     ctx.translate(food.x, food.y);
     ctx.rotate(food.rotation);
 
-    // Glow efekti
+    // Glow efekti — parlak
     ctx.beginPath();
-    ctx.arc(0, 0, r * 1.8, 0, Math.PI * 2);
-    ctx.fillStyle = food.color + '25';
+    ctx.arc(0, 0, r * 2, 0, Math.PI * 2);
+    ctx.fillStyle = food.color + '40';
     ctx.fill();
 
     switch (food.type) {
@@ -208,62 +200,65 @@ export class Renderer {
     ctx.restore();
   }
 
-  /** Kurabiye çizimi */
+  /** Kurabiye çizimi — Wormate.io tarzı basit */
   private drawCookie(r: number, color: string, color2: string): void {
     const { ctx } = this;
     
-    // Ana kurabiye
+    // Ana kurabiye — basit daire
     ctx.beginPath();
     ctx.arc(0, 0, r, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
 
-    // Çikolata parçaları
-    const chipCount = Math.max(3, Math.floor(r / 2));
+    // Kenar çizgisi
+    ctx.strokeStyle = color2;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Çikolata parçaları — basit noktalar
+    const chipCount = 4;
     for (let i = 0; i < chipCount; i++) {
-      const angle = (i / chipCount) * Math.PI * 2;
+      const angle = (i / chipCount) * Math.PI * 2 + 0.3;
       const dist = r * 0.5;
       const x = Math.cos(angle) * dist;
       const y = Math.sin(angle) * dist;
       
       ctx.beginPath();
-      ctx.arc(x, y, r * 0.2, 0, Math.PI * 2);
+      ctx.arc(x, y, r * 0.18, 0, Math.PI * 2);
       ctx.fillStyle = color2;
       ctx.fill();
     }
 
-    // Parlak nokta
+    // Parlak nokta — basit
     ctx.beginPath();
-    ctx.arc(-r * 0.3, -r * 0.3, r * 0.25, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.arc(-r * 0.25, -r * 0.25, r * 0.2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
     ctx.fill();
   }
 
-  /** Şeker çizimi */
+  /** Şeker çizimi — Wormate.io tarzı basit */
   private drawCandy(r: number, color: string, color2: string): void {
     const { ctx } = this;
     
-    // Ana şeker
+    // Ana şeker — parlak daire
     ctx.beginPath();
     ctx.arc(0, 0, r, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
 
-    // Spiral desen
-    ctx.beginPath();
-    ctx.arc(0, 0, r * 0.7, 0, Math.PI);
+    // Kenar çizgisi
     ctx.strokeStyle = color2;
-    ctx.lineWidth = r * 0.3;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Parlak nokta
+    // Basit parlak nokta
     ctx.beginPath();
-    ctx.arc(-r * 0.3, -r * 0.3, r * 0.3, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.arc(-r * 0.3, -r * 0.3, r * 0.35, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.fill();
   }
 
-  /** Donut çizimi */
+  /** Donut çizimi — Wormate.io tarzı basit */
   private drawDonut(r: number, color: string, color2: string): void {
     const { ctx } = this;
     
@@ -273,84 +268,86 @@ export class Renderer {
     ctx.fillStyle = color;
     ctx.fill();
 
+    // Kenar çizgisi
+    ctx.strokeStyle = color2;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
     // İç delik
     ctx.beginPath();
-    ctx.arc(0, 0, r * 0.4, 0, Math.PI * 2);
-    ctx.fillStyle = '#1a1a2e';
+    ctx.arc(0, 0, r * 0.35, 0, Math.PI * 2);
+    ctx.fillStyle = '#0a1628';
     ctx.fill();
 
-    // Glaze üst kısım
+    // Üst glaze — basit
     ctx.beginPath();
-    ctx.arc(0, -r * 0.2, r * 0.8, 0, Math.PI);
+    ctx.arc(0, -r * 0.15, r * 0.75, Math.PI * 0.8, Math.PI * 0.2, true);
     ctx.fillStyle = color2;
     ctx.fill();
 
-    // Serpiştirme noktaları
-    const sprinkleCount = Math.max(4, Math.floor(r / 1.5));
-    for (let i = 0; i < sprinkleCount; i++) {
-      const angle = (i / sprinkleCount) * Math.PI * 2;
-      const dist = r * 0.6;
+    // Serpiştirme — basit noktalar
+    for (let i = 0; i < 5; i++) {
+      const angle = (i / 5) * Math.PI * 2;
+      const dist = r * 0.55;
       const x = Math.cos(angle) * dist;
-      const y = Math.sin(angle) * dist - r * 0.2;
+      const y = Math.sin(angle) * dist;
       
       ctx.beginPath();
-      ctx.arc(x, y, r * 0.08, 0, Math.PI * 2);
-      ctx.fillStyle = ['#FF69B4', '#FFD700', '#00CED1', '#9370DB'][i % 4];
+      ctx.arc(x, y, r * 0.1, 0, Math.PI * 2);
+      ctx.fillStyle = ['#FF69B4', '#FFD700', '#00CED1', '#9370DB', '#FF6347'][i];
       ctx.fill();
     }
   }
 
-  /** Cupcake çizimi */
+  /** Cupcake çizimi — Wormate.io tarzı basit */
   private drawCupcake(r: number, color: string, color2: string): void {
     const { ctx } = this;
     
-    // Cupcake tabanı
+    // Cupcake tabanı — basit üçgen
     ctx.beginPath();
-    ctx.moveTo(-r * 0.8, r * 0.3);
-    ctx.lineTo(-r * 0.6, r);
-    ctx.lineTo(r * 0.6, r);
-    ctx.lineTo(r * 0.8, r * 0.3);
+    ctx.moveTo(-r * 0.7, r * 0.3);
+    ctx.lineTo(-r * 0.5, r);
+    ctx.lineTo(r * 0.5, r);
+    ctx.lineTo(r * 0.7, r * 0.3);
     ctx.closePath();
     ctx.fillStyle = '#DEB887';
     ctx.fill();
 
-    // Krema üstü
+    // Krema üstü — basit yarım daire
     ctx.beginPath();
-    ctx.arc(0, 0, r * 0.8, Math.PI, 0);
+    ctx.arc(0, 0, r * 0.75, Math.PI, 0);
     ctx.fillStyle = color;
     ctx.fill();
 
-    // Krema swirl
-    ctx.beginPath();
-    ctx.arc(0, -r * 0.2, r * 0.5, 0, Math.PI * 1.5);
+    // Kenar çizgisi
     ctx.strokeStyle = color2;
-    ctx.lineWidth = r * 0.2;
+    ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Kiraz
+    // Kiraz — basit daire
     ctx.beginPath();
-    ctx.arc(0, -r * 0.5, r * 0.2, 0, Math.PI * 2);
+    ctx.arc(0, -r * 0.45, r * 0.18, 0, Math.PI * 2);
     ctx.fillStyle = '#FF1493';
     ctx.fill();
 
     // Parlak nokta
     ctx.beginPath();
-    ctx.arc(-r * 0.15, -r * 0.6, r * 0.08, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.arc(-r * 0.1, -r * 0.5, r * 0.08, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.fill();
   }
 
-  /** Büyük yemek (ölen worm'dan) */
+  /** Büyük yemek (ölen worm'dan) — Wormate.io tarzı parlak */
   private drawBigFood(r: number, color: string, color2: string): void {
     const { ctx } = this;
     
-    // Glow
+    // Güçlü glow
     ctx.beginPath();
-    ctx.arc(0, 0, r * 1.5, 0, Math.PI * 2);
-    ctx.fillStyle = color + '40';
+    ctx.arc(0, 0, r * 1.8, 0, Math.PI * 2);
+    ctx.fillStyle = color + '50';
     ctx.fill();
 
-    // Ana daire
+    // Ana daire — gradient
     ctx.beginPath();
     ctx.arc(0, 0, r, 0, Math.PI * 2);
     const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
@@ -359,16 +356,21 @@ export class Renderer {
     ctx.fillStyle = gradient;
     ctx.fill();
 
-    // Yıldız parlaması
+    // Kenar çizgisi
+    ctx.strokeStyle = color2;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Büyük parlak nokta
     ctx.beginPath();
-    ctx.arc(-r * 0.3, -r * 0.3, r * 0.35, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.arc(-r * 0.3, -r * 0.3, r * 0.4, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.fill();
 
-    // Küçük yıldız
+    // Küçük parlak nokta
     ctx.beginPath();
-    ctx.arc(r * 0.2, r * 0.2, r * 0.15, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.arc(r * 0.25, r * 0.25, r * 0.2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.fill();
   }
 
@@ -404,7 +406,7 @@ export class Renderer {
     ctx.globalAlpha = 1;
   }
 
-  /** Worm çizimi — segment path + gözler — daha canlı ve parlak */
+  /** Worm çizimi — Wormate.io tarzı basit ama parlak */
   private drawWorm(worm: WormState): void {
     const { ctx } = this;
     const segs = worm.segments;
@@ -413,78 +415,63 @@ export class Renderer {
     const bodyRadius = getBodyRadius(worm);
     const headRadius = getHeadRadius(worm);
 
-    // Dış glow — worm'un etrafında parlama
+    // Dış glow — basit
     ctx.beginPath();
     this.drawSmoothPath(ctx, segs);
-    ctx.strokeStyle = worm.config.color + '20';
-    ctx.lineWidth = bodyRadius * 3.5;
+    ctx.strokeStyle = worm.config.color + '30';
+    ctx.lineWidth = bodyRadius * 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.stroke();
 
-    // Boost efekti — daha güçlü glow
+    // Boost efekti — parlak
     if (worm.boosting) {
       ctx.beginPath();
       this.drawSmoothPath(ctx, segs);
-      ctx.strokeStyle = worm.config.color + '50';
-      ctx.lineWidth = bodyRadius * 5;
+      ctx.strokeStyle = worm.config.color + '60';
+      ctx.lineWidth = bodyRadius * 4;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.stroke();
     }
 
-    // Ana gövde — kalın ve parlak
+    // Ana gövde — kalın
     ctx.beginPath();
     this.drawSmoothPath(ctx, segs);
     ctx.strokeStyle = worm.config.color;
-    ctx.lineWidth = bodyRadius * 2.2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.stroke();
-
-    // İç parlama — gradient efekti
-    ctx.beginPath();
-    this.drawSmoothPath(ctx, segs);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.lineWidth = bodyRadius * 1.2;
+    ctx.lineWidth = bodyRadius * 2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.stroke();
 
     // Desen — ikinci renk ile kısa çizgiler
     ctx.strokeStyle = worm.config.color2;
-    ctx.lineWidth = bodyRadius * 1.4;
-    ctx.setLineDash([SEGMENT_DISTANCE * 0.8, SEGMENT_DISTANCE * 1.5]);
+    ctx.lineWidth = bodyRadius * 1.2;
+    ctx.setLineDash([SEGMENT_DISTANCE, SEGMENT_DISTANCE * 2]);
     ctx.beginPath();
     this.drawSmoothPath(ctx, segs);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Head — büyük ve parlak daire
+    // Head — basit daire
     const head = segs[0];
     
     // Head glow
     ctx.beginPath();
-    ctx.arc(head.x, head.y, headRadius * 1.3, 0, Math.PI * 2);
-    ctx.fillStyle = worm.config.color + '30';
+    ctx.arc(head.x, head.y, headRadius * 1.2, 0, Math.PI * 2);
+    ctx.fillStyle = worm.config.color + '40';
     ctx.fill();
 
     // Ana head
     ctx.beginPath();
     ctx.arc(head.x, head.y, headRadius, 0, Math.PI * 2);
-    const headGradient = ctx.createRadialGradient(
-      head.x - headRadius * 0.3, head.y - headRadius * 0.3, 0,
-      head.x, head.y, headRadius
-    );
-    headGradient.addColorStop(0, worm.config.color);
-    headGradient.addColorStop(1, worm.config.color2);
-    ctx.fillStyle = headGradient;
+    ctx.fillStyle = worm.config.color;
     ctx.fill();
     ctx.strokeStyle = worm.config.color2;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Gözler — daha büyük ve ifade dolu
+    // Gözler — Wormate.io tarzı büyük
     this.drawEyes(worm, head, headRadius);
 
     // İsim etiketi
