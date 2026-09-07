@@ -197,11 +197,9 @@ export function killWorm(worm: WormState): { x: number; y: number; value: number
   return foodDrops;
 }
 
-/** Açıyı -PI ile PI arasına normalize eder */
+/** Açıyı -PI ile PI arasına normalize eder — en kısa dönüş yolunu hesaplar */
 function normalizeAngle(angle: number): number {
-  while (angle > Math.PI) angle -= Math.PI * 2;
-  while (angle < -Math.PI) angle += Math.PI * 2;
-  return angle;
+  return Math.atan2(Math.sin(angle), Math.cos(angle));
 }
 
 /** Worm hızını günceller (boost durumuna göre) */
