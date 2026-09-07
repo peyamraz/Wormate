@@ -65,7 +65,7 @@ export class GameEngine {
   }
 
   /** Oyunu başlat */
-  start(playerName: string): void {
+  start(playerName: string, skinIndex: number = 0): void {
     // Önceki oyunu temizle
     this.stop();
 
@@ -73,7 +73,7 @@ export class GameEngine {
     this.state = this.createInitialState();
 
     // Oyuncu worm
-    const player = createPlayerWorm(playerName);
+    const player = createPlayerWorm(playerName, skinIndex);
     this.state.player = player;
     this.state.worms.push(player);
 

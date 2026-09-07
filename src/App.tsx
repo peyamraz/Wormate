@@ -7,6 +7,7 @@ type Screen = 'menu' | 'playing' | 'gameover';
 function App() {
   const [screen, setScreen] = useState<Screen>('menu');
   const [playerName, setPlayerName] = useState('');
+  const [selectedSkin, setSelectedSkin] = useState(0);
   const [score, setScore] = useState(0);
   const [length, setLength] = useState(10);
   const [rank, setRank] = useState(0);
@@ -15,6 +16,16 @@ function App() {
     parseInt(localStorage.getItem('worm_highscore') || '0')
   );
   const [leaderboard, setLeaderboard] = useState<{ name: string; score: number; isPlayer: boolean }[]>([]);
+
+  // Skin renkleri
+  const skins = [
+    { name: 'Gökkuşağı', emoji: '🌈', colors: ['#FF6B6B', '#4ECDC4'] },
+    { name: 'Ateş', emoji: '🔥', colors: ['#FF4500', '#FFD700'] },
+    { name: 'Okyanus', emoji: '🌊', colors: ['#00CED1', '#1E90FF'] },
+    { name: 'Orman', emoji: '🌿', colors: ['#32CD32', '#228B22'] },
+    { name: 'Galaksi', emoji: '🌌', colors: ['#9370DB', '#4B0082'] },
+    { name: 'Pembe', emoji: '🌸', colors: ['#FF69B4', '#FF1493'] },
+  ];
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<GameEngine | null>(null);
@@ -56,9 +67,9 @@ function App() {
     });
 
     engine.resize(window.innerWidth, window.innerHeight);
-    engine.start(playerName || 'Oyuncu');
+    engine.start(playerName || 'Oyuncu', selectedSkin);
     setScreen('playing');
-  }, [playerName]);
+  }, [playerName, selectedSkin]);
 
   // Minimap render
   useEffect(() => {
@@ -129,39 +140,109 @@ function App() {
   // Menü ekranı
   if (screen === 'menu') {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900 via-indigo-900 to-blue-900">
-        <div className="text-center p-8 bg-black/40 backdrop-blur-md rounded-3xl shadow-2xl border border-white/10 max-w-md w-full mx-4">
-          <h1 className="text-6xl font-bold mb-2 bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">
-            🐛 Worm.io
-          </h1>
-          <p className="text-white/60 mb-8 text-sm">Tatlıları topla, büyü ve rakiplerini yen!</p>
+      <div className="w-full h-full relative overflow-hidden">
+        {/* Animasyonlu arka plan */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-800 to-indigo-900">
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-0 left-0 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
+            <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+            <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{animationDelay: '4s'}}></div>
+          </div>
+        </div>
 
-          <input
-            type="text"
-            placeholder="İsminizi girin..."
-            value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
-            className="w-full px-4 py-3 mb-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-400 text-center text-lg"
-            maxLength={15}
-          />
-
-          <button
-            onClick={startGame}
-            className="w-full py-4 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold text-xl rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 mb-6"
-          >
-            🎮 OYUNA BAŞLA
-          </button>
-
-          {highScore > 0 && (
-            <div className="text-white/70 text-sm">
-              🏆 En Yüksek Skor: <span className="font-bold text-yellow-400">{highScore}</span>
+        {/* İçerik */}
+        <div className="relative z-10 w-full h-full flex items-center justify-center p-4">
+          <div className="max-w-2xl w-full">
+            {/* Logo ve başlık */}
+            <div className="text-center mb-8 animate-slide-in">
+              <div className="inline-block mb-4 animate-float">
+                <div className="text-9xl mb-2 drop-shadow-2xl">🐛</div>
+              </div>
+              <h1 className="text-8xl font-black mb-3 bg-gradient-to-r from-yellow-300 via-pink-400 to-purple-500 bg-clip-text text-transparent drop-shadow-2xl tracking-tight">
+                WORM.IO
+              </h1>
+              <p className="text-white/90 text-2xl font-bold drop-shadow-lg">
+                🍪 Tatlıları Topla • 🚀 Büyü • 🏆 Kazan!
+              </p>
             </div>
-          )}
 
-          <div className="mt-6 text-white/50 text-xs space-y-1">
-            <p>🖱️ Fare ile yön kontrolü</p>
-            <p>⚡ Tıkla veya SPACE ile hızlan</p>
-            <p>🍪 Kurabiye, şeker ve tatlıları topla</p>
+            {/* Ana kart */}
+            <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-white/20 p-8 space-y-6 animate-scale-in">
+              {/* İsim girişi */}
+              <div>
+                <label className="block text-white/90 text-sm font-bold mb-2 text-left">
+                  👤 OYUNCU ADI
+                </label>
+                <input
+                  type="text"
+                  placeholder="İsminizi girin..."
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  className="w-full px-6 py-4 bg-white/20 border-2 border-white/30 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-4 focus:ring-pink-400/50 focus:border-pink-400 text-center text-xl font-bold transition-all"
+                  maxLength={15}
+                />
+              </div>
+
+              {/* Skin seçimi */}
+              <div>
+                <label className="block text-white/90 text-sm font-bold mb-3 text-left">
+                  🎨 SOLUCAN RENGİ
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  {skins.map((skin, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedSkin(i)}
+                      className={`p-3 rounded-xl border-2 transition-all duration-200 ${
+                        selectedSkin === i
+                          ? 'bg-white/30 border-white scale-105 shadow-lg'
+                          : 'bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40'
+                      }`}
+                    >
+                      <div className="text-3xl mb-1">{skin.emoji}</div>
+                      <div className="text-white/80 text-xs font-bold">{skin.name}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Başla butonu */}
+              <button
+                onClick={startGame}
+                className="w-full py-6 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-600 hover:from-green-500 hover:via-emerald-600 hover:to-teal-700 text-white font-black text-3xl rounded-2xl shadow-2xl transform hover:scale-105 transition-all duration-300 border-4 border-white/30 hover:border-white/50 hover:shadow-green-500/50 animate-glow"
+              >
+                🎮 OYUNA BAŞLA
+              </button>
+
+              {/* High score */}
+              {highScore > 0 && (
+                <div className="bg-yellow-500/20 border-2 border-yellow-400/50 rounded-2xl p-4 text-center">
+                  <div className="text-yellow-300 text-sm font-bold mb-1">🏆 EN YÜKSEK SKOR</div>
+                  <div className="text-yellow-400 text-4xl font-black">{highScore}</div>
+                </div>
+              )}
+
+              {/* Kontroller */}
+              <div className="grid grid-cols-3 gap-3 pt-4">
+                <div className="bg-white/10 rounded-xl p-3 text-center border border-white/20">
+                  <div className="text-3xl mb-1">🖱️</div>
+                  <div className="text-white/80 text-xs font-bold">FARE İLE YÖN</div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-3 text-center border border-white/20">
+                  <div className="text-3xl mb-1">⚡</div>
+                  <div className="text-white/80 text-xs font-bold">TIKLA HIZLAN</div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-3 text-center border border-white/20">
+                  <div className="text-3xl mb-1">🍪</div>
+                  <div className="text-white/80 text-xs font-bold">TATLI TOPLA</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Alt bilgi */}
+            <div className="text-center mt-6 text-white/60 text-sm">
+              <p>Rakiplerini yen, tatlıları topla ve en uzun solucan ol!</p>
+            </div>
           </div>
         </div>
       </div>
@@ -171,41 +252,67 @@ function App() {
   // Oyun bitti ekranı
   if (screen === 'gameover') {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-red-900 via-purple-900 to-indigo-900">
-        <div className="text-center p-8 bg-black/40 backdrop-blur-md rounded-3xl shadow-2xl border border-white/10 max-w-md w-full mx-4">
-          <h2 className="text-5xl font-bold mb-4 text-red-400">💀 Oyun Bitti!</h2>
-          
-          <div className="space-y-3 mb-6">
-            <div className="bg-white/10 rounded-xl p-4">
-              <div className="text-white/60 text-sm">Skorunuz</div>
-              <div className="text-4xl font-bold text-white">{finalScore}</div>
+      <div className="w-full h-full relative overflow-hidden">
+        {/* Animasyonlu arka plan */}
+        <div className="absolute inset-0 bg-gradient-to-br from-red-900 via-purple-900 to-indigo-900">
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-red-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+          </div>
+        </div>
+
+        {/* İçerik */}
+        <div className="relative z-10 w-full h-full flex items-center justify-center p-4">
+          <div className="max-w-lg w-full">
+            {/* Başlık */}
+            <div className="text-center mb-8">
+              <div className="text-8xl mb-4 animate-bounce">💀</div>
+              <h2 className="text-6xl font-black mb-2 bg-gradient-to-r from-red-400 via-pink-400 to-purple-400 bg-clip-text text-transparent drop-shadow-2xl">
+                OYUN BİTTİ!
+              </h2>
+              <p className="text-white/70 text-lg">Ama harika bir oyun oldu!</p>
             </div>
-            
-            {finalScore >= highScore && finalScore > 0 && (
-              <div className="bg-yellow-500/20 border border-yellow-400/50 rounded-xl p-3">
-                <div className="text-yellow-400 font-bold">🎉 Yeni Rekor!</div>
+
+            {/* Skor kartları */}
+            <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-white/20 p-8 space-y-4 mb-6">
+              {/* Ana skor */}
+              <div className="bg-gradient-to-br from-white/20 to-white/5 rounded-2xl p-6 border border-white/20">
+                <div className="text-white/60 text-sm font-bold mb-1">📊 SKORUNUZ</div>
+                <div className="text-6xl font-black text-white drop-shadow-lg">{finalScore}</div>
               </div>
-            )}
-            
-            <div className="bg-white/10 rounded-xl p-3">
-              <div className="text-white/60 text-sm">En Yüksek Skor</div>
-              <div className="text-2xl font-bold text-yellow-400">{highScore}</div>
+
+              {/* Yeni rekor */}
+              {finalScore >= highScore && finalScore > 0 && (
+                <div className="bg-gradient-to-r from-yellow-500/30 to-orange-500/30 border-2 border-yellow-400/60 rounded-2xl p-4 text-center animate-pulse">
+                  <div className="text-4xl mb-1">🎉🏆🎉</div>
+                  <div className="text-yellow-300 font-black text-2xl">YENİ REKOR!</div>
+                </div>
+              )}
+
+              {/* En yüksek skor */}
+              <div className="bg-white/10 rounded-2xl p-4 text-center border border-white/20">
+                <div className="text-white/60 text-sm font-bold mb-1">🏆 EN YÜKSEK SKOR</div>
+                <div className="text-4xl font-black text-yellow-400">{highScore}</div>
+              </div>
+            </div>
+
+            {/* Butonlar */}
+            <div className="space-y-3">
+              <button
+                onClick={startGame}
+                className="w-full py-5 bg-gradient-to-r from-green-400 via-emerald-500 to-teal-600 hover:from-green-500 hover:via-emerald-600 hover:to-teal-700 text-white font-black text-2xl rounded-2xl shadow-2xl transform hover:scale-105 transition-all duration-300 border-4 border-white/30 hover:border-white/50"
+              >
+                🔄 TEKRAR OYNA
+              </button>
+
+              <button
+                onClick={() => setScreen('menu')}
+                className="w-full py-4 bg-white/10 hover:bg-white/20 text-white font-bold text-lg rounded-2xl transition-all duration-300 border-2 border-white/20 hover:border-white/40"
+              >
+                🏠 ANA MENÜ
+              </button>
             </div>
           </div>
-
-          <button
-            onClick={startGame}
-            className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold text-xl rounded-xl shadow-lg transform hover:scale-105 transition-all duration-200 mb-3"
-          >
-            🔄 Tekrar Oyna
-          </button>
-          
-          <button
-            onClick={() => setScreen('menu')}
-            className="w-full py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all duration-200"
-          >
-            🏠 Ana Menü
-          </button>
         </div>
       </div>
     );
@@ -216,46 +323,64 @@ function App() {
     <div className="w-full h-full relative overflow-hidden">
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
       
-      {/* Skor paneli */}
-      <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md rounded-2xl p-4 text-white border border-white/10">
-        <div className="text-sm text-white/60 mb-1">Skor</div>
-        <div className="text-3xl font-bold">{score}</div>
-        <div className="text-xs text-white/50 mt-2">Uzunluk: {length}</div>
-        <div className="text-xs text-white/50">Sıra: #{rank}</div>
+      {/* Skor paneli - Sol üst */}
+      <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-xl rounded-2xl p-5 text-white border-2 border-white/20 shadow-2xl">
+        <div className="text-white/60 text-xs font-bold mb-1">📊 SKOR</div>
+        <div className="text-5xl font-black bg-gradient-to-r from-yellow-300 to-orange-400 bg-clip-text text-transparent">{score}</div>
+        <div className="mt-3 space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-white/50 text-xs">📏 Uzunluk:</span>
+            <span className="text-white font-bold text-sm">{length}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-white/50 text-xs">🏅 Sıra:</span>
+            <span className="text-white font-bold text-sm">#{rank}</span>
+          </div>
+        </div>
       </div>
 
-      {/* Leaderboard */}
-      <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md rounded-2xl p-4 text-white border border-white/10 min-w-[200px]">
-        <div className="text-sm font-bold mb-2 text-white/80">🏆 Lider Tablosu</div>
-        <div className="space-y-1">
+      {/* Leaderboard - Sağ üst */}
+      <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-xl rounded-2xl p-5 text-white border-2 border-white/20 shadow-2xl min-w-[220px]">
+        <div className="text-white font-black text-sm mb-3 flex items-center gap-2">
+          <span className="text-2xl">🏆</span>
+          <span>LİDER TABLOSU</span>
+        </div>
+        <div className="space-y-2">
           {leaderboard.slice(0, 5).map((entry, i) => (
             <div
               key={i}
-              className={`flex justify-between text-sm ${
-                entry.isPlayer ? 'text-yellow-400 font-bold' : 'text-white/70'
+              className={`flex justify-between items-center text-sm px-3 py-2 rounded-xl ${
+                entry.isPlayer 
+                  ? 'bg-yellow-500/30 border border-yellow-400/50 text-yellow-300 font-black' 
+                  : 'bg-white/5 border border-white/10 text-white/80'
               }`}
             >
-              <span className="truncate mr-2">
-                {i + 1}. {entry.name}
+              <span className="flex items-center gap-2">
+                <span className="font-bold text-xs opacity-60">{i + 1}.</span>
+                <span className="truncate max-w-[120px]">{entry.name}</span>
               </span>
-              <span>{entry.score}</span>
+              <span className="font-bold">{entry.score}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Minimap */}
-      <canvas
-        ref={minimapRef}
-        width={150}
-        height={150}
-        className="absolute bottom-4 right-4 rounded-full border-2 border-white/20 shadow-lg"
-      />
+      {/* Minimap - Sağ alt */}
+      <div className="absolute bottom-4 right-4">
+        <div className="bg-black/70 backdrop-blur-xl rounded-full p-2 border-2 border-white/20 shadow-2xl">
+          <canvas
+            ref={minimapRef}
+            width={150}
+            height={150}
+            className="rounded-full"
+          />
+        </div>
+      </div>
 
-      {/* Boost göstergesi */}
-      <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md rounded-xl px-4 py-2 text-white border border-white/10">
-        <div className="text-xs text-white/60">Hızlanmak için</div>
-        <div className="text-sm font-bold">🖱️ Tıkla veya SPACE</div>
+      {/* Boost göstergesi - Sol alt */}
+      <div className="absolute bottom-4 left-4 bg-black/70 backdrop-blur-xl rounded-2xl px-5 py-3 text-white border-2 border-white/20 shadow-2xl">
+        <div className="text-white/60 text-xs font-bold mb-1">⚡ HIZLANMAK İÇİN</div>
+        <div className="text-sm font-black">🖱️ TIKLA veya SPACE</div>
       </div>
     </div>
   );

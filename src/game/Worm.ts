@@ -39,8 +39,8 @@ export function createWorm(config: WormConfig): WormState {
 }
 
 /** Oyuncu worm'u oluşturur */
-export function createPlayerWorm(name: string): WormState {
-  const [color, color2] = WORM_COLORS[Math.floor(Math.random() * WORM_COLORS.length)];
+export function createPlayerWorm(name: string, skinIndex: number = 0): WormState {
+  const [color, color2] = WORM_COLORS[skinIndex % WORM_COLORS.length];
   return createWorm({
     id: `player_${++wormIdCounter}`,
     name: name || 'Player',
