@@ -1,37 +1,49 @@
+// ===== Temel Veri Yapıları =====
+
 export interface Point {
   x: number;
   y: number;
 }
 
-export interface Worm {
+export interface Segment {
+  x: number;
+  y: number;
+}
+
+export interface WormConfig {
   id: string;
   name: string;
-  segments: Point[];
+  color: string;
+  color2: string;
+  isPlayer: boolean;
+  behavior: 'passive' | 'aggressive' | 'random';
+}
+
+export interface WormState {
+  config: WormConfig;
+  segments: Segment[];
   angle: number;
   targetAngle: number;
   speed: number;
   baseSpeed: number;
   boosting: boolean;
-  color: string;
-  secondaryColor: string;
-  score: number;
   alive: boolean;
-  isPlayer: boolean;
-  eyeDirection: number;
-  // AI fields
-  aiTarget?: Point;
-  aiTimer?: number;
-  aiBehavior?: 'food' | 'hunt' | 'flee';
+  score: number;
+  boostTimer: number;
+  // AI state
+  aiDecisionTimer: number;
+  aiTarget: Point | null;
+  aiBehavior: 'food' | 'hunt' | 'flee' | 'wander';
 }
 
-export interface Food {
+export interface FoodItem {
   id: string;
   x: number;
   y: number;
   radius: number;
   color: string;
   value: number;
-  type: 'normal' | 'super' | 'powerup_speed' | 'powerup_magnet' | 'powerup_growth';
+  type: 'normal' | 'big';
   pulsePhase: number;
 }
 
@@ -47,47 +59,78 @@ export interface Particle {
 }
 
 export interface GameState {
-  worms: Worm[];
-  foods: Food[];
+  worms: WormState[];
+  foods: FoodItem[];
   particles: Particle[];
-  worldWidth: number;
-  worldHeight: number;
-  camera: { x: number; y: number; zoom: number; targetZoom: number };
-  player: Worm | null;
+  tick: number;
+  worldSize: number;
+  worldRadius: number;
+  worldCenter: Point;
+  camera: {
+    x: number;
+    y: number;
+    zoom: number;
+    targetZoom: number;
+  };
+  player: WormState | null;
   gameOver: boolean;
-  leaderboard: { name: string; score: number }[];
+  leaderboard: { name: string; score: number; isPlayer: boolean }[];
   mouseAngle: number;
-  mouseWorld: Point;
+  highScore: number;
 }
 
-export const WORLD_WIDTH = 6000;
-export const WORLD_HEIGHT = 6000;
-export const MAX_FOOD = 800;
-export const MAX_WORMS = 15;
-export const SEGMENT_DISTANCE = 8;
+// ===== Sabitler =====
+
+export const WORLD_SIZE = 4000;
+export const WORLD_RADIUS = 2000;
+export const WORLD_CENTER: Point = { x: WORLD_SIZE / 2, y: WORLD_SIZE / 2 };
+
+export const MAX_FOOD = 500;
+export const MIN_FOOD = 400;
+export const MAX_AI_WORMS = 15;
+export const MAX_SEGMENTS = 500;
+
 export const WORM_BASE_SPEED = 3;
 export const WORM_BOOST_SPEED = 6;
-export const TURN_SPEED = 0.08;
-export const MIN_LENGTH = 10;
-export const FOOD_RADIUS = 5;
-export const SUPER_FOOD_RADIUS = 8;
+export const TURN_RATE = 0.08;
+export const SEGMENT_DISTANCE = 8;
 
-export const WORM_COLORS = [
-  { primary: '#ff6b6b', secondary: '#ee5a24' },
-  { primary: '#4ecdc4', secondary: '#2d98da' },
-  { primary: '#f9ca24', secondary: '#f0932b' },
-  { primary: '#a29bfe', secondary: '#6c5ce7' },
-  { primary: '#fd79a8', secondary: '#e84393' },
-  { primary: '#00b894', secondary: '#00cec9' },
-  { primary: '#fdcb6e', secondary: '#e17055' },
-  { primary: '#74b9ff', secondary: '#0984e3' },
-  { primary: '#55efc4', secondary: '#00b894' },
-  { primary: '#fab1a0', secondary: '#e17055' },
+export const INITIAL_LENGTH = 10;
+export const HEAD_RADIUS_BASE = 8;
+export const SEGMENT_RADIUS_BASE = 6;
+
+export const FOOD_RADIUS = 4;
+export const BIG_FOOD_RADIUS = 8;
+export const FOOD_VALUE_NORMAL = 1;
+export const FOOD_VALUE_BIG = 3;
+
+export const BOOST_SEGMENT_COST = 5; // her 5 tick'te 1 segment
+
+export const AI_VISION_RANGE = 300;
+export const AI_DANGER_RANGE = 150;
+export const AI_BORDER_RANGE = 300;
+
+// Renk paletleri
+export const WORM_COLORS: [string, string][] = [
+  ['#ff6b6b', '#ee5a5a'],
+  ['#4ecdc4', '#45b7aa'],
+  ['#45b7d1', '#3da8c0'],
+  ['#f7dc6f', '#f0d264'],
+  ['#bb8fce', '#a87fc0'],
+  ['#85c1e9', '#76b3dc'],
+  ['#82e0aa', '#73d29b'],
+  ['#f8c471', '#f0b663'],
+  ['#f1948a', '#e3857c'],
+  ['#d7bde2', '#c9aed4'],
+];
+
+export const FOOD_COLORS = [
+  '#ff6b6b', '#4ecdc4', '#45b7d1', '#f7dc6f',
+  '#bb8fce', '#85c1e9', '#82e0aa', '#f8c471',
 ];
 
 export const AI_NAMES = [
-  'Slither', 'Wiggly', 'Noodle', 'Slinky', 'Coil',
-  'Viper', 'Python', 'Anaconda', 'Cobra', 'Mamba',
-  'Wormy', 'Squiggles', 'Twisty', 'Slinky', 'Zigzag',
-  'Turbo', 'Flash', 'Blaze', 'Shadow', 'Storm',
+  'Slinky', 'Wiggles', 'Noodle', 'Squiggly', 'Twisty',
+  'Coily', 'Slinky', 'Ziggy', 'Loop', 'Spiral',
+  'Curl', 'Wave', 'Ripple', 'Flow', 'Dash',
 ];

@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 * {
   margin: 0;
@@ -11,7 +13,7 @@ html, body {
   height: 100%;
   overflow: hidden;
   background: #0f0f1a;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 #root {
@@ -19,28 +21,66 @@ html, body {
   height: 100%;
 }
 
-/* Custom animations */
+/* Animasyonlu arka plan blob'ları */
+.bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.3;
+  animation: float 8s ease-in-out infinite;
+}
+
+.bg-blob-1 {
+  width: 300px;
+  height: 300px;
+  background: #4ecdc4;
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.bg-blob-2 {
+  width: 250px;
+  height: 250px;
+  background: #bb8fce;
+  top: 50%;
+  right: 10%;
+  animation-delay: -3s;
+}
+
+.bg-blob-3 {
+  width: 200px;
+  height: 200px;
+  background: #f7dc6f;
+  bottom: 10%;
+  left: 30%;
+  animation-delay: -5s;
+}
+
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -30px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
 }
 
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(78, 205, 196, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(78, 205, 196, 0.6); }
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-/* Scrollbar hiding */
+/* Scrollbar gizle */
 ::-webkit-scrollbar {
   display: none;
 }
 
-/* Selection color */
-::selection {
-  background: rgba(78, 205, 196, 0.3);
-  color: white;
+/* Canvas smooth rendering */
+canvas {
+  image-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Mobil dokunma optimizasyonu */
+canvas {
+  touch-action: none;
 }
