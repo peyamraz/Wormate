@@ -93,25 +93,25 @@ export const MIN_FOOD = 400;
 export const MAX_AI_WORMS = 15;
 export const MAX_SEGMENTS = 500;
 
-export const WORM_BASE_SPEED = 1.5;
-export const WORM_BOOST_SPEED = 3;
-export const TURN_RATE = 0.05;
-export const SEGMENT_DISTANCE = 8;
+export const WORM_BASE_SPEED = 3.5;
+export const WORM_BOOST_SPEED = 7;
+export const TURN_RATE = 0.12;
+export const SEGMENT_DISTANCE = 10;
 
 export const INITIAL_LENGTH = 15;
 export const HEAD_RADIUS_BASE = 10;
 export const SEGMENT_RADIUS_BASE = 7;
 
-export const FOOD_RADIUS = 4;
-export const BIG_FOOD_RADIUS = 8;
-export const FOOD_VALUE_NORMAL = 1;
-export const FOOD_VALUE_BIG = 3;
+export const FOOD_RADIUS = 5;
+export const BIG_FOOD_RADIUS = 10;
+export const FOOD_VALUE_NORMAL = 2;
+export const FOOD_VALUE_BIG = 5;
 
 export const BOOST_SEGMENT_COST = 5; // her 5 tick'te 1 segment
 
-export const AI_VISION_RANGE = 300;
-export const AI_DANGER_RANGE = 150;
-export const AI_BORDER_RANGE = 300;
+export const AI_VISION_RANGE = 400;
+export const AI_DANGER_RANGE = 200;
+export const AI_BORDER_RANGE = 250;
 
 // Renk paletleri
 export const WORM_COLORS: [string, string][] = [

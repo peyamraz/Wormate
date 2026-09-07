@@ -54,11 +54,11 @@ export function createPlayerWorm(name: string, skinIndex: number = 0): WormState
 /** AI worm oluşturur */
 export function createAIWorm(index: number): WormState {
   const [color, color2] = WORM_COLORS[index % WORM_COLORS.length];
-  // Çoğu AI pasif olsun, sadece %20'si agresif
+  // Daha fazla agresif AI - Wormate.io tarzı
   const behaviorRoll = Math.random();
   const behavior: 'passive' | 'aggressive' | 'random' = 
-    behaviorRoll < 0.6 ? 'passive' : 
-    behaviorRoll < 0.8 ? 'random' : 'aggressive';
+    behaviorRoll < 0.3 ? 'passive' : 
+    behaviorRoll < 0.5 ? 'random' : 'aggressive';
 
   const worm = createWorm({
     id: `ai_${++wormIdCounter}`,
@@ -69,8 +69,8 @@ export function createAIWorm(index: number): WormState {
     behavior,
   });
 
-  // AI'ya küçük başlangıç boyutu ver (oyuncudan küçük başlasınlar)
-  const extraSegments = Math.floor(Math.random() * 8);
+  // AI'ya değişken başlangıç boyutu ver - bazıları büyük başlasın
+  const extraSegments = Math.floor(Math.random() * 25);
   const lastSeg = worm.segments[worm.segments.length - 1];
   for (let i = 0; i < extraSegments; i++) {
     worm.segments.push({
