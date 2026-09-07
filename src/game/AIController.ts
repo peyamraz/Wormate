@@ -14,16 +14,16 @@ import { findNearbyDanger, isNearBorder } from './Collision';
 export function updateAI(worm: WormState, state: GameState): void {
   if (!worm.alive || worm.config.isPlayer) return;
 
-  // Her 3 tick'te bir karar ver (performans)
+  // Her 5 tick'te bir karar ver (daha yavaş, daha doğal)
   worm.aiDecisionTimer++;
-  if (worm.aiDecisionTimer < 3) return;
+  if (worm.aiDecisionTimer < 5) return;
   worm.aiDecisionTimer = 0;
 
   const head = worm.segments[0];
   const allWorms = state.worms.filter(w => w.alive && w !== worm);
 
-  // 1. Tehlike kaçışı (en yüksek öncelik)
-  const danger = findNearbyDanger(worm, state.worms, AI_DANGER_RANGE);
+  // 1. Tehlike kaçışı (en yüksek öncelik) - daha geniş menzil
+  const danger = findNearbyDanger(worm, state.worms, AI_DANGER_RANGE * 1.5);
   if (danger) {
     const dangerHead = danger.segments[0];
     // Tehlikeden kaç — ters yöne git
@@ -34,8 +34,8 @@ export function updateAI(worm: WormState, state: GameState): void {
     return;
   }
 
-  // 2. Sınır kaçışı
-  if (isNearBorder(worm, AI_BORDER_RANGE)) {
+  // 2. Sınır kaçışı - daha erken kaç
+  if (isNearBorder(worm, AI_BORDER_RANGE * 1.5)) {
     worm.targetAngle = angleToCenter(head);
     worm.boosting = false;
     worm.aiBehavior = 'flee';
@@ -44,22 +44,24 @@ export function updateAI(worm: WormState, state: GameState): void {
 
   worm.boosting = false;
 
-  // 3. Tuzak kurma (agresif AI)
-  if (worm.config.behavior === 'aggressive') {
+  // 3. Agresif AI - sadece çok büyükse ve yakınsa kovalasın
+  if (worm.config.behavior === 'aggressive' && worm.segments.length > 50) {
     const target = findAggressiveTarget(worm, allWorms);
     if (target) {
-      // Hedefin önüne geçmeye çalış (intercept)
       const targetHead = target.segments[0];
-      const interceptX = targetHead.x + Math.cos(target.angle) * 100;
-      const interceptY = targetHead.y + Math.sin(target.angle) * 100;
-      worm.targetAngle = Math.atan2(interceptY - head.y, interceptX - head.x);
-      worm.boosting = true;
-      worm.aiBehavior = 'hunt';
-      return;
+      const dist = Math.sqrt((head.x - targetHead.x) ** 2 + (head.y - targetHead.y) ** 2);
+      
+      // Sadece çok yakınsa ve çok büyükse kovala
+      if (dist < 200 && worm.segments.length > target.segments.length * 1.5) {
+        worm.targetAngle = Math.atan2(targetHead.y - head.y, targetHead.x - head.x);
+        worm.boosting = true;
+        worm.aiBehavior = 'hunt';
+        return;
+      }
     }
   }
 
-  // 4. Yemek takibi
+  // 4. Yemek takibi - ana davranış
   const nearestFood = findNearestFood(worm, state.foods);
   if (nearestFood) {
     worm.targetAngle = Math.atan2(nearestFood.y - head.y, nearestFood.x - head.x);
@@ -68,8 +70,8 @@ export function updateAI(worm: WormState, state: GameState): void {
   }
 
   // 5. Rastgele dolaş (yemek yoksa)
-  if (worm.config.behavior === 'random' || Math.random() < 0.1) {
-    worm.targetAngle += (Math.random() - 0.5) * 0.5;
+  if (worm.config.behavior === 'random' || Math.random() < 0.15) {
+    worm.targetAngle += (Math.random() - 0.5) * 0.8;
     worm.aiBehavior = 'wander';
   }
 }

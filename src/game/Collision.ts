@@ -40,7 +40,8 @@ export function checkCollisions(state: GameState): CollisionResult {
       // Detaylı kontrol: diğer worm'un her segmenti
       const headRadius = getHeadRadius(worm);
       const bodyRadius = getBodyRadius(other);
-      const collisionDist = headRadius + bodyRadius;
+      // Çarpışma mesafesini biraz küçült - daha adil olsun
+      const collisionDist = (headRadius + bodyRadius) * 0.85;
       const collisionDistSq = collisionDist * collisionDist;
 
       // Sadece yakın segmentleri kontrol et (performans)
