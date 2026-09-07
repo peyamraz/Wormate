@@ -4,7 +4,7 @@ import {
   MAX_FOOD, MAX_AI_WORMS, INITIAL_LENGTH,
 } from './types';
 import { createPlayerWorm, createAIWorm, moveWorm, growWorm, killWorm, getHeadRadius, updateWormSpeed } from './Worm';
-import { createFood, createFoodFromWormDeath, maintainFoodLevel, canCollectFood, updateFoodPulse } from './Food';
+import { createFood, createFoodFromWormDeath, maintainFoodLevel, canCollectFood, updateFoodAnimation } from './Food';
 import { checkCollisions } from './Collision';
 import { updateAI } from './AIController';
 import { InputHandler } from './InputHandler';
@@ -154,7 +154,7 @@ export class GameEngine {
     state.foods.push(...newFoods);
 
     // 8. Yemek pulse animasyonu
-    updateFoodPulse(state.foods, performance.now());
+    updateFoodAnimation(state.foods, performance.now());
 
     // 9. Boost trail parçacıkları
     this.spawnBoostTrail();
@@ -309,17 +309,34 @@ export class GameEngine {
 
   /** Parçacık oluştur — yemek toplama */
   private spawnCollectParticles(x: number, y: number, color: string): void {
-    for (let i = 0; i < 5; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 1 + Math.random() * 2;
+    // Ana parçacıklar — daha fazla ve parlak
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2 + Math.random() * 0.3;
+      const speed = 2 + Math.random() * 3;
       this.state.particles.push({
         x, y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
-        life: 20,
-        maxLife: 20,
+        life: 25,
+        maxLife: 25,
         color,
-        radius: 3 + Math.random() * 2,
+        radius: 4 + Math.random() * 3,
+      });
+    }
+
+    // Yıldız parçacıkları — parlak beyaz
+    for (let i = 0; i < 3; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 1 + Math.random() * 2;
+      this.state.particles.push({
+        x: x + (Math.random() - 0.5) * 10,
+        y: y + (Math.random() - 0.5) * 10,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 30,
+        maxLife: 30,
+        color: '#ffffff',
+        radius: 2 + Math.random() * 2,
       });
     }
   }
@@ -327,18 +344,52 @@ export class GameEngine {
   /** Parçacık oluştur — ölüm */
   private spawnDeathParticles(worm: WormState): void {
     const head = worm.segments[0];
-    for (let i = 0; i < 20; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 2 + Math.random() * 4;
+    
+    // Ana patlama parçacıkları — worm rengi
+    for (let i = 0; i < 30; i++) {
+      const angle = (i / 30) * Math.PI * 2;
+      const speed = 3 + Math.random() * 5;
       this.state.particles.push({
-        x: head.x + (Math.random() - 0.5) * 30,
-        y: head.y + (Math.random() - 0.5) * 30,
+        x: head.x + (Math.random() - 0.5) * 40,
+        y: head.y + (Math.random() - 0.5) * 40,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 50,
+        maxLife: 50,
+        color: worm.config.color,
+        radius: 5 + Math.random() * 5,
+      });
+    }
+
+    // İkincil parçacıklar — ikinci renk
+    for (let i = 0; i < 15; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 2 + Math.random() * 3;
+      this.state.particles.push({
+        x: head.x + (Math.random() - 0.5) * 50,
+        y: head.y + (Math.random() - 0.5) * 50,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         life: 40,
         maxLife: 40,
-        color: worm.config.color,
-        radius: 4 + Math.random() * 4,
+        color: worm.config.color2,
+        radius: 3 + Math.random() * 3,
+      });
+    }
+
+    // Beyaz parlama parçacıkları
+    for (let i = 0; i < 10; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 4 + Math.random() * 6;
+      this.state.particles.push({
+        x: head.x,
+        y: head.y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 35,
+        maxLife: 35,
+        color: '#ffffff',
+        radius: 2 + Math.random() * 3,
       });
     }
   }

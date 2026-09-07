@@ -42,9 +42,12 @@ export interface FoodItem {
   y: number;
   radius: number;
   color: string;
+  color2: string;
   value: number;
-  type: 'normal' | 'big';
+  type: 'cookie' | 'candy' | 'donut' | 'cupcake' | 'big' | 'death';
   pulsePhase: number;
+  rotation: number;
+  rotationSpeed: number;
 }
 
 export interface Particle {
@@ -90,14 +93,14 @@ export const MIN_FOOD = 400;
 export const MAX_AI_WORMS = 15;
 export const MAX_SEGMENTS = 500;
 
-export const WORM_BASE_SPEED = 3;
-export const WORM_BOOST_SPEED = 6;
-export const TURN_RATE = 0.08;
+export const WORM_BASE_SPEED = 1.5;
+export const WORM_BOOST_SPEED = 3;
+export const TURN_RATE = 0.05;
 export const SEGMENT_DISTANCE = 8;
 
-export const INITIAL_LENGTH = 10;
-export const HEAD_RADIUS_BASE = 8;
-export const SEGMENT_RADIUS_BASE = 6;
+export const INITIAL_LENGTH = 15;
+export const HEAD_RADIUS_BASE = 10;
+export const SEGMENT_RADIUS_BASE = 7;
 
 export const FOOD_RADIUS = 4;
 export const BIG_FOOD_RADIUS = 8;
