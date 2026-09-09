@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@types/ws": "^8.18.1",
+    "@vercel/analytics": "^2.0.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.43.0",
     "react": "19.2.6",
