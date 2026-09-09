@@ -1,0 +1,569 @@
+import { BONUSES, GAME_CONFIG as CONFIG, TREATS } from './constants';
+import type { BonusKind, TreatKind, WormPattern } from './constants';
+
+type Context = CanvasRenderingContext2D;
+type Paint = string | CanvasGradient;
+type Palette = { main: string; light: string; dark: string; accent: string };
+
+const TAU = Math.PI * 2;
+const sweets = new Map<string, HTMLCanvasElement>();
+const segments = new Map<string, HTMLCanvasElement>();
+const glows = new Map<string, HTMLCanvasElement>();
+const bonusSprites = new Map<string, HTMLCanvasElement>();
+const grounds = new WeakMap<Context, { fine: CanvasPattern | null; wide: CanvasPattern | null }>();
+
+export function blend(color: string, other: string, amount: number) {
+  const a = Number.parseInt(color.slice(1), 16);
+  const b = Number.parseInt(other.slice(1), 16);
+  const channel = (shift: number) => Math.round(((a >> shift) & 255) * (1 - amount) + ((b >> shift) & 255) * amount);
+  return `#${((channel(16) << 16) | (channel(8) << 8) | channel(0)).toString(16).padStart(6, '0')}`;
+}
+
+function sprite(paint: (ctx: Context) => void) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.setTransform(2, 0, 0, 2, 64, 64);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    paint(ctx);
+  }
+  return canvas;
+}
+
+function ellipse(ctx: Context, x: number, y: number, rx: number, ry: number, paint: Paint, angle = 0) {
+  ctx.fillStyle = paint;
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, angle, 0, TAU);
+  ctx.fill();
+}
+
+function polygon(ctx: Context, points: number[][], paint: Paint) {
+  ctx.fillStyle = paint;
+  ctx.beginPath();
+  points.forEach(([x, y], index) => index === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y));
+  ctx.closePath();
+  ctx.fill();
+}
+
+function roundedPath(ctx: Context, x: number, y: number, width: number, height: number, radius: number) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  ctx.lineTo(x + r, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function roundedRect(ctx: Context, x: number, y: number, width: number, height: number, radius: number, paint: Paint) {
+  roundedPath(ctx, x, y, width, height, radius);
+  ctx.fillStyle = paint;
+  ctx.fill();
+}
+
+function gradient(ctx: Context, top: string, bottom: string, y1 = -24, y2 = 24) {
+  const fill = ctx.createLinearGradient(-12, y1, 14, y2);
+  fill.addColorStop(0, top);
+  fill.addColorStop(1, bottom);
+  return fill;
+}
+
+function sprinkles(ctx: Context, points: number[][], offset: number) {
+  const colors = ['#fff6d2', '#ffea78', '#5ce0eb', '#f46198', '#b3f38a', '#fffaf1'];
+  points.forEach(([x, y, angle], i) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.strokeStyle = colors[(i + offset) % colors.length];
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-1.6, 0);
+    ctx.lineTo(1.6, 0);
+    ctx.stroke();
+    ctx.restore();
+  });
+}
+
+function cherry(ctx: Context, x: number, y: number) {
+  ctx.strokeStyle = '#51823e';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, y - 2);
+  ctx.quadraticCurveTo(x + 1, y - 7, x + 5, y - 7);
+  ctx.stroke();
+  ellipse(ctx, x, y, 4.5, 4.5, gradient(ctx, '#ff7d8d', '#c52059', y - 4, y + 5));
+  ellipse(ctx, x - 1.4, y - 1.5, 1.1, 1.4, '#fff5dbb0', 0.5);
+}
+
+function donut(ctx: Context, p: Palette, variant: number) {
+  ctx.save();
+  ctx.scale(1, 0.91);
+  ctx.fillStyle = gradient(ctx, '#ffd18c', '#b96830');
+  ctx.beginPath();
+  ctx.arc(0, 2, 23, 0, TAU);
+  ctx.arc(0, 2, 7, 0, TAU, true);
+  ctx.fill();
+  ctx.fillStyle = gradient(ctx, p.light, p.dark);
+  ctx.beginPath();
+  for (let i = 0; i <= 48; i++) {
+    const a = i / 48 * TAU;
+    const r = 19.9 + Math.sin(a * 7 + variant) * 1.5;
+    const x = Math.cos(a) * r;
+    const y = Math.sin(a) * r - 1.3;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.moveTo(7.6, -1);
+  ctx.arc(0, -1, 7.6, 0, TAU, true);
+  ctx.fill();
+  ctx.strokeStyle = '#fffaf044';
+  ctx.lineWidth = 2.7;
+  ctx.beginPath();
+  ctx.arc(-1, -1, 17.5, 3.7, 4.6);
+  ctx.stroke();
+  sprinkles(ctx, [[-13, -9, 0.6], [-4, -15, -0.4], [8, -14, 0.8], [15, -6, -0.7], [14, 6, 0.6], [5, 12, -0.5], [-7, 13, 0.8], [-15, 6, -0.5], [-13, -1, 1.5], [1, 17, 0]], variant);
+  ctx.restore();
+}
+
+function cake(ctx: Context, p: Palette, variant: number) {
+  polygon(ctx, [[-22, -2], [22, 5], [22, 24], [-22, 17]], '#e5ad58');
+  polygon(ctx, [[22, 5], [25, -10], [25, 9], [22, 24]], '#bb703b');
+  polygon(ctx, [[-22, 2], [22, 9], [22, 13], [-22, 6]], '#fff0bc');
+  polygon(ctx, [[-22, 7], [22, 14], [22, 18], [-22, 11]], p.dark);
+  polygon(ctx, [[-22, 11], [22, 18], [22, 22], [-22, 15]], '#ffe4a4');
+  polygon(ctx, [[22, 9], [25, -6], [25, -2], [22, 13]], '#f8db97');
+  polygon(ctx, [[22, 14], [25, -1], [25, 3], [22, 18]], blend(p.dark, '#44263b', 0.2));
+  polygon(ctx, [[-22, -2], [0, -20], [25, -10], [22, 5]], gradient(ctx, p.light, p.main));
+  ctx.fillStyle = p.main;
+  ctx.beginPath();
+  ctx.moveTo(-22, -2);
+  ctx.lineTo(22, 5);
+  ctx.lineTo(22, 9);
+  ctx.quadraticCurveTo(18, 10, 16, 6);
+  ctx.quadraticCurveTo(12, 5, 12, 10);
+  ctx.quadraticCurveTo(7, 12, 7, 6);
+  ctx.lineTo(-6, 3);
+  ctx.quadraticCurveTo(-7, 9, -11, 6);
+  ctx.lineTo(-12, 1);
+  ctx.quadraticCurveTo(-19, 3, -22, 1);
+  ctx.closePath();
+  ctx.fill();
+  sprinkles(ctx, [[-9, -4, 0.6], [7, -5, -0.4], [15, -8, 0.7]], variant);
+  ellipse(ctx, 0, -13, 7, 3.7, '#fff4d2');
+  cherry(ctx, 0, -18);
+  ctx.strokeStyle = '#fff7dc85';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(-19, -3);
+  ctx.lineTo(-2, -17);
+  ctx.stroke();
+}
+
+function macaron(ctx: Context, p: Palette) {
+  ellipse(ctx, 0, 9, 23, 12.5, gradient(ctx, p.main, p.dark));
+  roundedRect(ctx, -22, 0, 44, 10, 4, '#fff3cb');
+  roundedRect(ctx, -22, 4, 44, 3, 1, '#dfac81');
+  for (let i = -19; i <= 19; i += 4) {
+    ellipse(ctx, i, 11, 2.7, 2.4, p.main);
+    ellipse(ctx, i, -1, 2.5, 2.8, p.dark);
+  }
+  ellipse(ctx, 0, -4, 23, 13.5, gradient(ctx, p.light, p.main));
+  ctx.strokeStyle = '#ffffff65';
+  ctx.lineWidth = 2.7;
+  ctx.beginPath();
+  ctx.ellipse(-1, -5, 18, 9, 0, 3.6, 4.8);
+  ctx.stroke();
+  [[-12, -8], [2, -12], [14, -5], [-3, -2]].forEach(([x, y]) => ellipse(ctx, x, y, 0.8, 0.6, '#ffffff50'));
+}
+
+function popsicle(ctx: Context, p: Palette) {
+  roundedRect(ctx, -4.5, 7, 9, 23, 4.5, gradient(ctx, '#fbe0a8', '#cb9055'));
+  roundedRect(ctx, -2.5, 16, 2, 10, 1, '#fff0c57a');
+  roundedRect(ctx, -16, -26, 32, 43, 13, p.dark);
+  ctx.save();
+  roundedPath(ctx, -15, -26, 29, 39, 12);
+  ctx.clip();
+  ctx.fillStyle = gradient(ctx, p.light, p.main);
+  ctx.fillRect(-18, -27, 36, 43);
+  for (let y = -33; y <= 28; y += 17) {
+    polygon(ctx, [[-19, y + 14], [19, y - 8], [19, y], [-19, y + 22]], p.accent);
+    polygon(ctx, [[-19, y + 14], [19, y - 8], [19, y - 5], [-19, y + 17]], '#fff6d35c');
+  }
+  ctx.restore();
+  ctx.strokeStyle = '#ffffff88';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-10, -6);
+  ctx.lineTo(-10, -15);
+  ctx.quadraticCurveTo(-10, -21, -5, -22);
+  ctx.stroke();
+}
+
+function cookie(ctx: Context, variant: number) {
+  ellipse(ctx, 0, 2, 22.5, 21.5, '#ae612e');
+  ctx.fillStyle = gradient(ctx, '#ffe1a0', '#d99a53');
+  ctx.beginPath();
+  for (let i = 0; i <= 60; i++) {
+    const a = i / 60 * TAU;
+    const r = 21.5 + Math.sin(a * 11) * 0.5;
+    if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r - 1);
+    else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r - 1);
+  }
+  ctx.fill();
+  const chips = [[-11, -11, 3.5], [3, -14, 3], [12, -5, 4], [-14, 3, 3.8], [-3, -2, 4], [2, 12, 3.6], [13, 10, 3], [-10, 13, 2.4]];
+  for (let i = 0; i < chips.length; i++) {
+    const [x, y, size] = chips[i];
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(variant * 0.2 + i * 1.3);
+    roundedRect(ctx, -size, -size * 0.8, size * 2, size * 1.8, size * 0.65, '#78402a');
+    ellipse(ctx, -size * 0.3, -size * 0.5, size * 0.6, size * 0.35, '#bf7f51');
+    ctx.restore();
+  }
+  [[-5, -14], [16, 1], [-7, 6], [8, 3], [-17, -5], [5, 17], [5, -7]].forEach(([x, y]) => {
+    ellipse(ctx, x, y, 0.7, 0.9, '#9e672b60');
+    ellipse(ctx, x - 0.6, y - 0.7, 0.7, 0.6, '#fff0bb90');
+  });
+  ctx.strokeStyle = '#fff2c58c';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.arc(0, 0, 18.7, 3.5, 4.5);
+  ctx.stroke();
+}
+
+function gummy(ctx: Context, p: Palette) {
+  const jelly = ctx.createRadialGradient(-9, -14, 1, 1, 1, 34);
+  jelly.addColorStop(0, p.light);
+  jelly.addColorStop(0.45, p.main);
+  jelly.addColorStop(1, p.dark);
+  ctx.fillStyle = jelly;
+  ctx.beginPath();
+  const lobes = [[-10, -18, 7, 7], [10, -18, 7, 7], [0, -10, 15, 13], [0, 9, 14, 16], [-14, 5, 7, 9], [14, 5, 7, 9], [-9, 22, 8, 7], [9, 22, 8, 7]];
+  for (const [x, y, rx, ry] of lobes) {
+    ctx.moveTo(x + rx, y);
+    ctx.ellipse(x, y, rx, ry, 0, 0, TAU);
+  }
+  ctx.fill();
+  ellipse(ctx, -2, 9, 9, 11, '#ffffff20', 0.15);
+  ellipse(ctx, -6, -14, 5.5, 3.5, '#ffffff50', -0.6);
+  ellipse(ctx, -11, -20, 2.5, 1.5, '#ffffff70', -0.8);
+  ellipse(ctx, -12, 22, 3, 2, '#ffffff35', -0.2);
+  ellipse(ctx, -5, -9, 1.6, 2, '#47304c');
+  ellipse(ctx, 5, -9, 1.6, 2, '#47304c');
+  ellipse(ctx, 0, -3, 4.5, 3.2, blend(p.main, '#fff6dd', 0.35));
+  ellipse(ctx, 0, -4, 1.8, 1.2, '#654055');
+  ctx.strokeStyle = '#63394f';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(0, -2.5, 2.1, 0.3, Math.PI - 0.3);
+  ctx.stroke();
+}
+
+function cupcake(ctx: Context, p: Palette, variant: number) {
+  ctx.save();
+  polygon(ctx, [[-18, 0], [18, 0], [13, 25], [-13, 25]], gradient(ctx, p.main, p.dark));
+  ctx.clip();
+  ctx.strokeStyle = p.light;
+  ctx.lineWidth = 2;
+  for (let i = -17; i <= 17; i += 6) {
+    ctx.beginPath();
+    ctx.moveTo(i, 1);
+    ctx.lineTo(i * 0.7, 24);
+    ctx.stroke();
+  }
+  ctx.restore();
+  ellipse(ctx, 0, 1, 20, 5.5, '#b17b5c');
+  ctx.fillStyle = gradient(ctx, '#fffbe8', p.light, -25, 7);
+  ctx.beginPath();
+  ctx.moveTo(-21, 2);
+  ctx.bezierCurveTo(-26, -6, -15, -11, -12, -10);
+  ctx.bezierCurveTo(-18, -19, -4, -17, 0, -27);
+  ctx.bezierCurveTo(3, -30, 3, -18, 10, -19);
+  ctx.bezierCurveTo(18, -17, 10, -12, 17, -10);
+  ctx.bezierCurveTo(25, -8, 27, 1, 19, 5);
+  ctx.bezierCurveTo(8, 11, -9, 8, -21, 2);
+  ctx.fill();
+  ctx.strokeStyle = blend(p.main, '#ffffff', 0.48);
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(-15, -6);
+  ctx.quadraticCurveTo(-2, 0, 17, -3);
+  ctx.moveTo(-7, -15);
+  ctx.quadraticCurveTo(1, -10, 10, -13);
+  ctx.stroke();
+  sprinkles(ctx, [[-16, 0, -0.5], [-7, -4, 1.4], [6, 2, 0.5], [16, -6, 1.5], [4, -16, 0.3]], variant);
+}
+
+function candy(ctx: Context, p: Palette) {
+  polygon(ctx, [[-10, -7], [-29, -14], [-24, -2], [-29, 11], [-11, 8]], gradient(ctx, p.light, p.dark));
+  polygon(ctx, [[10, -7], [29, -14], [24, -2], [29, 11], [11, 8]], gradient(ctx, p.light, p.dark));
+  ctx.strokeStyle = '#fff0d780';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(-25, -8);
+  ctx.lineTo(-12, -2);
+  ctx.moveTo(-25, 6);
+  ctx.lineTo(-13, 2);
+  ctx.moveTo(25, -8);
+  ctx.lineTo(12, -2);
+  ctx.moveTo(25, 6);
+  ctx.lineTo(13, 2);
+  ctx.stroke();
+  roundedRect(ctx, -15, -14, 30, 29, 12, p.dark);
+  ctx.save();
+  roundedPath(ctx, -14, -15, 28, 27, 11);
+  ctx.clip();
+  ctx.fillStyle = gradient(ctx, p.light, p.main);
+  ctx.fillRect(-15, -15, 30, 30);
+  for (let x = -30; x < 30; x += 15) {
+    polygon(ctx, [[x, -18], [x + 8, -18], [x + 24, 16], [x + 16, 16]], '#fff1b8');
+  }
+  ctx.restore();
+  ellipse(ctx, -5, -8, 7, 2.3, '#ffffff80', -0.2);
+}
+
+function icecream(ctx: Context, p: Palette, variant: number) {
+  ctx.save();
+  polygon(ctx, [[-14, -2], [15, -2], [3, 29]], gradient(ctx, '#ffda8d', '#b86e37'));
+  ctx.clip();
+  ctx.strokeStyle = '#b9753890';
+  ctx.lineWidth = 1.2;
+  for (let i = -20; i < 35; i += 7) {
+    ctx.beginPath();
+    ctx.moveTo(-20, i);
+    ctx.lineTo(20, i + 26);
+    ctx.moveTo(20, i);
+    ctx.lineTo(-20, i + 26);
+    ctx.stroke();
+  }
+  ctx.restore();
+  ellipse(ctx, 0, -2, 18, 7, p.dark);
+  const scoop = ctx.createRadialGradient(-8, -20, 1, 0, -9, 25);
+  scoop.addColorStop(0, p.light);
+  scoop.addColorStop(0.6, p.main);
+  scoop.addColorStop(1, p.dark);
+  ellipse(ctx, 0, -12, 18, 16, scoop);
+  [-13, -5, 5, 13].forEach((x, i) => ellipse(ctx, x, -2 + i % 2, 6, 5, scoop));
+  ellipse(ctx, -6, -20, 7, 3, '#ffffff65', -0.5);
+  sprinkles(ctx, [[-10, -12, -0.4], [2, -20, 0.8], [10, -12, -0.3], [1, -8, 0.6]], variant);
+}
+
+export function getTreatSprite(kind: TreatKind, variant: number) {
+  const key = `${kind}:${variant}`;
+  let cached = sweets.get(key);
+  if (cached) return cached;
+  const main = CONFIG.FOOD_COLORS[variant % CONFIG.FOOD_COLORS.length];
+  const palette: Palette = {
+    main,
+    light: blend(main, '#fff9e3', 0.48),
+    dark: blend(main, '#682d51', 0.27),
+    accent: CONFIG.FOOD_COLORS[(variant + 2) % CONFIG.FOOD_COLORS.length],
+  };
+  cached = sprite(ctx => {
+    ellipse(ctx, 1, 23, kind === 'candy' ? 23 : 18, 4.5, '#00000032');
+    switch (kind) {
+      case 'donut': donut(ctx, palette, variant); break;
+      case 'cake': cake(ctx, palette, variant); break;
+      case 'macaron': macaron(ctx, palette); break;
+      case 'popsicle': popsicle(ctx, palette); break;
+      case 'cookie': cookie(ctx, variant); break;
+      case 'gummy': gummy(ctx, palette); break;
+      case 'cupcake': cupcake(ctx, palette, variant); break;
+      case 'candy': candy(ctx, palette); break;
+      case 'icecream': icecream(ctx, palette, variant); break;
+    }
+  });
+  sweets.set(key, cached);
+  return cached;
+}
+
+export function getWormSegment(color: string, pattern: WormPattern = 'solid', pale = false) {
+  const key = `${color}:${pattern}:${pattern === 'candy' && pale}`;
+  let cached = segments.get(key);
+  if (cached) return cached;
+  cached = sprite(ctx => {
+    const base = pattern === 'candy' && pale ? blend(color, '#fff4d3', 0.7) : color;
+    const shadow = ctx.createRadialGradient(1, 3, 17, 1, 3, 30);
+    shadow.addColorStop(0, '#00000065');
+    shadow.addColorStop(0.7, '#00000026');
+    shadow.addColorStop(1, '#00000000');
+    ellipse(ctx, 1, 3, 30, 29, shadow);
+
+    const fill = ctx.createRadialGradient(-8, -10, 0, -1, -2, 29);
+    fill.addColorStop(0, blend(base, '#ffffff', 0.42));
+    fill.addColorStop(0.28, blend(base, '#ffffff', 0.16));
+    fill.addColorStop(0.56, base);
+    fill.addColorStop(0.83, blend(base, '#002b3e', 0.23));
+    fill.addColorStop(1, blend(base, '#001823', 0.55));
+    ellipse(ctx, 0, 0, 24, 24, fill);
+
+    ctx.strokeStyle = blend(base, '#002334', 0.3);
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 23.1, -0.18, Math.PI * 0.94);
+    ctx.stroke();
+    if (pattern === 'freckles') {
+      ellipse(ctx, -9, -6, 3.1, 2.2, '#fff4de88', -0.4);
+      ellipse(ctx, 7, 7, 2.8, 2.1, '#fff4de5c', 0.5);
+      ellipse(ctx, 8, -11, 1.5, 1.2, '#fff4de77');
+    }
+    ctx.strokeStyle = '#ffffff30';
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.arc(-1, -1, 19, 3.6, 4.7);
+    ctx.stroke();
+    ellipse(ctx, -8, -11, 7.5, 3, '#ffffff1e', -0.65);
+  });
+  segments.set(key, cached);
+  return cached;
+}
+
+export function getGlow(color: string) {
+  let cached = glows.get(color);
+  if (cached) return cached;
+  cached = sprite(ctx => {
+    const fill = ctx.createRadialGradient(0, 0, 0, 0, 0, 32);
+    fill.addColorStop(0, `${color}dc`);
+    fill.addColorStop(0.2, `${color}96`);
+    fill.addColorStop(0.5, `${color}36`);
+    fill.addColorStop(0.8, `${color}0c`);
+    fill.addColorStop(1, `${color}00`);
+    ellipse(ctx, 0, 0, 32, 32, fill);
+  });
+  glows.set(color, cached);
+  return cached;
+}
+
+function hexTile(rx: number, ry: number, wide: boolean) {
+  const canvas = document.createElement('canvas');
+  canvas.width = rx * 6;
+  canvas.height = ry * 4;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+  ctx.scale(2, 2);
+  const width = rx * 3;
+  const height = ry * 2;
+  for (let column = -1; column <= 3; column++) {
+    for (let row = -1; row <= 2; row++) {
+      const x = column * rx * 1.5;
+      const y = row * height + (Math.abs(column) % 2) * ry;
+      const outline = () => {
+        ctx.beginPath();
+        ctx.moveTo(x + rx, y);
+        ctx.lineTo(x + rx / 2, y + ry);
+        ctx.lineTo(x - rx / 2, y + ry);
+        ctx.lineTo(x - rx, y);
+        ctx.lineTo(x - rx / 2, y - ry);
+        ctx.lineTo(x + rx / 2, y - ry);
+        ctx.closePath();
+      };
+      outline();
+      if (wide) {
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = '#081116a3';
+        ctx.stroke();
+        ctx.lineWidth = 0.6;
+        ctx.strokeStyle = '#3d59604d';
+        ctx.stroke();
+      } else {
+        const fill = ctx.createLinearGradient(x, y - ry, x, y + ry);
+        fill.addColorStop(0, '#1d3038');
+        fill.addColorStop(1, '#15252c');
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.lineWidth = 0.45;
+        ctx.strokeStyle = '#36505b68';
+        ctx.stroke();
+      }
+    }
+  }
+  if (!wide) {
+    for (let y = 1; y < height; y += 3) {
+      for (let x = 1; x < width; x += 3) {
+        ctx.fillStyle = (x + y) % 2 === 0 ? '#ffffff03' : '#00000005';
+        ctx.fillRect(x, y, 0.6, 0.6);
+      }
+    }
+  }
+  return canvas;
+}
+
+export function getArenaPatterns(ctx: Context) {
+  let cached = grounds.get(ctx);
+  if (cached) return cached;
+  const fine = ctx.createPattern(hexTile(8, 7, false), 'repeat');
+  const wide = ctx.createPattern(hexTile(96, 84, true), 'repeat');
+  const transform = new DOMMatrix().scale(0.5);
+  fine?.setTransform(transform);
+  wide?.setTransform(transform);
+  cached = { fine, wide };
+  grounds.set(ctx, cached);
+  return cached;
+}
+
+// Bake detailed gradients once; gameplay only blits small, reusable textures.
+export function prepareGameArt(ctx: Context) {
+  for (const treat of TREATS) {
+    for (let variant = 0; variant < CONFIG.FOOD_COLORS.length; variant++) getTreatSprite(treat.kind, variant);
+  }
+  for (const color of CONFIG.COLORS) {
+    getWormSegment(color);
+    getWormSegment(color, 'candy');
+    getWormSegment(color, 'candy', true);
+    getWormSegment(color, 'freckles');
+    getGlow(color);
+  }
+  for (const color of [...CONFIG.FOOD_COLORS, '#f0b56f', '#ffbd69', '#ff6983', '#38bdf8', '#fb923c', '#a3e635', '#facc15', '#f472b6', '#ffd166']) getGlow(color);
+  for (const bonus of BONUSES) getBonusSprite(bonus.kind);
+  getArenaPatterns(ctx);
+}
+
+export function getBonusSprite(kind: BonusKind) {
+  let cached = bonusSprites.get(kind);
+  if (cached) return cached;
+  const bonus = BONUSES.find(item => item.kind === kind)!;
+  cached = sprite(ctx => {
+    ellipse(ctx, 1, 24, 18, 4.5, '#00000040');
+    const gem = ctx.createRadialGradient(-8, -10, 2, 0, 0, 26);
+    gem.addColorStop(0, blend(bonus.color, '#ffffff', 0.55));
+    gem.addColorStop(0.45, bonus.color);
+    gem.addColorStop(1, blend(bonus.color, '#3b1d4a', 0.35));
+    ctx.fillStyle = gem;
+    ctx.beginPath();
+    ctx.moveTo(0, -24);
+    ctx.lineTo(21, -8);
+    ctx.lineTo(16, 18);
+    ctx.lineTo(-16, 18);
+    ctx.lineTo(-21, -8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#fff8deaa';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff55';
+    ctx.beginPath();
+    ctx.moveTo(-8, -16);
+    ctx.lineTo(2, -20);
+    ctx.lineTo(6, -10);
+    ctx.lineTo(-4, -8);
+    ctx.fill();
+    ctx.fillStyle = '#3b2048';
+    ctx.font = `800 ${kind === 'speed' || kind === 'chomp' ? 9 : 16}px system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(bonus.label, 0, 3);
+    ctx.fillStyle = '#fffef8';
+    ctx.fillText(bonus.label, 0, 1);
+  });
+  bonusSprites.set(kind, cached);
+  return cached;
+}

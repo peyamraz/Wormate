@@ -1,0 +1,60 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { parseClientMessage, NETWORK } from '../src/network/protocol';
+import { parseServerMessage } from '../src/network/validation';
+import { allowedOrigins, TokenBucket } from './security';
+import { createPracticeSession, getSession, clearSession } from '../src/session';
+
+const input = { type: 'input', seq: 1, angle: 1, boost: true };
+test('only validated intent is accepted; no IDs, scores, coordinates, or unknown fields', () => {
+  assert.deepEqual(parseClientMessage(JSON.stringify(input)), input);
+  for (const forged of [
+    { ...input, id: randomUUID() }, { ...input, score: 999999 }, { ...input, x: 1 },
+    { ...input, seq: -1 }, { ...input, seq: 0.5 }, { ...input, angle: 100 },
+    { ...input, angle: null }, { ...input, boost: 'true' },
+    { type: 'teleport' }, { type: 'restart', score: 100 },
+  ]) assert.equal(parseClientMessage(JSON.stringify(forged)), null);
+  for (const raw of ['{', '[]', 'null', ' '.repeat(NETWORK.MAX_MESSAGE_BYTES + 1), '{"type":"input","seq":1,"angle":1e999,"boost":true}']) assert.equal(parseClientMessage(raw), null);
+});
+
+test('guest names, room codes, protocol version and viewport are constrained', () => {
+  const join = { type: 'join', v: 1, name: 'Guest 2', room: 'SWEET', width: 1280, height: 720 };
+  assert.deepEqual(parseClientMessage(JSON.stringify(join)), join);
+  for (const bad of [
+    { ...join, name: '<script>' }, { ...join, name: 'A\u202eB' }, { ...join, name: 'x'.repeat(17) },
+    { ...join, room: '../room' }, { ...join, width: 1000000 }, { ...join, v: 2 },
+    { ...join, id: randomUUID() }, { ...join, name: '' },
+  ]) assert.equal(parseClientMessage(JSON.stringify(bad)), null);
+});
+
+test('origin allowlist fails closed and production requires HTTPS', () => {
+  assert.deepEqual([...allowedOrigins('https://game.example.com', true)], ['https://game.example.com']);
+  for (const origin of ['', '*', 'https://game.example.com/path', 'http://game.example.com']) assert.throws(() => allowedOrigins(origin, true));
+});
+
+test('message budget is bounded, refills with elapsed time and rejects a flood', () => {
+  const budget = new TokenBucket(2, 1, 0);
+  assert.equal(budget.take(0), true);
+  assert.equal(budget.take(0), true);
+  assert.equal(budget.take(0), false);
+  assert.equal(budget.take(500), false);
+  assert.equal(budget.take(1000), true);
+});
+
+test('local identity is random, stable in memory and explicitly deleted', () => {
+  const first = createPracticeSession('Guest');
+  assert.equal(getSession()?.id, first.id);
+  assert.match(first.id, /^[0-9a-f-]{36}$/);
+  clearSession();
+  assert.equal(getSession(), null);
+  assert.notEqual(createPracticeSession('Guest').id, first.id);
+  clearSession();
+});
+
+test('client rejects an unsupported version or oversized server packet', () => {
+  assert.equal(parseServerMessage('{"type":"welcome","v":2,"id":"fake","room":"SWEET"}'), null);
+  assert.equal(parseServerMessage(' '.repeat(NETWORK.MAX_STATE_BYTES + 1)), null);
+  const welcome = { type: 'welcome', v: 1, id: randomUUID(), room: 'SWEET' };
+  assert.deepEqual(parseServerMessage(JSON.stringify(welcome)), welcome);
+});
