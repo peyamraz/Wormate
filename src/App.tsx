@@ -9,6 +9,7 @@ import { validName, validRoom } from './network/protocol';
 import { clearSession, createPracticeSession, getSession, setOnlineSession } from './session';
 import type { GuestSession } from './session';
 import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Users, Bot, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut } from 'lucide-react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 const EMPTY_STATUS: PlayerStatus = {
   score: 0,
@@ -466,6 +467,7 @@ export default function App() {
           )}
         </>
       )}
+      <SpeedInsights />
     </div>
   );
 }
