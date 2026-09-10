@@ -206,6 +206,7 @@ export class OnlineClient {
     }
     this.view.bots = worms;
     this.view.foods = snapshot.foods;
+    this.view.rebuildFoodGrid();
     this.view.bonuses = snapshot.bonuses;
     this.view.ticks = snapshot.tick;
     this.view.deathReason = this.view.player.deathReason;
