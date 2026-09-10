@@ -4,8 +4,9 @@ import { createArenaServer } from './arenaServer';
 import { allowedOrigins } from './security';
 
 const production = process.env.NODE_ENV === 'production';
-const port = Number(process.env.PORT ?? 3001);
+const port = Number(process.env.PORT ?? 8080);
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid PORT');
+const host = process.env.HOST ?? '0.0.0.0';
 const defaults = `http://localhost:${port},http://127.0.0.1:${port},http://localhost:5173,http://127.0.0.1:5173`;
 const origins = allowedOrigins(process.env.ALLOWED_ORIGINS ?? (production ? '' : defaults), production);
 const server = createArenaServer({
@@ -14,8 +15,13 @@ const server = createArenaServer({
   trustedProxies: new Set((process.env.TRUSTED_PROXY_IPS ?? '').split(',').map(value => value.trim()).filter(Boolean)),
 });
 
-await server.listen(port, process.env.HOST ?? '127.0.0.1');
-console.info(`Wormate arena listening on port ${port}. IDs are kept in memory only.`);
+try {
+  await server.listen(port, host);
+  console.info(`Wormate arena listening on ${host}:${port}. IDs are kept in memory only.`);
+} catch (error) {
+  console.error(`Failed to start Wormate arena on ${host}:${port}:`, error);
+  process.exit(1);
+}
 let stopping = false;
 const stop = async () => {
   if (stopping) return;
