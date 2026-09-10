@@ -342,14 +342,16 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
     ctx.drawImage(getGlow(food.color), food.x - size / 2, food.y - size / 2, size, size);
   }
 
-  // Draw glows for bonus orbs
+  // Draw glows for bonus orbs: bright outer halo plus a hot white core.
   for (const bonus of engine.bonuses) {
     if (!inView(bonus.x, bonus.y, bounds)) continue;
     const info = BONUS_BY_KIND[bonus.kind];
-    const pulse = reducedMotion ? 1 : 1 + Math.sin(engine.ticks * 0.08 + bonus.phase) * 0.08;
-    const size = (info.multiplier >= 10 ? 52 : 42) * pulse;
-    ctx.globalAlpha = 0.55;
-    ctx.drawImage(getGlow(info.color), bonus.x - size * 0.9, bonus.y - size * 0.9, size * 1.8, size * 1.8);
+    const pulse = reducedMotion ? 1 : 1 + Math.sin(engine.ticks * 0.08 + bonus.phase) * 0.1;
+    const size = (info.multiplier >= 10 ? 56 : 46) * pulse;
+    ctx.globalAlpha = 0.72;
+    ctx.drawImage(getGlow(info.color), bonus.x - size * 0.95, bonus.y - size * 0.95, size * 1.9, size * 1.9);
+    ctx.globalAlpha = 0.3;
+    ctx.drawImage(getGlow('#ffffff'), bonus.x - size * 0.45, bonus.y - size * 0.45, size * 0.9, size * 0.9);
   }
 
   // Switch back to 'source-over' ONCE for rest of frame

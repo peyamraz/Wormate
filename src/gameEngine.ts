@@ -325,7 +325,7 @@ export class GameEngine {
     this.addBonus(x + 250, y + 70, 'chomp');
     this.addBonus(x + 160, y + 110, 'x2');
     this.addBonus(x - 240, y - 80, 'x5');
-    while (this.bonuses.length < 8) this.spawnBonus();
+    while (this.bonuses.length < CONFIG.BONUS_TARGET_COUNT) this.spawnBonus();
     this.rebuildFoodGrid();
   }
 
@@ -489,7 +489,7 @@ export class GameEngine {
   }
 
   private addBonus(x: number, y: number, kind = this.rollBonusKind()) {
-    if (this.bonuses.length >= 10) return;
+    if (this.bonuses.length >= CONFIG.BONUS_MAX_COUNT) return;
     this.bonuses.push({
       id: this.nextBonusId++,
       x: clamp(x, 80, CONFIG.CANVAS_WIDTH - 80),
@@ -505,6 +505,16 @@ export class GameEngine {
     const head = (players[Math.floor(Math.random() * players.length)] ?? this.player).segments[0];
     const angle = Math.random() * Math.PI * 2;
     const radius = nearPlayer ? 180 + Math.random() * 420 : 400 + Math.random() * 900;
+    this.addBonus(head.x + Math.cos(angle) * radius, head.y + Math.sin(angle) * radius);
+  }
+
+  /** Keeps the map lively by dropping a fresh orb in a human's play space. */
+  private spawnBonusNearPlayer() {
+    const players = this.onlineArena ? [...this.humans.values()].filter(worm => !worm.isDead) : [this.player];
+    if (!players.length) return;
+    const head = (players[Math.floor(Math.random() * players.length)] ?? this.player).segments[0];
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 240 + Math.random() * 280;
     this.addBonus(head.x + Math.cos(angle) * radius, head.y + Math.sin(angle) * radius);
   }
 
@@ -814,8 +824,12 @@ export class GameEngine {
     this.bots = this.bots.filter(bot => !bot.isDead);
     while (this.bots.length < (this.onlineArena ? 6 : CONFIG.BOT_COUNT)) this.spawnBot();
     while (this.foods.length < CONFIG.FOOD_COUNT) this.spawnFood();
-    this.bonuses = this.bonuses.filter(bonus => this.ticks - bonus.bornAt < 3600);
-    if (this.ticks % 90 === 0 && this.bonuses.length < 8) this.spawnBonus(true);
+
+    // Denser bonus flow: top the map back up quickly, keep orbs on the field
+    // longer, and periodically drop one right in a player's neighborhood.
+    this.bonuses = this.bonuses.filter(bonus => this.ticks - bonus.bornAt < CONFIG.BONUS_LIFETIME_TICKS);
+    if (this.ticks % CONFIG.BONUS_RESPAWN_TICKS === 0 && this.bonuses.length < CONFIG.BONUS_TARGET_COUNT) this.spawnBonus(true);
+    if (this.ticks % CONFIG.BONUS_NEAR_PLAYER_TICKS === 0) this.spawnBonusNearPlayer();
 
     if (this.player.isBoosting && this.ticks % 3 === 0) {
       const tail = this.player.segments[this.player.segments.length - 1];
