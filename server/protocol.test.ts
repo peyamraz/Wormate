@@ -5,6 +5,9 @@ import { parseClientMessage, NETWORK } from '../src/network/protocol';
 import { parseServerMessage } from '../src/network/validation';
 import { allowedOrigins, TokenBucket } from './security';
 import { createPracticeSession, getSession, clearSession } from '../src/session';
+import { GAME_CONFIG } from '../src/constants';
+import { GameEngine } from '../src/gameEngine';
+import { serializeWorm } from './arenaServer';
 
 const input = { type: 'input', seq: 1, angle: 1, boost: true };
 test('only validated intent is accepted; no IDs, scores, coordinates, or unknown fields', () => {
@@ -57,4 +60,30 @@ test('client rejects an unsupported version or oversized server packet', () => {
   assert.equal(parseServerMessage(' '.repeat(NETWORK.MAX_STATE_BYTES + 1)), null);
   const welcome = { type: 'welcome', v: 1, id: randomUUID(), room: 'SWEET' };
   assert.deepEqual(parseServerMessage(JSON.stringify(welcome)), welcome);
+});
+
+test('bonus cap follows BONUS_MAX_COUNT (regression: validator must not hardcode 10)', () => {
+  const world = new GameEngine(undefined, false, 'online');
+  const worm = world.addHuman(randomUUID(), 'Guest');
+  const makeBonuses = (count: number) =>
+    Array.from({ length: count }, (_, i) => ({ id: i + 1, x: 200 + i * 3, y: 200, kind: 'speed', phase: 0, bornAt: 0 }));
+  const base = () => ({
+    type: 'state', v: 1, tick: 1, run: 1, you: worm.id,
+    worms: [serializeWorm(worm)], foods: [], status: world.getStatus(worm), events: [],
+  });
+  assert.ok(
+    parseServerMessage(JSON.stringify({ ...base(), bonuses: makeBonuses(GAME_CONFIG.BONUS_MAX_COUNT) })),
+    `exactly BONUS_MAX_COUNT (${GAME_CONFIG.BONUS_MAX_COUNT}) bonuses must be accepted`,
+  );
+  assert.equal(
+    parseServerMessage(JSON.stringify({ ...base(), bonuses: makeBonuses(GAME_CONFIG.BONUS_MAX_COUNT + 1) })),
+    null,
+    'bonuses beyond BONUS_MAX_COUNT must be rejected',
+  );
+  if (GAME_CONFIG.BONUS_MAX_COUNT > 10) {
+    assert.ok(
+      parseServerMessage(JSON.stringify({ ...base(), bonuses: makeBonuses(11) })),
+      '11 bonuses must be accepted while the cap is above the old hardcoded 10',
+    );
+  }
 });

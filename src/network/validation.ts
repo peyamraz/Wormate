@@ -41,7 +41,7 @@ export function parseServerMessage(raw: string): ServerMessage | null {
   }
   if (!wormIds.has(message.you)) return null;
   if (!Array.isArray(message.foods) || message.foods.length > CONFIG.MAX_FOOD_COUNT || !message.foods.every(food)) return null;
-  if (!Array.isArray(message.bonuses) || message.bonuses.length > 10 || !message.bonuses.every(b => isRecord(b) && point(b) && number(b.id) && bonusKind(b.kind) && number(b.phase, 0, Math.PI * 2) && number(b.bornAt))) return null;
+  if (!Array.isArray(message.bonuses) || message.bonuses.length > CONFIG.BONUS_MAX_COUNT || !message.bonuses.every(b => isRecord(b) && point(b) && number(b.id) && bonusKind(b.kind) && number(b.phase, 0, Math.PI * 2) && number(b.bornAt))) return null;
   const status = message.status;
   if (!isRecord(status) || !['score', 'multiplier', 'multiplierSeconds', 'speedSeconds', 'chompSeconds', 'combo'].every(key => number(status[key], 0, 999999999))) return null;
   if (!['activeCount', 'humanCount', 'botCount', 'connectedCount'].every(key => number(status[key], 0, 32))) return null;

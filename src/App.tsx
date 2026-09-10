@@ -53,7 +53,7 @@ export default function App() {
   const [deathReason, setDeathReason] = useState('');
   const [mode, setMode] = useState<'online' | 'practice'>('online');
   const [nickname, setNickname] = useState('Guest');
-  const [room, setRoom] = useState(() => {
+  const [room] = useState(() => {
     const value = new URLSearchParams(window.location.search).get('room');
     return validRoom(value) ? value : 'SWEET';
   });
@@ -277,24 +277,6 @@ export default function App() {
                   <Bot size={16} /> Practice
                 </button>
               </div>
-
-              {mode === 'online' && (
-                <div className="space-y-3 pt-2">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 text-left">
-                      Room Code
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={12}
-                      value={room}
-                      onChange={e => setRoom(e.target.value.toUpperCase())}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white font-mono font-bold uppercase tracking-wider focus:outline-none focus:border-orange-500 transition-colors"
-                      placeholder="SWEET"
-                    />
-                  </div>
-                </div>
-              )}
             </div>
 
             {notice && (
