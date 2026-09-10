@@ -1,3 +1,5 @@
+export const VERSION = '1.4.0';
+
 export const GAME_CONFIG = {
   CANVAS_WIDTH: 3200,
   CANVAS_HEIGHT: 3200,

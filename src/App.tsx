@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GameCanvas } from './GameCanvas';
 import type { GameState } from './GameCanvas';
+import { VERSION } from './constants';
 import type { PlayerStatus } from './gameEngine';
 import { gameAudio } from './gameAudio';
 import { OnlineClient } from './network/OnlineClient';
@@ -325,6 +326,7 @@ export default function App() {
                 </div>
               </div>
             )}
+            <p className="mt-5 text-[10px] font-mono tracking-widest text-slate-600">v{VERSION}</p>
           </div>
         </div>
       )}
