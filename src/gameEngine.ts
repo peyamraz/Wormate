@@ -541,9 +541,11 @@ export class GameEngine {
   }
 
   private pullSnacks(worm = this.player) {
-    if (worm.chompTicks <= 0) return;
+    // Every human worm has a gentle magnetic field so treats drift toward the
+    // mouth as the snake closes in; CHOMP widens and strengthens the field.
+    const chomping = worm.chompTicks > 0;
     const head = worm.segments[0];
-    const range = 170;
+    const range = chomping ? 170 : 120;
     const rangeSq = range * range;
     const minCx = clamp(Math.floor((head.x - range) / GRID_CELL_SIZE), 0, GRID_COLS - 1);
     const maxCx = clamp(Math.floor((head.x + range) / GRID_CELL_SIZE), 0, GRID_COLS - 1);
@@ -560,13 +562,14 @@ export class GameEngine {
           const distSq = dx * dx + dy * dy;
           if (distSq < 16 || distSq > rangeSq) continue;
           const distance = Math.sqrt(distSq);
-          const pull = 6.2 * (1 - distance / range);
+          const pull = (chomping ? 6.2 : 2.4) * (1 - distance / range);
           food.x += (dx / distance) * pull;
           food.y += (dy / distance) * pull;
         }
       }
     }
 
+    if (!chomping) return;
     for (const bonus of this.bonuses) {
       const dx = head.x - bonus.x;
       const dy = head.y - bonus.y;
