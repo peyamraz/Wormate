@@ -140,7 +140,7 @@ function drawWormBody(ctx: Context, worm: Worm, engine: GameEngine, reducedMotio
 }
 
 function drawFoodGlow(ctx: Context, food: Food, zoom: number) {
-  const radius = Math.max(food.radius, 11 / zoom);
+  const radius = Math.max(food.radius, 15 / zoom);
   if (food.isTreasure) {
     const size = radius * 7;
     ctx.globalAlpha = 0.55;
@@ -332,14 +332,26 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
     if (food.isTreasure || food.value >= 3) drawFoodGlow(ctx, food, zoom);
   }
 
-  // Draw glows for bonus orbs
+  // Soft halo under every ordinary treat so food pops against the dark floor.
+  for (let i = 0; i < visibleFoods.length; i++) {
+    const food = visibleFoods[i];
+    if (food.isTreasure || food.value >= 3) continue;
+    const radius = Math.max(food.radius, 15 / zoom);
+    const size = radius * 3.4;
+    ctx.globalAlpha = 0.2;
+    ctx.drawImage(getGlow(food.color), food.x - size / 2, food.y - size / 2, size, size);
+  }
+
+  // Draw glows for bonus orbs: bright outer halo plus a hot white core.
   for (const bonus of engine.bonuses) {
     if (!inView(bonus.x, bonus.y, bounds)) continue;
     const info = BONUS_BY_KIND[bonus.kind];
-    const pulse = reducedMotion ? 1 : 1 + Math.sin(engine.ticks * 0.08 + bonus.phase) * 0.08;
-    const size = (info.multiplier >= 10 ? 52 : 42) * pulse;
-    ctx.globalAlpha = 0.55;
-    ctx.drawImage(getGlow(info.color), bonus.x - size * 0.9, bonus.y - size * 0.9, size * 1.8, size * 1.8);
+    const pulse = reducedMotion ? 1 : 1 + Math.sin(engine.ticks * 0.08 + bonus.phase) * 0.1;
+    const size = (info.multiplier >= 10 ? 56 : 46) * pulse;
+    ctx.globalAlpha = 0.72;
+    ctx.drawImage(getGlow(info.color), bonus.x - size * 0.95, bonus.y - size * 0.95, size * 1.9, size * 1.9);
+    ctx.globalAlpha = 0.3;
+    ctx.drawImage(getGlow('#ffffff'), bonus.x - size * 0.45, bonus.y - size * 0.45, size * 0.9, size * 0.9);
   }
 
   // Switch back to 'source-over' ONCE for rest of frame
@@ -351,7 +363,7 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
     const food = visibleFoods[i];
     const phase = engine.ticks * 0.023 + food.phase;
     const float = reducedMotion ? 0 : Math.sin(phase) * 0.9;
-    const radius = Math.max(food.radius, 11 / zoom);
+    const radius = Math.max(food.radius, 15 / zoom);
     const size = radius * 2.85;
 
     if (food.isTreasure || food.value >= 3) {
