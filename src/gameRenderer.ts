@@ -1,5 +1,6 @@
 import { BONUS_BY_KIND, GAME_CONFIG as CONFIG } from './constants';
 import type { Food, GameEngine, Worm } from './gameEngine';
+import { GRID_CELL_SIZE, GRID_COLS, GRID_ROWS } from './gameEngine';
 import { getArenaPatterns, getBonusSprite, getGlow, getTreatSprite, getWormSegment } from './gameArt';
 
 type Context = CanvasRenderingContext2D;
@@ -9,7 +10,7 @@ const SEGMENT_SIZE = 64 / 24;
 let vignette: HTMLCanvasElement | null = null;
 
 function inView(x: number, y: number, bounds: Bounds) {
-  return x > bounds.left && x < bounds.right && y > bounds.top && y < bounds.bottom;
+  return x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom;
 }
 
 function ellipse(ctx: Context, x: number, y: number, rx: number, ry: number, fill: string) {
@@ -42,7 +43,7 @@ function drawFace(ctx: Context, worm: Worm, radius: number, ticks: number, reduc
     ellipse(ctx, radius * 0.32, side * radius * 0.8, radius * 0.18, radius * 0.08, '#ffaebd60');
     ctx.save();
     ctx.translate(-radius * 0.04, side * radius * 0.47);
-    ctx.scale(1, blink);
+    if (blink !== 1) ctx.scale(1, blink);
     ellipse(ctx, 0, 0.5, radius * 0.415, radius * 0.425, '#082d43');
     ellipse(ctx, 0, -0.2, radius * 0.365, radius * 0.38, '#d8eff1');
     ellipse(ctx, -radius * 0.028, -radius * 0.06, radius * 0.34, radius * 0.31, '#fffef3');
@@ -73,25 +74,12 @@ function drawFace(ctx: Context, worm: Worm, radius: number, ticks: number, reduc
   ctx.restore();
 }
 
-function drawWorm(ctx: Context, worm: Worm, engine: GameEngine, reducedMotion: boolean, bounds: Bounds) {
+function drawWormBody(ctx: Context, worm: Worm, engine: GameEngine, reducedMotion: boolean, bounds: Bounds) {
   if (worm.isDead || !worm.segments.some(point => inView(point.x, point.y, bounds))) return;
   const radius = worm.radius * (engine.isDemo ? 1.14 : 1);
   const head = worm.segments[0];
   const step = Math.max(2, Math.round(radius * 0.58 / CONFIG.WORM_SEGMENT_SPACING));
   const player = worm === engine.player;
-
-  if (worm.isBoosting || worm.speedTicks > 0 || player) {
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.globalAlpha = worm.isBoosting || worm.speedTicks > 0 ? 0.5 : 0.12;
-    const glow = getGlow(worm.color);
-    const size = radius * (worm.isBoosting || worm.speedTicks > 0 ? 5.8 : 4.5);
-    for (let i = 0; i < worm.segments.length; i += step * 3) {
-      const point = worm.segments[i];
-      if (inView(point.x, point.y, bounds)) ctx.drawImage(glow, point.x - size / 2, point.y - size / 2, size, size);
-    }
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = 1;
-  }
 
   // Overlapping domed sprites give the body depth without per-frame gradients.
   for (let i = worm.segments.length - 1; i > 0; i -= step) {
@@ -100,7 +88,8 @@ function drawWorm(ctx: Context, worm: Worm, engine: GameEngine, reducedMotion: b
     const taper = 0.64 + 0.36 * Math.min(1, (worm.segments.length - 1 - i) / 7);
     let swallow = 0;
     if (!reducedMotion) {
-      for (const wave of worm.swallowWaves) {
+      for (let w = 0; w < worm.swallowWaves.length; w++) {
+        const wave = worm.swallowWaves[w];
         const distance = Math.abs(i - wave);
         if (distance < 7) swallow = Math.max(swallow, (1 - distance / 7) * 0.15);
       }
@@ -114,6 +103,7 @@ function drawWorm(ctx: Context, worm: Worm, engine: GameEngine, reducedMotion: b
   const headSize = radius * SEGMENT_SIZE * 1.055 * pulse;
   ctx.drawImage(getWormSegment(worm.color), head.x - headSize / 2, head.y - headSize / 2, headSize, headSize);
   drawFace(ctx, worm, radius * pulse, engine.ticks, reducedMotion);
+
   if (player && worm.chompTicks > 0 && !engine.isDemo) {
     const vacuum = 18 + (reducedMotion ? 10 : (engine.ticks % 24));
     ctx.strokeStyle = '#fb923c';
@@ -157,44 +147,11 @@ function drawFoodGlow(ctx: Context, food: Food, zoom: number) {
     ctx.drawImage(getGlow('#ff6983'), food.x - size / 2, food.y - size / 2, size, size);
     ctx.globalAlpha = 0.9;
     ctx.drawImage(getGlow('#ffbd69'), food.x - size * 0.36, food.y - size * 0.36, size * 0.72, size * 0.72);
-  } else {
+  } else if (food.value >= 3) {
     const size = radius * 4.5;
-    ctx.globalAlpha = food.value >= 3 ? 0.24 : 0.13;
+    ctx.globalAlpha = 0.25;
     ctx.drawImage(getGlow(food.color), food.x - size / 2, food.y - size / 2, size, size);
   }
-}
-
-function drawFood(ctx: Context, food: Food, engine: GameEngine, reducedMotion: boolean) {
-  const phase = engine.ticks * 0.023 + food.phase;
-  const float = reducedMotion ? 0 : Math.sin(phase) * 0.9;
-  const birth = reducedMotion ? 1 : Math.min(1, 0.5 + (engine.ticks - food.bornAt) / 20);
-  const radius = Math.max(food.radius, 11 / engine.camera.zoom);
-  const size = radius * 2.85 * birth;
-  ctx.save();
-  ctx.translate(food.x, food.y + float);
-  ctx.rotate(food.rotation + (reducedMotion ? 0 : Math.sin(phase * 0.6) * 0.045));
-  ctx.drawImage(getTreatSprite(food.kind, food.variant), -size / 2, -size / 2, size, size);
-  ctx.restore();
-  if (food.isTreasure || food.value >= 3) {
-    ctx.fillStyle = '#fff0be';
-    ctx.globalAlpha = reducedMotion ? 0.5 : 0.4 + Math.sin(phase) * 0.22;
-    sparkle(ctx, food.x + radius * 1.3, food.y - radius * 1.15, 2.4 / engine.camera.zoom);
-    ctx.globalAlpha = 1;
-  }
-}
-
-function drawLootTrails(ctx: Context, engine: GameEngine, bounds: Bounds) {
-  ctx.globalCompositeOperation = 'lighter';
-  for (const trail of engine.lootTrails) {
-    const size = trail.width * 3;
-    ctx.globalAlpha = trail.life * 0.7;
-    for (let i = 0; i < trail.points.length; i += 2) {
-      const point = trail.points[i];
-      if (inView(point.x, point.y, bounds)) ctx.drawImage(getGlow('#ffbd69'), point.x - size / 2, point.y - size / 2, size, size);
-    }
-  }
-  ctx.globalAlpha = 1;
-  ctx.globalCompositeOperation = 'source-over';
 }
 
 function drawEffects(ctx: Context, engine: GameEngine, bounds: Bounds, reducedMotion: boolean) {
@@ -282,10 +239,10 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
   const { width, height } = engine.viewport;
   const { x, y, zoom } = engine.camera;
   const bounds: Bounds = {
-    left: x - width / (2 * zoom) - 100,
-    right: x + width / (2 * zoom) + 100,
-    top: y - height / (2 * zoom) - 100,
-    bottom: y + height / (2 * zoom) + 100,
+    left: x - width / (2 * zoom) - 90,
+    right: x + width / (2 * zoom) + 90,
+    top: y - height / (2 * zoom) - 90,
+    bottom: y + height / (2 * zoom) + 90,
   };
   const shake = reducedMotion ? 0 : engine.shake;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -296,16 +253,19 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
   ctx.scale(zoom, zoom);
   ctx.translate(-x, -y);
 
+  // Background grid
   const groundX = Math.max(0, bounds.left);
   const groundY = Math.max(0, bounds.top);
   const groundWidth = Math.min(CONFIG.CANVAS_WIDTH, bounds.right) - groundX;
   const groundHeight = Math.min(CONFIG.CANVAS_HEIGHT, bounds.bottom) - groundY;
-  const patterns = getArenaPatterns(ctx);
-  ctx.fillStyle = patterns.fine ?? '#18282f';
-  ctx.fillRect(groundX, groundY, groundWidth, groundHeight);
-  if (patterns.wide) {
-    ctx.fillStyle = patterns.wide;
+  if (groundWidth > 0 && groundHeight > 0) {
+    const patterns = getArenaPatterns(ctx);
+    ctx.fillStyle = patterns.fine ?? '#18282f';
     ctx.fillRect(groundX, groundY, groundWidth, groundHeight);
+    if (patterns.wide) {
+      ctx.fillStyle = patterns.wide;
+      ctx.fillRect(groundX, groundY, groundWidth, groundHeight);
+    }
   }
   ctx.strokeStyle = '#fb718523';
   ctx.lineWidth = 28;
@@ -314,26 +274,108 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
   ctx.lineWidth = 3;
   ctx.strokeRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
 
-  drawLootTrails(ctx, engine, bounds);
+  // Collect visible foods using spatial grid
+  const visibleFoods: Food[] = [];
+  if (engine.foodGrid) {
+    const minCx = Math.max(0, Math.min(GRID_COLS - 1, Math.floor(bounds.left / GRID_CELL_SIZE)));
+    const maxCx = Math.max(0, Math.min(GRID_COLS - 1, Math.floor(bounds.right / GRID_CELL_SIZE)));
+    const minCy = Math.max(0, Math.min(GRID_ROWS - 1, Math.floor(bounds.top / GRID_CELL_SIZE)));
+    const maxCy = Math.max(0, Math.min(GRID_ROWS - 1, Math.floor(bounds.bottom / GRID_CELL_SIZE)));
+
+    for (let cy = minCy; cy <= maxCy; cy++) {
+      for (let cx = minCx; cx <= maxCx; cx++) {
+        const cell = engine.foodGrid[cy * GRID_COLS + cx];
+        for (let i = 0; i < cell.length; i++) {
+          const food = cell[i];
+          if (food.x >= bounds.left && food.x <= bounds.right && food.y >= bounds.top && food.y <= bounds.bottom) {
+            visibleFoods.push(food);
+          }
+        }
+      }
+    }
+  } else {
+    for (let i = 0; i < engine.foods.length; i++) {
+      const food = engine.foods[i];
+      if (inView(food.x, food.y, bounds)) visibleFoods.push(food);
+    }
+  }
+
+  // Draw Loot Trails
   ctx.globalCompositeOperation = 'lighter';
-  for (const food of engine.foods) {
-    if (inView(food.x, food.y, bounds)) drawFoodGlow(ctx, food, zoom);
+  for (const trail of engine.lootTrails) {
+    const size = trail.width * 3;
+    ctx.globalAlpha = trail.life * 0.7;
+    for (let i = 0; i < trail.points.length; i += 2) {
+      const point = trail.points[i];
+      if (inView(point.x, point.y, bounds)) ctx.drawImage(getGlow('#ffbd69'), point.x - size / 2, point.y - size / 2, size, size);
+    }
   }
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.globalAlpha = 1;
-  for (const food of engine.foods) {
-    if (inView(food.x, food.y, bounds)) drawFood(ctx, food, engine, reducedMotion);
+
+  // Batch all Glow passes together in ONE 'lighter' pass
+  const allLivingWorms = engine.allWorms().filter(w => !w.isDead);
+  for (const worm of allLivingWorms) {
+    if (worm.isBoosting || worm.speedTicks > 0 || worm === engine.player) {
+      ctx.globalAlpha = worm.isBoosting || worm.speedTicks > 0 ? 0.45 : 0.12;
+      const glow = getGlow(worm.color);
+      const size = worm.radius * (worm.isBoosting || worm.speedTicks > 0 ? 5.5 : 4.2);
+      const glowStep = Math.max(3, Math.round(worm.radius * 0.8 / CONFIG.WORM_SEGMENT_SPACING));
+      for (let i = 0; i < worm.segments.length; i += glowStep * 2) {
+        const point = worm.segments[i];
+        if (inView(point.x, point.y, bounds)) ctx.drawImage(glow, point.x - size / 2, point.y - size / 2, size, size);
+      }
+    }
   }
+
+  // Draw glows ONLY for treasure and high-value food
+  for (let i = 0; i < visibleFoods.length; i++) {
+    const food = visibleFoods[i];
+    if (food.isTreasure || food.value >= 3) drawFoodGlow(ctx, food, zoom);
+  }
+
+  // Draw glows for bonus orbs
   for (const bonus of engine.bonuses) {
     if (!inView(bonus.x, bonus.y, bounds)) continue;
     const info = BONUS_BY_KIND[bonus.kind];
     const pulse = reducedMotion ? 1 : 1 + Math.sin(engine.ticks * 0.08 + bonus.phase) * 0.08;
     const size = (info.multiplier >= 10 ? 52 : 42) * pulse;
-    ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = 0.55;
     ctx.drawImage(getGlow(info.color), bonus.x - size * 0.9, bonus.y - size * 0.9, size * 1.8, size * 1.8);
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = 1;
+  }
+
+  // Switch back to 'source-over' ONCE for rest of frame
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+
+  // Draw visible foods
+  for (let i = 0; i < visibleFoods.length; i++) {
+    const food = visibleFoods[i];
+    const phase = engine.ticks * 0.023 + food.phase;
+    const float = reducedMotion ? 0 : Math.sin(phase) * 0.9;
+    const radius = Math.max(food.radius, 11 / zoom);
+    const size = radius * 2.85;
+
+    if (food.isTreasure || food.value >= 3) {
+      ctx.save();
+      ctx.translate(food.x, food.y + float);
+      ctx.rotate(food.rotation + (reducedMotion ? 0 : Math.sin(phase * 0.6) * 0.045));
+      ctx.drawImage(getTreatSprite(food.kind, food.variant), -size / 2, -size / 2, size, size);
+      ctx.restore();
+
+      ctx.fillStyle = '#fff0be';
+      ctx.globalAlpha = reducedMotion ? 0.5 : 0.4 + Math.sin(phase) * 0.22;
+      sparkle(ctx, food.x + radius * 1.3, food.y - radius * 1.15, 2.4 / zoom);
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.drawImage(getTreatSprite(food.kind, food.variant), food.x - size / 2, food.y + float - size / 2, size, size);
+    }
+  }
+
+  // Draw bonus orbs
+  for (const bonus of engine.bonuses) {
+    if (!inView(bonus.x, bonus.y, bounds)) continue;
+    const info = BONUS_BY_KIND[bonus.kind];
+    const pulse = reducedMotion ? 1 : 1 + Math.sin(engine.ticks * 0.08 + bonus.phase) * 0.08;
+    const size = (info.multiplier >= 10 ? 52 : 42) * pulse;
     ctx.save();
     ctx.translate(bonus.x, bonus.y + (reducedMotion ? 0 : Math.sin(engine.ticks * 0.05 + bonus.phase) * 2));
     ctx.rotate(reducedMotion ? 0 : Math.sin(engine.ticks * 0.03 + bonus.phase) * 0.12);
@@ -341,9 +383,13 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
     ctx.restore();
   }
 
-  for (const worm of engine.bots) drawWorm(ctx, worm, engine, reducedMotion, bounds);
-  drawWorm(ctx, engine.player, engine, reducedMotion, bounds);
+  // Draw worms
+  for (const worm of engine.bots) drawWormBody(ctx, worm, engine, reducedMotion, bounds);
+  drawWormBody(ctx, engine.player, engine, reducedMotion, bounds);
+
+  // Draw effects
   drawEffects(ctx, engine, bounds, reducedMotion);
+
   ctx.restore();
   ctx.drawImage(getVignette(), 0, 0, width, height);
 }

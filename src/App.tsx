@@ -8,7 +8,7 @@ import type { ConnectionInfo } from './network/OnlineClient';
 import { validName, validRoom } from './network/protocol';
 import { clearSession, createPracticeSession, getSession, setOnlineSession } from './session';
 import type { GuestSession } from './session';
-import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Users, Bot, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut } from 'lucide-react';
+import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut, ChevronDown, ChevronUp, Bot } from 'lucide-react';
 
 const EMPTY_STATUS: PlayerStatus = {
   score: 0,
@@ -56,11 +56,12 @@ export default function App() {
     const value = new URLSearchParams(window.location.search).get('room');
     return validRoom(value) ? value : 'SWEET';
   });
-  const [endpoint, setEndpoint] = useState(() => (new URLSearchParams(window.location.search).get('arena') ?? '').slice(0, 240));
+  const [endpoint] = useState(() => (new URLSearchParams(window.location.search).get('arena') ?? '').slice(0, 240));
   const [guest, setGuest] = useState<GuestSession | null>(null);
   const [connection, setConnection] = useState<ConnectionInfo | null>(null);
   const [notice, setNotice] = useState('');
   const [copied, setCopied] = useState('');
+  const [collapsedLeaderboard, setCollapsedLeaderboard] = useState(false);
   const clientRef = useRef<OnlineClient | null>(null);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isOnline = guest?.mode === 'online';
@@ -207,6 +208,9 @@ export default function App() {
     };
   }, [gameState, startGame, togglePause]);
 
+  const topLeader = status.leaderboard[0];
+  const userRankEntry = status.leaderboard.find(e => e.isPlayer);
+
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-slate-900 font-sans text-white select-none">
       <GameCanvas
@@ -220,248 +224,334 @@ export default function App() {
         guest={guest}
       />
 
-      {/* UI Overlays */}
-      {(gameState === 'menu' || gameState === 'connecting') && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-slate-900/25 p-4">
-          <div className="absolute top-5 left-6 flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-slate-300">
-            <span className="h-1.5 w-1.5 rounded-full bg-teal-300 motion-safe:animate-pulse" />
-            LIVE DEMO
-          </div>
-          <div className="state-panel pointer-events-auto max-h-[calc(100dvh-4rem)] w-full max-w-md overflow-y-auto rounded-3xl border border-slate-600/60 bg-slate-800/90 p-6 text-center shadow-2xl backdrop-blur-sm sm:p-8">
-            <h1 className="text-5xl sm:text-6xl font-black mb-2 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent italic tracking-tighter">
-              WORMATE
-            </h1>
-            <p className="text-slate-400 mb-5 font-medium">Eat. Grow. Dominate.</p>
-            <fieldset disabled={gameState === 'connecting'} className="mb-5 text-left disabled:opacity-60">
-              <legend className="sr-only">Choose a game mode</legend>
-              <div className="mb-4 grid grid-cols-2 gap-1 rounded-xl bg-slate-950/55 p-1">
-                {(['online', 'practice'] as const).map(option => (
-                  <button key={option} type="button" aria-pressed={mode === option} onClick={() => { setMode(option); setNotice(''); }} className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold transition-colors ${mode === option ? 'bg-slate-600 text-white' : 'text-slate-400 hover:text-white'}`}>
-                    {option === 'online' ? <Globe size={15} /> : <Bot size={15} />}{option === 'online' ? 'Live Arena' : 'Practice'}
-                  </button>
-                ))}
-              </div>
-              <div className={`grid gap-3 ${mode === 'online' ? 'grid-cols-[1fr_100px]' : ''}`}>
-                <label className="text-[10px] font-bold tracking-wider text-slate-400">NICKNAME
-                  <input value={nickname} onChange={event => setNickname(event.target.value)} maxLength={16} autoComplete="off" spellCheck={false} className="mt-1.5 w-full rounded-lg border border-slate-600 bg-slate-950/45 px-3 py-2.5 text-sm font-medium tracking-normal text-white outline-none focus:border-cyan-400" />
+      {/* Main Menu */}
+      {gameState === 'menu' && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-slate-950/40 backdrop-blur-xs">
+          <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 p-8 rounded-3xl shadow-2xl flex flex-col items-center text-center">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-4xl">🍬</span>
+              <h1 className="text-4xl font-black bg-gradient-to-r from-pink-500 via-orange-400 to-yellow-400 bg-clip-text text-transparent">
+                WORMATE
+              </h1>
+              <span className="text-4xl">🍩</span>
+            </div>
+            <p className="text-slate-400 text-sm mb-6 font-medium">Sweet Arena &middot; Realtime Multiplayer</p>
+
+            <div className="w-full space-y-4 mb-6">
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 text-left">
+                  Nickname
                 </label>
-                {mode === 'online' && <label className="text-[10px] font-bold tracking-wider text-slate-400">ROOM CODE
-                  <input value={room} onChange={event => setRoom(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} maxLength={12} autoComplete="off" spellCheck={false} className="mt-1.5 w-full rounded-lg border border-slate-600 bg-slate-950/45 px-3 py-2.5 font-mono text-sm tracking-normal text-cyan-200 outline-none focus:border-cyan-400" />
-                </label>}
+                <input
+                  type="text"
+                  maxLength={16}
+                  value={nickname}
+                  onChange={e => setNickname(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-orange-500 transition-colors"
+                  placeholder="Enter name..."
+                />
               </div>
-              {mode === 'online' && <details className="mt-3 text-xs text-slate-400">
-                <summary className="cursor-pointer py-1">Server connection &amp; privacy</summary>
-                <label className="mt-2 block">Arena server (optional)
-                  <input value={endpoint} onChange={event => setEndpoint(event.target.value)} maxLength={240} placeholder="wss://game.example.com/arena" autoComplete="off" spellCheck={false} className="mt-1.5 w-full rounded-lg border border-slate-600 bg-slate-950/45 px-3 py-2.5 text-xs text-white outline-none focus:border-cyan-400" />
-                </label>
-                <p className="mt-2 leading-relaxed">Use the same server and room on both devices. Live play needs the included Node server; a static preview alone cannot host an arena.</p>
-                <p className="mt-2 leading-relaxed">Guest IDs stay in memory during the session. Leaving deletes the ID. A lost connection is removed by the server heartbeat within about 30 seconds.</p>
-              </details>}
-            </fieldset>
-            {notice && <p role="alert" className="mb-4 rounded-lg border border-amber-400/30 bg-amber-400/10 p-3 text-left text-xs leading-relaxed text-amber-100">{notice}</p>}
-            
-            <button 
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMode('online')}
+                  className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 border transition-all ${
+                    mode === 'online'
+                      ? 'bg-orange-500/20 border-orange-500 text-orange-400 shadow-lg shadow-orange-500/10'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Globe size={16} /> Live Arena
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode('practice')}
+                  className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 border transition-all ${
+                    mode === 'practice'
+                      ? 'bg-orange-500/20 border-orange-500 text-orange-400 shadow-lg shadow-orange-500/10'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Bot size={16} /> Practice
+                </button>
+              </div>
+
+              {mode === 'online' && (
+                <div className="space-y-3 pt-2">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 text-left">
+                      Room Code
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={12}
+                      value={room}
+                      onChange={e => setRoom(e.target.value.toUpperCase())}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-white font-mono font-bold uppercase tracking-wider focus:outline-none focus:border-orange-500 transition-colors"
+                      placeholder="SWEET"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {notice && (
+              <div role="alert" className="w-full mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-medium">
+                {notice}
+              </div>
+            )}
+
+            <button
               onClick={() => { void startGame(); }}
-              disabled={gameState === 'connecting'}
-              className="group relative w-full py-4 px-8 bg-orange-500 hover:bg-orange-400 disabled:opacity-70 disabled:cursor-wait text-white rounded-2xl font-bold text-lg transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 shadow-lg shadow-orange-500/30"
+              className="w-full py-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white rounded-2xl font-black text-xl tracking-wider uppercase shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3"
             >
-              {gameState === 'connecting' ? <LoaderCircle className="animate-spin" /> : <Play className="fill-current" />}
-              {gameState === 'connecting' ? 'CONNECTING...' : mode === 'online' ? 'JOIN LIVE ARENA' : 'PLAY WITH BOTS'}
+              <Play fill="currentColor" size={20} /> PLAY NOW
             </button>
-            {gameState === 'connecting' && <button onClick={returnToMenu} className="mt-2 px-4 py-2 text-xs text-slate-400 hover:text-white">Cancel connection</button>}
 
-            <p className="mt-4 text-xs leading-relaxed text-slate-300">
-              Grab SPEED, CHOMP, and glowing 2x-100x gems. Rarer multipliers last less.
-              <span className="desktop-controls mt-1 text-slate-400">Mouse or WASD to steer. Hold Space to boost.</span>
-              <span className="mobile-controls mt-1 text-slate-400">Drag to steer. Hold BOOST to go faster.</span>
-            </p>
-
-            <div className="mt-6 p-5 bg-slate-900/50 rounded-2xl border border-slate-700">
-              <div className="flex items-center justify-center gap-2 mb-4 text-slate-300 font-bold uppercase tracking-widest text-sm">
-                <Trophy className="w-4 h-4 text-yellow-400" />
-                Local High Scores
-              </div>
-              <div className="space-y-2">
-                {highScores.length > 0 ? (
-                  highScores.map((s, i) => (
-                    <div key={i} className="flex justify-between items-center py-1 px-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
-                      <span className="text-slate-500 font-mono">#{i + 1}</span>
+            {highScores.length > 0 && (
+              <div className="mt-6 w-full pt-6 border-t border-slate-800/80">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-400 mb-3">
+                  <span className="flex items-center gap-1.5"><Trophy size={14} className="text-yellow-400" /> High Scores</span>
+                  <span>Personal Best</span>
+                </div>
+                <div className="space-y-1.5">
+                  {highScores.map((s, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-xs py-1 px-2.5 rounded-lg bg-slate-950/60 border border-slate-800/40 font-mono">
+                      <span className="text-slate-500 font-bold">#{idx + 1}</span>
                       <span className="font-bold text-slate-200">{s.toLocaleString()}</span>
                     </div>
-                  ))
-                ) : (
-                  <div className="text-slate-500 italic text-sm py-2">No scores yet!</div>
-                )}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
 
-      {gameState === 'paused' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
-          <div role="dialog" aria-modal="true" aria-labelledby="paused-title" className="state-panel max-h-[calc(100dvh-2rem)] overflow-y-auto text-center p-8 bg-slate-800 rounded-3xl shadow-2xl border border-slate-700 max-w-xs w-full mx-4">
-            <h2 id="paused-title" className="text-4xl font-black mb-4 text-white">{isOnline ? 'LIVE ARENA' : 'PAUSED'}</h2>
-            {isOnline && <p className="mb-5 text-sm leading-relaxed text-amber-200">The arena keeps running. Your worm can still collide while this menu is open.</p>}
-            <button 
-              onClick={togglePause}
-              className="w-full py-4 px-8 bg-orange-500 hover:bg-orange-400 text-white rounded-2xl font-bold text-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 mb-4 shadow-lg shadow-orange-500/30"
-            >
-              <Play className="fill-current" />
-              RESUME
-            </button>
-            <button 
+      {/* Connecting Overlay */}
+      {gameState === 'connecting' && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm z-50">
+          <div className="flex flex-col items-center gap-4 bg-slate-900/90 border border-slate-800 p-8 rounded-3xl shadow-2xl">
+            <LoaderCircle size={40} className="animate-spin text-orange-500" />
+            <div className="text-lg font-bold text-white">Connecting to arena...</div>
+            <p className="text-xs text-slate-400">Joining room {room}</p>
+            <button
               onClick={returnToMenu}
-              className="w-full py-4 px-8 bg-slate-700 hover:bg-slate-600 text-white rounded-2xl font-bold text-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 shadow-lg"
+              className="mt-2 text-xs font-bold text-slate-400 hover:text-white px-4 py-2 rounded-lg border border-slate-800 hover:bg-slate-800 transition-colors"
             >
-              QUIT TO MENU
+              Cancel
             </button>
-            <p className="mt-4 text-xs text-slate-400">{isOnline ? 'Esc to return. Your session ID stays the same.' : 'Esc to resume. R to restart.'}</p>
           </div>
         </div>
       )}
 
+      {/* Game Over Modal */}
       {gameState === 'gameover' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-red-950/35 backdrop-blur-[2px]">
-          <div role="dialog" aria-modal="true" aria-labelledby="gameover-title" className="state-panel max-h-[calc(100dvh-2rem)] overflow-y-auto text-center p-8 bg-slate-800 rounded-3xl shadow-2xl border border-slate-700 max-w-sm w-full mx-4">
-            <h2 id="gameover-title" className="text-5xl font-black mb-2 text-white italic tracking-tighter">GAME OVER</h2>
-            <div className="text-slate-400 mb-8 text-sm font-medium">{deathReason}</div>
-            
-            <div className="mb-8 p-6 bg-slate-900/50 rounded-2xl border border-slate-700">
-              <div className="text-slate-500 uppercase tracking-widest text-xs font-bold mb-1">Final Score</div>
-              <div className="text-5xl font-black text-orange-500">{score.toLocaleString()}</div>
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs z-50">
+          <div className="w-full max-w-sm bg-slate-900/95 border border-slate-800 p-8 rounded-3xl shadow-2xl flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4 text-3xl">
+              💀
+            </div>
+            <h2 className="text-2xl font-black text-white mb-1">GAME OVER</h2>
+            <p className="text-xs text-slate-400 mb-6 font-medium">{deathReason || 'Better luck next time!'}</p>
+
+            <div className="w-full mb-6 p-4 bg-slate-950/80 rounded-2xl border border-slate-800">
+              <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-1">Final Score</div>
+              <div className="text-3xl font-black text-orange-400">{score.toLocaleString()}</div>
             </div>
 
             <button 
               onClick={() => { void startGame(); }}
               disabled={Boolean(isOnline && clientRef.current?.awaitingRespawn)}
-              className="group relative w-full py-4 px-8 bg-orange-500 hover:bg-orange-400 disabled:opacity-60 text-white rounded-2xl font-bold text-xl transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 shadow-lg shadow-orange-500/30"
+              className="w-full py-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 disabled:opacity-50 text-white rounded-2xl font-black text-lg tracking-wider transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25"
             >
-              <RotateCcw />
-              TRY AGAIN
+              <RotateCcw size={18} /> PLAY AGAIN
             </button>
             {notice && <p role="status" className="mt-3 text-xs text-amber-200">{notice}</p>}
-            <button onClick={returnToMenu} className="mt-5 rounded-lg px-4 py-2 text-xs font-bold tracking-wider text-slate-300 transition-colors hover:text-white">
+            <button onClick={returnToMenu} className="mt-4 text-xs font-bold tracking-wider text-slate-400 hover:text-white transition-colors py-1">
               BACK TO MENU
             </button>
           </div>
         </div>
       )}
 
-      {/* HUD */}
+      {/* Modern In-Game HUD */}
       {(gameState === 'playing' || gameState === 'paused') && (
         <>
-          <div className="absolute top-4 left-3 flex max-w-[calc(100%_-_13rem)] flex-col items-start gap-2 pointer-events-none sm:top-6 sm:left-6 sm:max-w-[50%]">
-            <div className="px-3 py-2 bg-slate-800/80 backdrop-blur-md rounded-full border border-slate-700 flex items-center gap-2 shadow-xl">
-              <div className="h-2 w-2 shrink-0 rounded-full bg-cyan-400 animate-pulse" />
-              <span key={score} className="score-pop font-black text-lg tabular-nums sm:text-xl" title={score.toLocaleString()} aria-label={`Score: ${score}`}>
-                <span className="sm:hidden">{compactScore.format(score)}</span><span className="hidden sm:inline">{score.toLocaleString()}</span>
+          {/* Top Left: Score & Active Buffs (Clean Glass Badge) */}
+          <div className="pointer-events-none absolute top-3 left-3 flex max-w-[calc(100%-11rem)] flex-col items-start gap-1.5 sm:top-5 sm:left-5 sm:max-w-[45%]">
+            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/45 px-3 py-1.5 shadow-lg backdrop-blur-md">
+              <div className="h-2 w-2 shrink-0 rounded-full bg-cyan-400 animate-pulse ring-2 ring-cyan-400/20" />
+              <span key={score} className="score-pop font-mono text-base font-black tabular-nums text-white sm:text-lg" title={score.toLocaleString()} aria-label={`Score: ${score}`}>
+                <span className="sm:hidden">{compactScore.format(score)}</span>
+                <span className="hidden sm:inline">{score.toLocaleString()}</span>
               </span>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {status.speedSeconds > 0 && (
-                <div className="flex items-center gap-1 rounded-full border border-sky-400/40 bg-sky-500/80 px-3 py-1 text-[11px] font-black tracking-wide">
-                  <Zap size={12} fill="currentColor" /> SPEED {status.speedSeconds}s
+                <div className="flex items-center gap-1 rounded-full border border-sky-400/30 bg-sky-500/65 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-white backdrop-blur-xs">
+                  <Zap size={10} fill="currentColor" /> {status.speedSeconds}s
                 </div>
               )}
               {status.chompSeconds > 0 && (
-                <div className="flex items-center gap-1 rounded-full border border-orange-300/40 bg-orange-500/80 px-3 py-1 text-[11px] font-black tracking-wide">
-                  <Magnet size={12} /> CHOMP {status.chompSeconds}s
+                <div className="flex items-center gap-1 rounded-full border border-orange-300/30 bg-orange-500/65 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-white backdrop-blur-xs">
+                  <Magnet size={10} /> {status.chompSeconds}s
                 </div>
               )}
               {status.multiplier > 1 && (
-                <div className="rounded-full border border-yellow-300/40 bg-yellow-400 px-3 py-1 text-[11px] font-black tracking-wide text-slate-900">
+                <div className="rounded-full border border-yellow-300/40 bg-yellow-400/90 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-slate-950 backdrop-blur-xs">
                   {status.multiplier}x {status.multiplierSeconds}s
                 </div>
               )}
               {status.combo > 2 && (
-                <div className="rounded-full border border-pink-300/40 bg-pink-500/80 px-3 py-1 text-[11px] font-black tracking-wide">
+                <div className="rounded-full border border-pink-300/30 bg-pink-500/70 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-white backdrop-blur-xs">
                   COMBO {status.combo}
                 </div>
               )}
             </div>
           </div>
 
-          {guest && <div className="pointer-events-auto absolute bottom-24 left-3 max-w-[calc(100%-7rem)] sm:bottom-14 sm:left-6">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-wide text-cyan-200">
-              <ShieldCheck size={13} />{isOnline ? `LIVE / ${guest.room}` : 'PRACTICE / LOCAL'}
-              {isOnline && <span className="text-slate-400">{connection?.latency ?? 0} ms</span>}
+          {/* Bottom Left: Session & Ping Badge */}
+          {guest && (
+            <div className="pointer-events-auto absolute bottom-20 left-3 max-w-[calc(100%-6.5rem)] sm:bottom-6 sm:left-5">
+              <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-slate-950/35 px-2.5 py-1 text-[9px] font-bold text-cyan-200 backdrop-blur-xs">
+                <ShieldCheck size={11} className="text-cyan-400" />
+                <span>{isOnline ? guest.room : 'PRACTICE'}</span>
+                {isOnline && <span className="text-slate-400 font-mono font-normal">({connection?.latency ?? 0}ms)</span>}
+                <button onClick={() => { void copy(guest.id, 'id'); }} className="ml-1 p-0.5 hover:text-white" aria-label="Copy temporary session ID">{copied === 'id' ? <Check size={11} /> : <Copy size={11} />}</button>
+                {isOnline && <button onClick={shareRoom} className="hover:text-white underline">{copied === 'room' ? 'Copied' : 'Invite'}</button>}
+              </div>
             </div>
-            <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400">
-              <span className="select-text font-mono" title={guest.id}>ID {guest.id.slice(0, 8)}</span>
-              <button onClick={() => { void copy(guest.id, 'id'); }} className="p-2 hover:text-white" aria-label="Copy temporary session ID">{copied === 'id' ? <Check size={13} /> : <Copy size={13} />}</button>
-              {isOnline && <button onClick={shareRoom} className="py-2 hover:text-white">{copied === 'room' ? 'Copied' : 'Invite a friend'}</button>}
-            </div>
-            {notice && <p role="status" className="max-w-64 select-text break-all text-[10px] leading-relaxed text-amber-200">{notice}</p>}
-          </div>}
+          )}
 
-          <div className="absolute top-4 right-3 flex w-44 flex-col items-end gap-2 sm:top-6 sm:right-6 sm:w-56">
-            <div className="flex gap-2">
-              {isOnline && <button onClick={returnToMenu} aria-label="Leave arena and delete session" title="Leave and delete session" className="rounded-full border border-slate-600/70 bg-slate-800/85 p-2.5 text-slate-300 hover:text-white"><LogOut size={20} /></button>}
+          {/* Top Right: Modern Glass Controls & Leaderboard */}
+          <div className="absolute top-3 right-3 flex w-36 flex-col items-end gap-1.5 sm:top-5 sm:right-5 sm:w-52">
+            {/* Quick Action Toolbar (Translucent Glass Pills) */}
+            <div className="flex items-center gap-1.5 pointer-events-auto">
+              {isOnline && (
+                <button
+                  onClick={returnToMenu}
+                  aria-label="Leave arena"
+                  title="Leave arena"
+                  className="rounded-full border border-white/10 bg-slate-950/40 p-1.5 text-slate-300 shadow-md backdrop-blur-md transition-all hover:bg-red-500/20 hover:text-red-300 active:scale-95 sm:p-2"
+                >
+                  <LogOut size={14} className="sm:size-4" />
+                </button>
+              )}
               <button 
                 onClick={togglePause}
-                aria-label={gameState === 'paused' ? 'Resume game' : 'Pause game'}
-                title="Pause / resume (Esc)"
-                className="p-2.5 bg-slate-800/85 backdrop-blur-md text-white rounded-full border border-slate-600/70 hover:bg-slate-700 transition-colors shadow-xl"
+                aria-label={gameState === 'paused' ? 'Resume' : 'Pause'}
+                title="Pause (Esc)"
+                className="rounded-full border border-white/10 bg-slate-950/40 p-1.5 text-white shadow-md backdrop-blur-md transition-all hover:bg-slate-800/60 active:scale-95 sm:p-2"
               >
-                {gameState === 'paused' ? <Play size={20} /> : <Pause size={20} />}
+                {gameState === 'paused' ? <Play size={14} className="sm:size-4" /> : <Pause size={14} className="sm:size-4" />}
               </button>
               <button 
                 onClick={event => { setMuted(!muted); gameAudio.unlock(); event.currentTarget.blur(); }}
-                aria-label={muted ? 'Enable sound' : 'Mute sound'}
-                title={muted ? 'Enable sound' : 'Mute sound'}
-                className="p-2.5 bg-slate-800/85 backdrop-blur-md text-white rounded-full border border-slate-600/70 hover:bg-slate-700 transition-colors shadow-xl"
+                aria-label={muted ? 'Unmute' : 'Mute'}
+                title={muted ? 'Unmute' : 'Mute'}
+                className="rounded-full border border-white/10 bg-slate-950/40 p-1.5 text-white shadow-md backdrop-blur-md transition-all hover:bg-slate-800/60 active:scale-95 sm:p-2"
               >
-                {muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                {muted ? <VolumeX size={14} className="sm:size-4" /> : <Volume2 size={14} className="sm:size-4" />}
+              </button>
+              {/* Collapse/Expand Toggle Button */}
+              <button
+                onClick={() => setCollapsedLeaderboard(!collapsedLeaderboard)}
+                aria-label={collapsedLeaderboard ? 'Expand leaderboard' : 'Minimize leaderboard'}
+                title={collapsedLeaderboard ? 'Expand leaderboard' : 'Minimize leaderboard'}
+                className="rounded-full border border-white/10 bg-slate-950/40 p-1.5 text-slate-300 shadow-md backdrop-blur-md transition-all hover:bg-slate-800/60 active:scale-95 sm:p-2"
+              >
+                {collapsedLeaderboard ? <ChevronDown size={14} className="sm:size-4" /> : <ChevronUp size={14} className="sm:size-4" />}
               </button>
             </div>
 
-            <section aria-label="Live arena leaderboard" className="pointer-events-none w-full overflow-hidden rounded-2xl border border-slate-600/60 bg-slate-900/78 shadow-xl backdrop-blur-md">
-              <header className="flex items-center justify-between border-b border-slate-600/50 px-3 py-2.5">
-                <div className="flex items-center gap-2">
-                  <Users size={14} className="text-cyan-300" />
-                  <div className="leading-none">
-                    <div className="text-[9px] font-extrabold tracking-[0.16em] text-slate-400">{isOnline ? guest?.room : 'PRACTICE'}</div>
-                    <div className="mt-1 text-xs font-black text-white">{isOnline ? `${status.connectedCount} CONNECTED` : `${status.activeCount} ACTIVE`}</div>
+            {/* Leaderboard Card: Glassmorphic, Translucent & Compact */}
+            {collapsedLeaderboard ? (
+              // Collapsed Mini-Badge on Mobile
+              <div
+                onClick={() => setCollapsedLeaderboard(false)}
+                className="pointer-events-auto flex w-full cursor-pointer items-center justify-between rounded-xl border border-white/10 bg-slate-950/35 px-2 py-1.5 text-[9px] shadow-lg backdrop-blur-md transition-all hover:bg-slate-950/50"
+              >
+                <div className="flex items-center gap-1 font-bold text-amber-300">
+                  <Crown size={11} fill="currentColor" />
+                  <span className="truncate max-w-[4rem]">{topLeader?.name ?? 'Leader'}</span>
+                </div>
+                {userRankEntry && (
+                  <div className="font-mono font-black text-cyan-300">
+                    #{userRankEntry.rank}
                   </div>
-                </div>
-                <div className="text-right text-[9px] font-bold leading-4 text-slate-400">
-                  <div>{status.humanCount} PLAYER</div>
-                  <div>{status.botCount} BOTS</div>
-                </div>
-              </header>
-
-              <div className="px-2 py-2">
-                <div className="mb-1 flex items-center justify-between px-2 text-[9px] font-bold tracking-widest text-slate-500">
-                  <span>PLAYERS</span>
-                  <span>SCORE</span>
-                </div>
-                <ol className="space-y-0.5">
-                  {status.leaderboard.map((entry, index) => {
-                    const separatedPlayer = entry.isPlayer && index >= 5;
-                    return (
-                      <li
-                        key={entry.id}
-                        className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] ${entry.isPlayer ? 'bg-cyan-400/15 text-cyan-50' : 'text-slate-300'} ${separatedPlayer ? 'mt-2 border-t border-dashed border-slate-600 pt-2' : ''}`}
-                      >
-                        <span className={`w-4 text-center font-black ${entry.rank === 1 ? 'text-yellow-300' : 'text-slate-500'}`}>
-                          {entry.rank === 1 ? <Crown size={13} fill="currentColor" /> : entry.rank}
-                        </span>
-                        <span className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-white/30" style={{ backgroundColor: entry.color }} />
-                        <span className="min-w-0 flex-1 truncate font-bold">{entry.name}</span>
-                        {entry.isBot ? <Bot size={10} className="shrink-0 text-slate-500" /> : !entry.isPlayer && <Users size={10} className="shrink-0 text-cyan-300" />}
-                        <span className="font-mono font-black tabular-nums text-white">{entry.score.toLocaleString()}</span>
-                      </li>
-                    );
-                  })}
-                </ol>
+                )}
               </div>
-            </section>
+            ) : (
+              // Full Modern Sleek Leaderboard
+              <section aria-label="Live arena leaderboard" className="pointer-events-none w-full overflow-hidden rounded-xl border border-white/10 bg-slate-950/35 shadow-xl backdrop-blur-md transition-all">
+                {/* Header info */}
+                <header className="flex items-center justify-between border-b border-white/10 px-2 py-1.5 sm:px-3 sm:py-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[9px] font-black tracking-wider text-slate-300 uppercase sm:text-[10px]">
+                      {isOnline ? guest?.room : 'SOLO'}
+                    </span>
+                  </div>
+                  <div className="text-[8px] font-bold text-slate-400 sm:text-[9px]">
+                    {isOnline ? `${status.connectedCount} LIVE` : `${status.activeCount} BOTS`}
+                  </div>
+                </header>
+
+                {/* Player List */}
+                <div className="p-1 sm:p-1.5">
+                  <ol className="space-y-0.5">
+                    {status.leaderboard.map((entry, index) => {
+                      const separatedPlayer = entry.isPlayer && index >= 5;
+                      const isFirst = entry.rank === 1;
+                      const isSecond = entry.rank === 2;
+                      const isThird = entry.rank === 3;
+
+                      return (
+                        <li
+                          key={entry.id}
+                          className={`flex items-center gap-1.5 rounded-lg px-1.5 py-0.5 text-[9px] transition-colors sm:px-2 sm:py-1 sm:text-[10px] ${
+                            entry.isPlayer 
+                              ? 'bg-cyan-500/20 text-cyan-200 ring-1 ring-cyan-400/40 font-bold' 
+                              : 'text-slate-300'
+                          } ${separatedPlayer ? 'mt-1 border-t border-dashed border-white/10 pt-1' : ''}`}
+                        >
+                          {/* Rank Icon / Number */}
+                          <span className={`w-3.5 text-center font-black shrink-0 ${
+                            isFirst ? 'text-amber-400' : isSecond ? 'text-slate-300' : isThird ? 'text-amber-600' : 'text-slate-500'
+                          }`}>
+                            {isFirst ? <Crown size={10} fill="currentColor" className="inline sm:size-3" /> : entry.rank}
+                          </span>
+
+                          {/* Color Dot Avatar */}
+                          <span 
+                            className="h-2 w-2 shrink-0 rounded-full ring-1 ring-white/40 shadow-xs sm:h-2.5 sm:w-2.5" 
+                            style={{ backgroundColor: entry.color }} 
+                          />
+
+                          {/* Name */}
+                          <span className="min-w-0 flex-1 truncate font-semibold">
+                            {entry.name}
+                          </span>
+
+                          {/* Score (Compact on mobile, localized on desktop) */}
+                          <span className="font-mono font-black tabular-nums text-white/90 shrink-0">
+                            <span className="sm:hidden">{compactScore.format(entry.score)}</span>
+                            <span className="hidden sm:inline">{entry.score.toLocaleString()}</span>
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
+              </section>
+            )}
           </div>
+
           {gameState === 'playing' && (
-            <div className="pointer-events-none absolute bottom-6 left-6 text-xs leading-6 text-slate-400">
-              <span className="desktop-controls">Mouse / WASD to steer &middot; Space to boost &middot; Esc for {isOnline ? 'menu' : 'pause'}</span>
-              <span className="mobile-controls">Drag anywhere<br />to steer your worm.</span>
+            <div className="pointer-events-none absolute bottom-5 left-5 text-[10px] text-slate-500">
+              <span className="desktop-controls">WASD / Mouse to steer &middot; Space to boost</span>
             </div>
           )}
         </>
