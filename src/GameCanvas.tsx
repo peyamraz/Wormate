@@ -30,6 +30,7 @@ interface Controls {
 }
 
 const STEP = 1000 / 60;
+const MAX_CATCHUP = STEP * 3;
 const CONTROL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'ShiftLeft', 'ShiftRight']);
 
 function clearControls(input: Controls) {
@@ -52,7 +53,7 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d', { alpha: false });
+    const ctx = canvas?.getContext('2d', { alpha: false, desynchronized: true });
     if (!canvas || !ctx) return;
     prepareGameArt(ctx);
     const input = inputRef.current;
@@ -66,6 +67,8 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
     let accumulator = 0;
     let sentGameOver = false;
     let lastScore = 0;
+    let lastReportedScore = 0;
+    let lastScoreUpdateTime = 0;
     let lastStatusKey = '';
     let lastPublished = 0;
     let previousRun = online?.run ?? 0;
@@ -159,7 +162,7 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
         if (current.state === 'paused') engine.shake = 0;
         previousState = current.state;
       }
-      const elapsed = lastTime ? Math.min(time - lastTime, STEP * 5) : STEP;
+      const elapsed = lastTime ? Math.min(time - lastTime, MAX_CATCHUP) : STEP;
       lastTime = time;
       if (!document.hidden) {
         const horizontal = Number(input.keys.has('ArrowRight') || input.keys.has('KeyD')) - Number(input.keys.has('ArrowLeft') || input.keys.has('KeyA'));
@@ -171,6 +174,7 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
             previousRun = online.run;
             sentGameOver = false;
             lastScore = 0;
+            lastReportedScore = 0;
             lastStatusKey = '';
             clearControls(input);
             input.angle = engine.player.angle;
@@ -179,7 +183,6 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
           online.stepView(elapsed);
         }
         accumulator += elapsed;
-        // Fixed 60 Hz simulation prevents high-refresh screens from speeding up play.
         while (accumulator >= STEP) {
           accumulator -= STEP;
           if (online) {
@@ -199,20 +202,32 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
           if (engine.player.score !== lastScore) {
             const increased = engine.player.score > lastScore;
             lastScore = engine.player.score;
-            current.onScoreUpdate(lastScore);
             if (!current.muted && increased) gameAudio.eat(lastScore);
+            if (time - lastScoreUpdateTime > 50) {
+              lastScoreUpdateTime = time;
+              lastReportedScore = lastScore;
+              current.onScoreUpdate(lastScore);
+            }
           }
           if (time - lastPublished > 100) {
             lastPublished = time;
             const status = online ? online.status : engine.getStatus();
             if (status) {
-              const statusKey = JSON.stringify(status);
-              if (statusKey !== lastStatusKey) { lastStatusKey = statusKey; current.onStatusUpdate(status); }
+              const statusKey = `${status.score}:${status.multiplier}:${status.multiplierSeconds}:${status.speedSeconds}:${status.chompSeconds}:${status.combo}:${status.activeCount}:${status.humanCount}:${status.botCount}:${status.connectedCount}:${status.leaderboard[0]?.score ?? 0}`;
+              if (statusKey !== lastStatusKey) {
+                lastStatusKey = statusKey;
+                current.onStatusUpdate(status);
+                if (lastReportedScore !== lastScore) {
+                  lastReportedScore = lastScore;
+                  current.onScoreUpdate(lastScore);
+                }
+              }
             }
           }
           if (engine.player.isDead && !sentGameOver && !online?.awaitingRespawn) {
             sentGameOver = true;
             clearControls(input);
+            current.onScoreUpdate(engine.player.score);
             if (!current.muted) gameAudio.gameOver();
             current.onGameOver(engine.player.score, engine.deathReason);
           }
@@ -256,7 +271,7 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
 
   return (
     <>
-      <canvas ref={canvasRef} className="fixed inset-0 block h-full w-full touch-none bg-slate-900" aria-label="Wormate arena. Steer with the mouse, arrow keys, WASD, or drag on touch. Hold Space to boost." />
+      <canvas ref={canvasRef} className="fixed inset-0 block h-full w-full touch-none bg-slate-900 will-change-transform" aria-label="Wormate arena. Steer with the mouse, arrow keys, WASD, or drag on touch. Hold Space to boost." />
       {state === 'playing' && (
         <button
           className="touch-boost fixed bottom-7 right-6 z-10 flex h-20 w-20 touch-none flex-col items-center justify-center gap-1 rounded-full border border-orange-300/40 bg-orange-500/85 text-white shadow-lg active:scale-95 active:bg-orange-400"

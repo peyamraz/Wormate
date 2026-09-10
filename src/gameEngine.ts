@@ -83,6 +83,11 @@ export interface LeaderboardEntry {
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const distanceSquared = (a: Point, b: Point) => (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
 
+export const GRID_CELL_SIZE = 160;
+export const GRID_COLS = 20;
+export const GRID_ROWS = 20;
+export const TOTAL_GRID_CELLS = GRID_COLS * GRID_ROWS;
+
 export function getCameraZoom(length: number, viewport: Viewport) {
   const screenScale = clamp(Math.min(viewport.width, viewport.height) / 650, 0.72, 1);
   const growth = Math.max(1, length / CONFIG.WORM_START_LENGTH);
@@ -128,6 +133,7 @@ export class Worm {
     this.facePhase = Math.floor(Math.random() * 280);
     this.radius = CONFIG.WORM_START_RADIUS * Math.min(2.1, Math.max(1, length / CONFIG.WORM_START_LENGTH) ** 0.34);
     this.spawnProtection = id === 'player' ? CONFIG.SPAWN_PROTECTION_TICKS : 90;
+    this.decisionTicks = Math.floor(Math.random() * 10);
     this.segments = Array.from({ length }, (_, i) => ({
       x: x - Math.cos(angle) * i * CONFIG.WORM_SEGMENT_SPACING,
       y: y - Math.sin(angle) * i * CONFIG.WORM_SEGMENT_SPACING,
@@ -262,6 +268,7 @@ export class GameEngine {
   worldEvents: WorldEvent[] = [];
   bots: Worm[] = [];
   foods: Food[] = [];
+  foodGrid: Food[][] = Array.from({ length: TOTAL_GRID_CELLS }, () => []);
   particles: Particle[] = [];
   floatingScores: FloatingScore[] = [];
   snackBites: SnackBite[] = [];
@@ -319,6 +326,17 @@ export class GameEngine {
     this.addBonus(x + 160, y + 110, 'x2');
     this.addBonus(x - 240, y - 80, 'x5');
     while (this.bonuses.length < 8) this.spawnBonus();
+    this.rebuildFoodGrid();
+  }
+
+  rebuildFoodGrid() {
+    for (let i = 0; i < TOTAL_GRID_CELLS; i++) this.foodGrid[i].length = 0;
+    for (let i = 0; i < this.foods.length; i++) {
+      const food = this.foods[i];
+      const cx = clamp(Math.floor(food.x / GRID_CELL_SIZE), 0, GRID_COLS - 1);
+      const cy = clamp(Math.floor(food.y / GRID_CELL_SIZE), 0, GRID_ROWS - 1);
+      this.foodGrid[cy * GRID_COLS + cx].push(food);
+    }
   }
 
   allWorms() { return [...(this.onlineArena ? this.humans.values() : [this.player]), ...this.bots]; }
@@ -345,6 +363,7 @@ export class GameEngine {
     worm.spawnProtection = CONFIG.SPAWN_PROTECTION_TICKS;
     this.humans.set(id, worm);
     for (let i = 1; i <= 12; i++) this.addFood(point.x + i * 25, point.y + Math.sin(i * 0.5) * 10);
+    this.rebuildFoodGrid();
     return worm;
   }
 
@@ -388,7 +407,6 @@ export class GameEngine {
       y = head.y + dy;
       angle = Math.atan2(dy, dx) + Math.PI / 2;
     } else {
-      // Prefer nearby offscreen opponents so the arena does not become empty.
       let foundSafePosition = false;
       for (let attempt = 0; attempt < 40; attempt++) {
         if (attempt < 28) {
@@ -410,7 +428,6 @@ export class GameEngine {
         }
       }
       if (!foundSafePosition) {
-        // A bounded fallback also stays safe when an unusually wide display sees the whole map.
         x = head.x < CONFIG.CANVAS_WIDTH / 2 ? CONFIG.CANVAS_WIDTH - 300 : 300;
         y = head.y < CONFIG.CANVAS_HEIGHT / 2 ? CONFIG.CANVAS_HEIGHT - 300 : 300;
       }
@@ -428,10 +445,12 @@ export class GameEngine {
     if (this.foods.length >= CONFIG.MAX_FOOD_COUNT) return;
     const treat = TREATS[Math.floor(Math.random() * TREATS.length)];
     const variant = Math.floor(Math.random() * CONFIG.FOOD_COLORS.length);
-    this.foods.push({
+    const fx = clamp(x, 30, CONFIG.CANVAS_WIDTH - 30);
+    const fy = clamp(y, 30, CONFIG.CANVAS_HEIGHT - 30);
+    const food: Food = {
       id: this.nextFoodId++,
-      x: clamp(x, 30, CONFIG.CANVAS_WIDTH - 30),
-      y: clamp(y, 30, CONFIG.CANVAS_HEIGHT - 30),
+      x: fx,
+      y: fy,
       kind: treat.kind,
       variant,
       color: treat.kind === 'cookie' ? '#f0b56f' : CONFIG.FOOD_COLORS[variant],
@@ -441,7 +460,11 @@ export class GameEngine {
       rotation: (Math.random() - 0.5) * 0.6,
       isTreasure,
       bornAt: this.ticks,
-    });
+    };
+    this.foods.push(food);
+    const cx = clamp(Math.floor(fx / GRID_CELL_SIZE), 0, GRID_COLS - 1);
+    const cy = clamp(Math.floor(fy / GRID_CELL_SIZE), 0, GRID_ROWS - 1);
+    this.foodGrid[cy * GRID_COLS + cx].push(food);
   }
 
   spawnFood(nearPlayer = true) {
@@ -521,23 +544,38 @@ export class GameEngine {
     if (worm.chompTicks <= 0) return;
     const head = worm.segments[0];
     const range = 170;
-    for (const food of this.foods) {
-      const dx = head.x - food.x;
-      const dy = head.y - food.y;
-      const distance = Math.hypot(dx, dy);
-      if (distance < 4 || distance > range) continue;
-      const pull = 6.2 * (1 - distance / range);
-      food.x += dx / distance * pull;
-      food.y += dy / distance * pull;
+    const rangeSq = range * range;
+    const minCx = clamp(Math.floor((head.x - range) / GRID_CELL_SIZE), 0, GRID_COLS - 1);
+    const maxCx = clamp(Math.floor((head.x + range) / GRID_CELL_SIZE), 0, GRID_COLS - 1);
+    const minCy = clamp(Math.floor((head.y - range) / GRID_CELL_SIZE), 0, GRID_ROWS - 1);
+    const maxCy = clamp(Math.floor((head.y + range) / GRID_CELL_SIZE), 0, GRID_ROWS - 1);
+
+    for (let cy = minCy; cy <= maxCy; cy++) {
+      for (let cx = minCx; cx <= maxCx; cx++) {
+        const cell = this.foodGrid[cy * GRID_COLS + cx];
+        for (let i = 0; i < cell.length; i++) {
+          const food = cell[i];
+          const dx = head.x - food.x;
+          const dy = head.y - food.y;
+          const distSq = dx * dx + dy * dy;
+          if (distSq < 16 || distSq > rangeSq) continue;
+          const distance = Math.sqrt(distSq);
+          const pull = 6.2 * (1 - distance / range);
+          food.x += (dx / distance) * pull;
+          food.y += (dy / distance) * pull;
+        }
+      }
     }
+
     for (const bonus of this.bonuses) {
       const dx = head.x - bonus.x;
       const dy = head.y - bonus.y;
-      const distance = Math.hypot(dx, dy);
-      if (distance < 4 || distance > range * 0.8) continue;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < 16 || distSq > (range * 0.8) ** 2) continue;
+      const distance = Math.sqrt(distSq);
       const pull = 3.4 * (1 - distance / (range * 0.8));
-      bonus.x += dx / distance * pull;
-      bonus.y += dy / distance * pull;
+      bonus.x += (dx / distance) * pull;
+      bonus.y += (dy / distance) * pull;
     }
   }
 
@@ -569,7 +607,7 @@ export class GameEngine {
 
   private steerBot(bot: Worm) {
     if (--bot.decisionTicks > 0) return;
-    bot.decisionTicks = 10 + Math.floor(Math.random() * 10);
+    bot.decisionTicks = 12 + Math.floor(Math.random() * 8);
     const head = bot.segments[0];
     const margin = 160;
 
@@ -588,6 +626,10 @@ export class GameEngine {
     for (const other of worms) {
       if (other === bot || other.isDead) continue;
       const clearance = (bot.radius + other.radius + 26) ** 2;
+      const otherHead = other.segments[0];
+      const maxReach = other.segments.length * CONFIG.WORM_SEGMENT_SPACING + 70;
+      if (distanceSquared(lookAhead, otherHead) > maxReach * maxReach) continue;
+
       for (let i = 0; i < other.segments.length; i += 4) {
         const segment = other.segments[i];
         if (distanceSquared(lookAhead, segment) < clearance) {
@@ -597,15 +639,33 @@ export class GameEngine {
       }
     }
 
+    const botCx = clamp(Math.floor(head.x / GRID_CELL_SIZE), 0, GRID_COLS - 1);
+    const botCy = clamp(Math.floor(head.y / GRID_CELL_SIZE), 0, GRID_ROWS - 1);
     let nearest: Food | undefined;
     let best = 340 ** 2;
-    for (const food of this.foods) {
-      const distance = distanceSquared(head, food);
-      if (distance < best) {
-        best = distance;
-        nearest = food;
+
+    for (let ring = 0; ring <= 2; ring++) {
+      const minCx = Math.max(0, botCx - ring);
+      const maxCx = Math.min(GRID_COLS - 1, botCx + ring);
+      const minCy = Math.max(0, botCy - ring);
+      const maxCy = Math.min(GRID_ROWS - 1, botCy + ring);
+      for (let cy = minCy; cy <= maxCy; cy++) {
+        for (let cx = minCx; cx <= maxCx; cx++) {
+          if (ring > 0 && cx > minCx && cx < maxCx && cy > minCy && cy < maxCy) continue;
+          const cell = this.foodGrid[cy * GRID_COLS + cx];
+          for (let i = 0; i < cell.length; i++) {
+            const food = cell[i];
+            const dist = distanceSquared(head, food);
+            if (dist < best) {
+              best = dist;
+              nearest = food;
+            }
+          }
+        }
       }
+      if (nearest) break;
     }
+
     bot.targetAngle = nearest
       ? Math.atan2(nearest.y - head.y, nearest.x - head.x)
       : bot.targetAngle + (Math.random() - 0.5) * 0.8;
@@ -641,6 +701,12 @@ export class GameEngine {
       return;
     }
     if (!this.onlineArena && this.player.isDead) return;
+
+    // Fast check: if foods array changed from outside (e.g. in test setup), rebuild grid
+    let totalInGrid = 0;
+    for (let i = 0; i < TOTAL_GRID_CELLS; i++) totalInGrid += this.foodGrid[i].length;
+    if (totalInGrid !== this.foods.length) this.rebuildFoodGrid();
+
     const worms = this.allWorms();
     for (const worm of worms) {
       if (worm.isDead) continue;
@@ -663,44 +729,66 @@ export class GameEngine {
     // Rotate food priority; resolve all collisions before marking any victim dead.
     const offset = this.ticks % Math.max(1, worms.length);
     const victims = new Set<Worm>();
+    const eatenFoodIds = new Set<number>();
+
     for (let n = 0; n < worms.length; n++) {
       const worm = worms[(n + offset) % worms.length];
       if (worm.isDead) continue;
       const head = worm.segments[0];
-      for (let i = this.foods.length - 1; i >= 0; i--) {
-        const food = this.foods[i];
-        const chompBonus = worm.isHuman && worm.chompTicks > 0 ? 22 : 0;
-        const reach = worm.radius + food.radius + (worm.isHuman ? 5 : 0) + chompBonus;
-        const distance = distanceSquared(head, food);
-        if (distance < (reach + 35) ** 2) worm.appetite = Math.max(worm.appetite, 0.6);
-        if (distance > reach ** 2) continue;
-        if (worm.isHuman) {
-          worm.combo = worm.comboTicks > 0 ? Math.min(20, worm.combo + 1) : 1;
-          worm.comboTicks = 24;
-        }
-        const awarded = worm.isHuman
-          ? (food.value * 10 + worm.combo) * worm.multiplier
-          : food.value * 10;
-        worm.grow(food.value, awarded);
-        this.foods[i] = this.foods[this.foods.length - 1];
-        this.foods.pop();
-        if (worm.isHuman) this.recordEvent({ type: 'eat', playerId: worm.id, x: food.x, y: food.y, color: food.color, value: awarded, food: { ...food } });
-        if (worm === this.player) {
-          this.snackBites.push({ ...food, life: 1, target: worm });
-          if (this.snackBites.length > 20) this.snackBites.shift();
-          this.snackRings.push({ x: food.x, y: food.y, radius: food.radius, color: food.value >= 3 ? '#ffdf8b' : food.color, life: 1 });
-          if (this.snackRings.length > 20) this.snackRings.shift();
-          this.createExplosion(food.x, food.y, food.color, food.value >= 3 ? 12 : 7, 1, true);
-          const label = worm.multiplier > 1 ? `${worm.multiplier}x` : food.value >= 3 ? 'SWEET!' : worm.combo > 4 ? `COMBO ${worm.combo}` : undefined;
-          this.floatingScores.push({ x: food.x, y: food.y - 24, value: awarded, color: worm.multiplier >= 10 ? '#ffd166' : food.value >= 3 ? '#ffe39a' : food.color, life: 1, label });
-          if (this.floatingScores.length > 16) this.floatingScores.shift();
-          this.shake = Math.max(this.shake, food.value > 1 ? 2.8 : 1.2);
+      const chompBonus = worm.isHuman && worm.chompTicks > 0 ? 22 : 0;
+      const reach = worm.radius + (CONFIG.FOOD_RADIUS * 1.15) + (worm.isHuman ? 5 : 0) + chompBonus;
+      const searchRadius = reach + 35;
+      const minCx = clamp(Math.floor((head.x - searchRadius) / GRID_CELL_SIZE), 0, GRID_COLS - 1);
+      const maxCx = clamp(Math.floor((head.x + searchRadius) / GRID_CELL_SIZE), 0, GRID_COLS - 1);
+      const minCy = clamp(Math.floor((head.y - searchRadius) / GRID_CELL_SIZE), 0, GRID_ROWS - 1);
+      const maxCy = clamp(Math.floor((head.y + searchRadius) / GRID_CELL_SIZE), 0, GRID_ROWS - 1);
+
+      for (let cy = minCy; cy <= maxCy; cy++) {
+        for (let cx = minCx; cx <= maxCx; cx++) {
+          const cell = this.foodGrid[cy * GRID_COLS + cx];
+          for (let i = cell.length - 1; i >= 0; i--) {
+            const food = cell[i];
+            if (eatenFoodIds.has(food.id)) continue;
+            const itemReach = worm.radius + food.radius + (worm.isHuman ? 5 : 0) + chompBonus;
+            const distance = distanceSquared(head, food);
+            if (distance < (itemReach + 35) ** 2) worm.appetite = Math.max(worm.appetite, 0.6);
+            if (distance > itemReach ** 2) continue;
+
+            if (worm.isHuman) {
+              worm.combo = worm.comboTicks > 0 ? Math.min(20, worm.combo + 1) : 1;
+              worm.comboTicks = 24;
+            }
+            const awarded = worm.isHuman
+              ? (food.value * 10 + worm.combo) * worm.multiplier
+              : food.value * 10;
+            worm.grow(food.value, awarded);
+            eatenFoodIds.add(food.id);
+            cell.splice(i, 1);
+
+            if (worm.isHuman) this.recordEvent({ type: 'eat', playerId: worm.id, x: food.x, y: food.y, color: food.color, value: awarded, food: { ...food } });
+            if (worm === this.player) {
+              this.snackBites.push({ ...food, life: 1, target: worm });
+              if (this.snackBites.length > 20) this.snackBites.shift();
+              this.snackRings.push({ x: food.x, y: food.y, radius: food.radius, color: food.value >= 3 ? '#ffdf8b' : food.color, life: 1 });
+              if (this.snackRings.length > 20) this.snackRings.shift();
+              this.createExplosion(food.x, food.y, food.color, food.value >= 3 ? 12 : 7, 1, true);
+              const label = worm.multiplier > 1 ? `${worm.multiplier}x` : food.value >= 3 ? 'SWEET!' : worm.combo > 4 ? `COMBO ${worm.combo}` : undefined;
+              this.floatingScores.push({ x: food.x, y: food.y - 24, value: awarded, color: worm.multiplier >= 10 ? '#ffd166' : food.value >= 3 ? '#ffe39a' : food.color, life: 1, label });
+              if (this.floatingScores.length > 16) this.floatingScores.shift();
+              this.shake = Math.max(this.shake, food.value > 1 ? 2.8 : 1.2);
+            }
+          }
         }
       }
+
       if (worm.spawnProtection > 0) continue;
       for (const other of worms) {
         if (worm === other || other.isDead || other.spawnProtection > 0) continue;
         const collisionRadius = (worm.radius + other.radius) * 0.82;
+        const otherHead = other.segments[0];
+        const maxReach = other.segments.length * CONFIG.WORM_SEGMENT_SPACING + collisionRadius + 20;
+        if (distanceSquared(head, otherHead) > maxReach * maxReach) continue;
+
         for (let i = 0; i < other.segments.length; i += 2) {
           if (distanceSquared(head, other.segments[i]) < collisionRadius ** 2) {
             victims.add(worm);
@@ -710,12 +798,16 @@ export class GameEngine {
         if (victims.has(worm)) break;
       }
     }
+
+    if (eatenFoodIds.size > 0) {
+      this.foods = this.foods.filter(food => !eatenFoodIds.has(food.id));
+    }
+
     for (const worm of victims) {
       worm.isDead = true;
       this.burstWorm(worm);
     }
 
-    // Replenish after filtering so newly spawned bots are not discarded.
     this.bots = this.bots.filter(bot => !bot.isDead);
     while (this.bots.length < (this.onlineArena ? 6 : CONFIG.BOT_COUNT)) this.spawnBot();
     while (this.foods.length < CONFIG.FOOD_COUNT) this.spawnFood();
@@ -782,7 +874,7 @@ export class GameEngine {
   }
 
   createExplosion(x: number, y: number, color: string, count: number, force = 1, festive = false) {
-    for (let i = 0; i < count && this.particles.length < 220; i++) {
+    for (let i = 0; i < count && this.particles.length < 160; i++) {
       const tint = festive && i % 3 === 0 ? CONFIG.FOOD_COLORS[Math.floor(Math.random() * CONFIG.FOOD_COLORS.length)] : color;
       this.particles.push(new Particle(x, y, tint, force));
     }
