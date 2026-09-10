@@ -17,7 +17,8 @@ const server = createArenaServer({
 
 try {
   await server.listen(port, host);
-  console.info(`Wormate arena listening on ${host}:${port}. IDs are kept in memory only.`);
+  console.info(`Listening on ${host}:${port}`);
+  console.info('Wormate arena ready. IDs are kept in memory only.');
 } catch (error) {
   console.error(`Failed to start Wormate arena on ${host}:${port}:`, error);
   process.exit(1);

@@ -61,6 +61,25 @@ proxy, restrict direct backend access with a firewall, make the proxy overwrite
 (for a local proxy, typically `127.0.0.1,::1`). Never trust arbitrary forwarded
 headers. Add connection and bandwidth limits at the proxy/network edge too.
 
+### Railway
+
+`npm start` is the production entry point: it builds the frontend into `dist/`
+and then boots the arena server, so the single Railway service serves both the
+game page and the WebSocket endpoint. Set these variables on Railway:
+
+```text
+NODE_ENV=production
+ALLOWED_ORIGINS=https://wormate-gold.vercel.app
+```
+
+Railway injects `PORT`; the server binds `0.0.0.0` by default and logs
+`Listening on 0.0.0.0:<port>` once it is ready.
+
+`npm start` runs `server/start.js`, which launches the arena as a child
+process and forwards `SIGTERM`/`SIGINT` to it (npm does not forward
+termination signals on its own). The server then drains open connections and
+exits cleanly, so Railway restarts and deploys do not crash the service.
+
 ## Identity Lifetime
 
 - The server creates a cryptographically random UUID after a validated join.
