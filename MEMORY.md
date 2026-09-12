@@ -2,7 +2,9 @@
 
 > Kaynak: `https://github.com/peyamraz/Wormate`, dal: `main` (en güncel, PR #7 + #8 merge'li).
 > Yerel eski kopya (`sessionManager/BroadcastChannel` sahte-multiplayer) silindi, yerine `main` temiz klonlandı.
-> Repo public kalacak.
+> Repo public kalacak. İsim şimdilik **Wormate** (değişiklik yok).
+> Yeniden adlandırma gündeme gelirse öne çıkan aday: **Wurmix** (yedek: HexWorm, Wriggle).
+> Elenenler: Slitherhex (slither.io çakışması), Devour.io (mevcut korku oyunu).
 
 ## Mimari (mevcut)
 
@@ -49,6 +51,13 @@
 7. **Hızlı toplama efekti (TAMAM — 2026-09-12):** CHOMP ile yeme tok `gulp`, SPEED ile tiz `zip` sesi;
    SPEED aktifken kafada kesik mavi halka + mavi kuyruk izi (CHOMP turuncu halkası zaten vardı).
    Test: 28/28 geçti (`tsc` temiz, `vite build` OK).
+
+## Ek işler (2026-09-12)
+
+- **Büyük dünya:** arena 3200→4000, grid 25x25, spawn merkeze göre, yemek 1500/bonus 18/bot 18 (online 8).
+- **Duvar dışı void + mini harita:** dış alan desensiz karanlık, sınır ince çizgi; sol üstte konum/bonus/bot haritası + görüş çerçevesi.
+- **Arena akıcılık:** snapshot 15→20Hz, paket başı yemek 500 cap (donma şikayetine karşı).
+- Test: 29/29 geçti (`tsc` temiz, `vite build` OK).
 
 ## Kararlar / notlar
 

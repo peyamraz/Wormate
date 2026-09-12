@@ -55,6 +55,22 @@ test('worm snapshots carry hat and glasses and survive validation', () => {
   }
 });
 
+test('worm coordinates follow the enlarged arena bounds', () => {
+  const world = new GameEngine(undefined, false, 'online');
+  const worm = world.addHuman(randomUUID(), 'Guest');
+  const base = () => ({
+    type: 'state', v: 1, tick: 1, run: 1, you: worm.id,
+    worms: [{ ...serializeWorm(worm) }], foods: [], bonuses: [],
+    status: world.getStatus(worm), events: [],
+  });
+  const near = base();
+  near.worms[0].points = near.worms[0].points.map(() => 3900);
+  assert.ok(parseServerMessage(JSON.stringify(near)), '3900 must be inside the 4000 arena');
+  const far = base();
+  far.worms[0].points = far.worms[0].points.map(() => 4600);
+  assert.equal(parseServerMessage(JSON.stringify(far)), null, '4600 must be rejected');
+});
+
 test('origin allowlist fails closed and production requires HTTPS', () => {
   assert.deepEqual([...allowedOrigins('https://game.example.com', true)], ['https://game.example.com']);
   for (const origin of ['', '*', 'https://game.example.com/path', 'http://game.example.com']) assert.throws(() => allowedOrigins(origin, true));

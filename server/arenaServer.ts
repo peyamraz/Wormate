@@ -234,11 +234,16 @@ export function createArenaServer(options: ArenaServerOptions) {
     const halfWidth = session.viewport.width / (2 * zoom) + 180;
     const halfHeight = session.viewport.height / (2 * zoom) + 180;
     const visible = (point: Point) => Math.abs(point.x - center.x) <= halfWidth && Math.abs(point.y - center.y) <= halfHeight;
+    // En kötü durumu sınırla: görünür yemekler 500 ile cap'lenir, paket şişmez.
+    const foods: ArenaSnapshot['foods'] = [];
+    for (const food of world.foods) {
+      if (foods.length >= NETWORK.MAX_SNAPSHOT_FOODS) break;
+      if (visible(food)) foods.push({ ...food, x: round(food.x), y: round(food.y) });
+    }
     const message: ArenaSnapshot = {
       type: 'state', v: 1, tick: world.ticks, run: session.run, you: session.id,
       worms: world.allWorms().filter(worm => worm === viewer || (!worm.isDead && worm.segments.some(visible))).map(serializeWorm),
-      foods: world.foods.filter(visible).map(food => ({ ...food, x: round(food.x), y: round(food.y) })),
-      bonuses: world.bonuses.filter(visible), status: world.getStatus(viewer),
+      foods, bonuses: world.bonuses.filter(visible), status: world.getStatus(viewer),
       events: world.worldEvents.filter(event => event.playerId === session.id || (event.type === 'death' && visible(event))).slice(-32),
     };
     send(ws, message);

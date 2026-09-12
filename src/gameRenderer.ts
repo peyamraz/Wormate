@@ -392,7 +392,8 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
   };
   const shake = reducedMotion ? 0 : engine.shake;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.fillStyle = '#291b27';
+  // Duvar dışı: desensiz karanlık boşluk — harita bitiyormuş hissi vermez.
+  ctx.fillStyle = '#04070d';
   ctx.fillRect(0, 0, width, height);
   ctx.save();
   ctx.translate(width / 2 + (Math.random() - 0.5) * shake, height / 2 + (Math.random() - 0.5) * shake);
@@ -413,11 +414,8 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
       ctx.fillRect(groundX, groundY, groundWidth, groundHeight);
     }
   }
-  ctx.strokeStyle = '#fb718523';
-  ctx.lineWidth = 28;
-  ctx.strokeRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
-  ctx.strokeStyle = '#fb7185';
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#fb718540';
+  ctx.lineWidth = 2;
   ctx.strokeRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
 
   // Collect visible foods using spatial grid
@@ -550,4 +548,64 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
 
   ctx.restore();
   ctx.drawImage(getVignette(), 0, 0, width, height);
+  drawMinimap(ctx, engine, width, height, reducedMotion);
+}
+
+function drawMinimap(ctx: Context, engine: GameEngine, width: number, height: number, reducedMotion: boolean) {
+  const size = Math.min(112, Math.max(84, width * 0.16));
+  const x = 12, y = 108;
+  const pad = 6;
+  const inner = size - pad * 2;
+  const scale = inner / CONFIG.CANVAS_WIDTH;
+  const dot = (wx: number, wy: number) => ({
+    x: x + pad + wx * scale,
+    y: y + pad + wy * scale,
+  });
+  ctx.save();
+  ctx.fillStyle = 'rgba(6,10,20,0.72)';
+  ctx.strokeStyle = 'rgba(148,163,184,0.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(x, y, size, size, 10);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.roundRect(x, y, size, size, 10);
+  ctx.clip();
+  for (const bonus of engine.bonuses) {
+    const p = dot(bonus.x, bonus.y);
+    ctx.fillStyle = BONUS_BY_KIND[bonus.kind].color;
+    ctx.globalAlpha = 0.8;
+    ctx.fillRect(p.x - 1, p.y - 1, 2, 2);
+  }
+  ctx.globalAlpha = 1;
+  for (const worm of engine.bots) {
+    if (worm.isDead) continue;
+    const p = dot(worm.segments[0].x, worm.segments[0].y);
+    ctx.fillStyle = worm.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 1.4 + Math.min(1.6, worm.segments.length / 200), 0, TAU);
+    ctx.fill();
+  }
+  if (!engine.player.isDead) {
+    const p = dot(engine.player.segments[0].x, engine.player.segments[0].y);
+    const pulse = reducedMotion ? 3 : 3 + Math.sin(engine.ticks * 0.1) * 0.8;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, pulse, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = engine.player.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, pulse * 0.55, 0, TAU);
+    ctx.fill();
+  }
+  // Görünen alan çerçevesi
+  const hw = width / (2 * engine.camera.zoom) * scale;
+  const hh = height / (2 * engine.camera.zoom) * scale;
+  const c = dot(engine.camera.x, engine.camera.y);
+  ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(c.x - hw, c.y - hh, hw * 2, hh * 2);
+  ctx.restore();
+  ctx.globalAlpha = 1;
 }

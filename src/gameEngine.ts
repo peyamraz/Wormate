@@ -87,8 +87,8 @@ const clamp = (value: number, min: number, max: number) => Math.max(min, Math.mi
 const distanceSquared = (a: Point, b: Point) => (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
 
 export const GRID_CELL_SIZE = 160;
-export const GRID_COLS = 20;
-export const GRID_ROWS = 20;
+export const GRID_COLS = 25;
+export const GRID_ROWS = 25;
 export const TOTAL_GRID_CELLS = GRID_COLS * GRID_ROWS;
 
 export function getCameraZoom(length: number, viewport: Viewport) {
@@ -303,7 +303,7 @@ export class GameEngine {
     if (this.onlineArena) this.player.isDead = true;
     this.camera = { x, y, zoom: getCameraZoom(this.player.segments.length, viewport) };
     if (mode === 'view') return;
-    for (let i = 0; i < (this.onlineArena ? 6 : CONFIG.BOT_COUNT); i++) this.spawnBot(i < 4 || isDemo);
+    for (let i = 0; i < (this.onlineArena ? 8 : CONFIG.BOT_COUNT); i++) this.spawnBot(i < 4 || isDemo);
 
     // A visible snack trail guarantees that the first few seconds are rewarding.
     for (let i = 1; i <= 20; i++) this.addFood(x + i * 28, y + Math.sin(i * 0.45) * 12);
@@ -354,8 +354,8 @@ export class GameEngine {
     let clearance = -1;
     for (let attempt = 0; attempt < 100; attempt++) {
       const candidate = attempt < 60
-        ? { x: 1150 + Math.random() * 900, y: 1150 + Math.random() * 900 }
-        : { x: 220 + Math.random() * 2760, y: 220 + Math.random() * 2760 };
+        ? { x: 1400 + Math.random() * 1200, y: 1400 + Math.random() * 1200 }
+        : { x: 220 + Math.random() * 3560, y: 220 + Math.random() * 3560 };
       let nearest = Infinity;
       for (const worm of living) {
         for (let i = 0; i < worm.segments.length; i += 3) nearest = Math.min(nearest, distanceSquared(candidate, worm.segments[i]));
@@ -835,7 +835,7 @@ export class GameEngine {
     }
 
     this.bots = this.bots.filter(bot => !bot.isDead);
-    while (this.bots.length < (this.onlineArena ? 6 : CONFIG.BOT_COUNT)) this.spawnBot();
+    while (this.bots.length < (this.onlineArena ? 8 : CONFIG.BOT_COUNT)) this.spawnBot();
     while (this.foods.length < CONFIG.FOOD_COUNT) this.spawnFood();
 
     // Denser bonus flow: top the map back up quickly, keep orbs on the field

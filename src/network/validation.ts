@@ -40,7 +40,7 @@ export function parseServerMessage(raw: string): ServerMessage | null {
     if (!number(worm.growthPulse, 0, 1) || !number(worm.appetite, 0, 1) || !number(worm.lookOffset, -1, 1)) return null;
     if (typeof worm.hat !== 'string' || !SHOP_HATS.some(h => h.id === worm.hat)) return null;
     if (typeof worm.glasses !== 'string' || !SHOP_GLASSES.some(g => g.id === worm.glasses)) return null;
-    if (!Array.isArray(worm.points) || worm.points.length < 2 || worm.points.length > CONFIG.WORM_MAX_LENGTH * 2 || worm.points.length % 2 || !worm.points.every(p => number(p, -500, 3700))) return null;
+    if (!Array.isArray(worm.points) || worm.points.length < 2 || worm.points.length > CONFIG.WORM_MAX_LENGTH * 2 || worm.points.length % 2 || !worm.points.every(p => number(p, -500, CONFIG.CANVAS_WIDTH + 500))) return null;
   }
   if (!wormIds.has(message.you)) return null;
   if (!Array.isArray(message.foods) || message.foods.length > CONFIG.MAX_FOOD_COUNT || !message.foods.every(food)) return null;
