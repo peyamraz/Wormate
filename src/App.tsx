@@ -9,12 +9,13 @@ import type { ConnectionInfo } from './network/OnlineClient';
 import { validName, validRoom } from './network/protocol';
 import { clearSession, createPracticeSession, getSession, setOnlineSession } from './session';
 import type { GuestSession } from './session';
+import { t } from './i18n';
 import {
   SHOP_GLASSES, SHOP_HATS, SHOP_SKINS,
   buyGlasses, buyHat, buySkin, earnCoins, equip, readCoins, readLoadout, readOwned,
 } from './shop';
 import type { GlassesId, HatId, Loadout, Owned } from './shop';
-import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut, ChevronDown, ChevronUp, Bot, Coins, ShoppingBag, User, LogIn } from 'lucide-react';
+import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut, ChevronDown, ChevronUp, ChevronLeft, Bot, Coins, ShoppingBag, User, LogIn, Palette, Glasses } from 'lucide-react';
 
 const EMPTY_STATUS: PlayerStatus = {
   score: 0,
@@ -32,6 +33,12 @@ const EMPTY_STATUS: PlayerStatus = {
   leaderboard: [],
 };
 const compactScore = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
+
+function deathText(reason: string): string {
+  if (reason === 'You bumped into another worm.') return t.deathBump;
+  if (reason === 'You reached the edge of the arena.') return t.deathEdge;
+  return reason;
+}
 
 // Skorlar bilinçli olarak SADECE oturumluk tutulur: sekmeye her gelişte boş başlar.
 // Kalıcı olan tek şey mağaza cüzdanıdır (wormate_coins). Eski localStorage anahtarı bir kez temizlenir.
@@ -68,6 +75,7 @@ export default function App() {
   const [owned, setOwned] = useState<Owned>(readOwned);
   const [loadout, setLoadout] = useState<Loadout>(readLoadout);
   const [shopTab, setShopTab] = useState<'skin' | 'hat' | 'glasses'>('skin');
+  const [shopPage, setShopPage] = useState<'skin' | 'hat' | 'glasses' | null>(null);
   const [menuTab, setMenuTab] = useState<'shop' | 'account'>('shop');
   const clientRef = useRef<OnlineClient | null>(null);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -87,14 +95,14 @@ export default function App() {
     releaseButtonFocus();
     const client = clientRef.current;
     if (client?.ready && getSession()?.mode === 'online') {
-      if (client.restart()) setNotice('Waiting for the server to respawn your worm...');
+      if (client.restart()) setNotice(t.waitingRespawn);
       return;
     }
     const name = nickname.normalize('NFKC').trim();
-    if (!validName(name)) { setNotice('Use 1-16 letters, numbers, spaces, underscores or hyphens for your name.'); return; }
+    if (!validName(name)) { setNotice(t.noticeName); return; }
     setNotice('');
     if (mode === 'online') {
-      if (!validRoom(room)) { setNotice('Room codes use 3-12 uppercase letters or numbers.'); return; }
+      if (!validRoom(room)) { setNotice(t.noticeRoom); return; }
       clientRef.current?.close();
       clearSession();
       setGuest(null);
@@ -127,7 +135,7 @@ export default function App() {
       } catch (error) {
         if (clientRef.current === candidate) {
           clientRef.current = null; clearSession(); setGuest(null); setGameState('menu');
-          setNotice(error instanceof Error ? error.message : 'Connection failed.');
+          setNotice(error instanceof Error ? error.message : t.srvUnreachable);
         }
       }
       return;
@@ -172,7 +180,7 @@ export default function App() {
       setCopied(label);
       if (copyTimer.current) clearTimeout(copyTimer.current);
       copyTimer.current = setTimeout(() => setCopied(''), 2000);
-    } catch { setNotice(`Copy manually: ${value}`); }
+    } catch { setNotice(t.copyManual.replace('{v}', value)); }
     releaseButtonFocus();
   };
 
@@ -229,7 +237,7 @@ export default function App() {
       {/* Main Menu */}
       {gameState === 'menu' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-slate-950/40 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 p-8 rounded-3xl shadow-2xl flex flex-col items-center text-center">
+          <div className="w-full max-w-md max-h-[92dvh] overflow-y-auto bg-slate-900/90 border border-slate-800 p-8 rounded-3xl shadow-2xl flex flex-col items-center text-center">
             <div className="flex items-center gap-3 mb-2">
               <span className="text-4xl">🍬</span>
               <h1 className="text-4xl font-black bg-gradient-to-r from-pink-500 via-orange-400 to-yellow-400 bg-clip-text text-transparent">
@@ -242,7 +250,7 @@ export default function App() {
             <div className="w-full space-y-4 mb-6">
               <div>
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 text-left">
-                  Nickname
+                  {t.nickname}
                 </label>
                 <input
                   type="text"
@@ -250,7 +258,7 @@ export default function App() {
                   value={nickname}
                   onChange={e => setNickname(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white font-bold focus:outline-none focus:border-orange-500 transition-colors"
-                  placeholder="Enter name..."
+                  placeholder={t.nicknamePh}
                 />
               </div>
 
@@ -264,7 +272,7 @@ export default function App() {
                       : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
                   }`}
                 >
-                  <Globe size={16} /> Live Arena
+                  <Globe size={16} /> {t.liveArena}
                 </button>
                 <button
                   type="button"
@@ -275,7 +283,7 @@ export default function App() {
                       : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
                   }`}
                 >
-                  <Bot size={16} /> Practice
+                  <Bot size={16} /> {t.practice}
                 </button>
               </div>
             </div>
@@ -285,17 +293,17 @@ export default function App() {
               <div className="flex items-center gap-1.5 border-b border-slate-800/80 bg-slate-900/60 p-2">
                 <button
                   type="button"
-                  onClick={() => setMenuTab('shop')}
+                  onClick={() => { setMenuTab('shop'); setShopPage(null); }}
                   className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-black uppercase tracking-wider transition-all ${menuTab === 'shop' ? 'border-orange-500/60 bg-orange-500/20 text-orange-300 shadow-lg shadow-orange-500/10' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
                 >
-                  <ShoppingBag size={14} /> Mağaza
+                  <ShoppingBag size={14} /> {t.shop}
                 </button>
                 <button
                   type="button"
                   onClick={() => setMenuTab('account')}
                   className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-black uppercase tracking-wider transition-all ${menuTab === 'account' ? 'border-cyan-500/60 bg-cyan-500/20 text-cyan-300 shadow-lg shadow-cyan-500/10' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
                 >
-                  <LogIn size={14} /> Oturum Aç
+                  <LogIn size={14} /> {t.account}
                 </button>
                 <span className="flex shrink-0 items-center gap-1 rounded-full bg-yellow-400/15 border border-yellow-400/30 px-2.5 py-1 text-xs font-black text-yellow-300">
                   <Coins size={12} /> {coins.toLocaleString()}
@@ -304,19 +312,56 @@ export default function App() {
               <div className="p-4">
               {menuTab === 'shop' ? (
               <>
-              <div className="flex gap-1.5 mb-3">
-                {(['skin', 'hat', 'glasses'] as const).map(tab => (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => setShopTab(tab)}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${shopTab === tab ? 'bg-orange-500/25 text-orange-300 border border-orange-500/50' : 'bg-slate-900 text-slate-400 border border-slate-800'}`}
-                  >
-                    {tab === 'skin' ? 'Deri' : tab === 'hat' ? 'Şapka' : 'Gözlük'}
-                  </button>
-                ))}
+              {shopPage === null ? (
+              <div className="grid grid-cols-3 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => { setShopTab('skin'); setShopPage('skin'); }}
+                  className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900 p-3 transition-all hover:border-cyan-500/50 active:scale-95"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-500/15 text-cyan-300"><Palette size={18} /></span>
+                  <span className="text-[11px] font-black text-slate-200">{t.skinTab}</span>
+                  <span className="text-[10px] font-bold text-slate-500 tabular-nums">{owned.skins.length}/{SHOP_SKINS.length}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShopTab('hat'); setShopPage('hat'); }}
+                  className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900 p-3 transition-all hover:border-amber-500/50 active:scale-95"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/15 text-amber-300"><Crown size={18} /></span>
+                  <span className="text-[11px] font-black text-slate-200">{t.hatTab}</span>
+                  <span className="text-[10px] font-bold text-slate-500 tabular-nums">{owned.hats.length}/{SHOP_HATS.length}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShopTab('glasses'); setShopPage('glasses'); }}
+                  className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900 p-3 transition-all hover:border-violet-500/50 active:scale-95"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-500/15 text-violet-300"><Glasses size={18} /></span>
+                  <span className="text-[11px] font-black text-slate-200">{t.glassesTab}</span>
+                  <span className="text-[10px] font-bold text-slate-500 tabular-nums">{owned.glasses.length}/{SHOP_GLASSES.length}</span>
+                </button>
               </div>
-              <div className="grid grid-cols-3 gap-1.5 max-h-44 overflow-y-auto pr-0.5">
+              ) : (
+              <>
+              <div className="mb-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShopPage(null)}
+                  aria-label={t.back}
+                  title={t.back}
+                  className="rounded-lg border border-slate-800 bg-slate-900 p-1.5 text-slate-300 transition-colors hover:text-white"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <span className="text-xs font-black uppercase tracking-wider text-slate-200">
+                  {shopPage === 'skin' ? t.skinTab : shopPage === 'hat' ? t.hatTab : t.glassesTab}
+                </span>
+                <span className="ml-auto text-[10px] font-bold text-slate-500 tabular-nums">
+                  {shopPage === 'skin' ? `${owned.skins.length}/${SHOP_SKINS.length}` : shopPage === 'hat' ? `${owned.hats.length}/${SHOP_HATS.length}` : `${owned.glasses.length}/${SHOP_GLASSES.length}`}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5 max-h-60 overflow-y-auto pr-0.5">
                 {shopTab === 'skin' && SHOP_SKINS.map(item => {
                   const has = owned.skins.includes(item.id);
                   const worn = loadout.skin === item.id;
@@ -337,7 +382,7 @@ export default function App() {
                       </span>
                       <span className="block truncate text-[10px] font-bold text-slate-200">{item.name}</span>
                       <span className={`block text-[10px] font-black ${worn ? 'text-cyan-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
-                        {worn ? 'Kuşanıldı' : has ? 'Kuşan' : `🪙 ${item.price}`}
+                        {worn ? t.equipped : has ? t.equip : `🪙 ${item.price}`}
                       </span>
                     </button>
                   );
@@ -359,7 +404,7 @@ export default function App() {
                     >
                       <span className="block truncate text-[10px] font-bold text-slate-200">{item.name}</span>
                       <span className={`block text-[10px] font-black ${worn ? 'text-cyan-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
-                        {worn ? 'Kuşanıldı' : has ? 'Kuşan' : `🪙 ${item.price}`}
+                        {worn ? t.equipped : has ? t.equip : `🪙 ${item.price}`}
                       </span>
                     </button>
                   );
@@ -381,13 +426,15 @@ export default function App() {
                     >
                       <span className="block truncate text-[10px] font-bold text-slate-200">{item.name}</span>
                       <span className={`block text-[10px] font-black ${worn ? 'text-cyan-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
-                        {worn ? 'Kuşanıldı' : has ? 'Kuşan' : `🪙 ${item.price}`}
+                        {worn ? t.equipped : has ? t.equip : `🪙 ${item.price}`}
                       </span>
                     </button>
                   );
                 })}
               </div>
-              <p className="mt-2 text-[10px] text-slate-500 font-medium">Her oyun sonu skorun /10 kadar altın kazanırsın.</p>
+              <p className="mt-2 text-[10px] text-slate-500 font-medium">{t.goldNote}</p>
+              </>
+              )}
               </>
               ) : (
               <div className="space-y-2">
@@ -399,19 +446,19 @@ export default function App() {
                     <User size={20} />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-black text-white">Misafir</span>
+                    <span className="block text-sm font-black text-white">{t.guest}</span>
                     <span className="block truncate text-[11px] font-medium text-slate-400">
-                      {nickname ? `"${nickname}" olarak hemen oyna` : 'İsim yaz, hemen oyna'} · skorlar bu oturumda saklanır
+                      {nickname ? t.guestWithName.replace('{n}', nickname) : t.guestPlain} · {t.sessionNote}
                     </span>
                   </span>
                   <span className="flex shrink-0 items-center gap-1 rounded-full bg-cyan-500/20 border border-cyan-400/40 px-2.5 py-1 text-[10px] font-black text-cyan-300">
-                    <Check size={11} /> Aktif
+                    <Check size={11} /> {t.active}
                   </span>
                 </button>
                 <button
                   type="button"
                   disabled
-                  title="Çok yakında"
+                  title={t.googleSoon}
                   className="flex w-full cursor-not-allowed items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/70 p-3 text-left opacity-70"
                 >
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white">
@@ -424,13 +471,13 @@ export default function App() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-black text-slate-300">Google</span>
-                    <span className="block truncate text-[11px] font-medium text-slate-500">Bulut skorlar ve rozetler</span>
+                    <span className="block truncate text-[11px] font-medium text-slate-500">{t.googleDesc}</span>
                   </span>
                   <span className="shrink-0 rounded-full bg-amber-400/15 border border-amber-400/40 px-2.5 py-1 text-[10px] font-black text-amber-300">
-                    Yakında
+                    {t.googleSoon}
                   </span>
                 </button>
-                <p className="pt-1 text-center text-[10px] font-medium text-slate-500">Google girişi geldiğinde skorların ve mağazan bulutta saklanacak.</p>
+                <p className="pt-1 text-center text-[10px] font-medium text-slate-500">{t.googleNote}</p>
               </div>
               )}
               </div>
@@ -446,14 +493,14 @@ export default function App() {
               onClick={() => { void startGame(); }}
               className="w-full py-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white rounded-2xl font-black text-xl tracking-wider uppercase shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3"
             >
-              <Play fill="currentColor" size={20} /> PLAY NOW
+              <Play fill="currentColor" size={20} /> {t.playNow}
             </button>
 
             {highScores.length > 0 && (
               <div className="mt-6 w-full pt-6 border-t border-slate-800/80">
                   <div className="flex items-center justify-between text-xs font-bold text-slate-400 mb-3">
-                    <span className="flex items-center gap-1.5"><Trophy size={14} className="text-yellow-400" /> Session Scores</span>
-                    <span>This visit</span>
+                    <span className="flex items-center gap-1.5"><Trophy size={14} className="text-yellow-400" /> {t.sessionScores}</span>
+                    <span>{t.thisVisit}</span>
                   </div>
                 <div className="space-y-1.5">
                   {highScores.map((s, idx) => (
@@ -475,13 +522,13 @@ export default function App() {
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm z-50">
           <div className="flex flex-col items-center gap-4 bg-slate-900/90 border border-slate-800 p-8 rounded-3xl shadow-2xl">
             <LoaderCircle size={40} className="animate-spin text-orange-500" />
-            <div className="text-lg font-bold text-white">Connecting to arena...</div>
-            <p className="text-xs text-slate-400">Joining room {room}</p>
+            <div className="text-lg font-bold text-white">{t.connecting}</div>
+            <p className="text-xs text-slate-400">{t.joiningRoom.replace('{r}', room)}</p>
             <button
               onClick={returnToMenu}
               className="mt-2 text-xs font-bold text-slate-400 hover:text-white px-4 py-2 rounded-lg border border-slate-800 hover:bg-slate-800 transition-colors"
             >
-              Cancel
+              {t.cancel}
             </button>
           </div>
         </div>
@@ -494,11 +541,11 @@ export default function App() {
             <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4 text-3xl">
               💀
             </div>
-            <h2 className="text-2xl font-black text-white mb-1">GAME OVER</h2>
-            <p className="text-xs text-slate-400 mb-6 font-medium">{deathReason || 'Better luck next time!'}</p>
+            <h2 className="text-2xl font-black text-white mb-1">{t.gameOver}</h2>
+            <p className="text-xs text-slate-400 mb-6 font-medium">{deathReason ? deathText(deathReason) : t.betterLuck}</p>
 
             <div className="w-full mb-6 p-4 bg-slate-950/80 rounded-2xl border border-slate-800">
-              <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-1">Final Score</div>
+              <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-1">{t.finalScore}</div>
               <div className="text-3xl font-black text-orange-400">{score.toLocaleString()}</div>
             </div>
 
@@ -507,11 +554,11 @@ export default function App() {
               disabled={Boolean(isOnline && clientRef.current?.awaitingRespawn)}
               className="w-full py-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 disabled:opacity-50 text-white rounded-2xl font-black text-lg tracking-wider transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25"
             >
-              <RotateCcw size={18} /> PLAY AGAIN
+              <RotateCcw size={18} /> {t.playAgain}
             </button>
             {notice && <p role="status" className="mt-3 text-xs text-amber-200">{notice}</p>}
             <button onClick={returnToMenu} className="mt-4 text-xs font-bold tracking-wider text-slate-400 hover:text-white transition-colors py-1">
-              BACK TO MENU
+              {t.backToMenu}
             </button>
           </div>
         </div>
@@ -524,7 +571,7 @@ export default function App() {
           <div className="pointer-events-none absolute top-3 left-3 flex max-w-[calc(100%-11rem)] flex-col items-start gap-1.5 sm:top-5 sm:left-5 sm:max-w-[45%]">
             <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/45 px-3 py-1.5 shadow-lg backdrop-blur-md">
               <div className="h-2 w-2 shrink-0 rounded-full bg-cyan-400 animate-pulse ring-2 ring-cyan-400/20" />
-              <span key={score} className="score-pop font-mono text-base font-black tabular-nums text-white sm:text-lg" title={score.toLocaleString()} aria-label={`Score: ${score}`}>
+              <span key={score} className="score-pop font-mono text-base font-black tabular-nums text-white sm:text-lg" title={score.toLocaleString()} aria-label={`${t.scoreTag}: ${score}`}>
                 <span className="sm:hidden">{compactScore.format(score)}</span>
                 <span className="hidden sm:inline">{score.toLocaleString()}</span>
               </span>
@@ -558,10 +605,10 @@ export default function App() {
             <div className="pointer-events-auto absolute bottom-20 left-3 max-w-[calc(100%-6.5rem)] sm:bottom-6 sm:left-5">
               <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-slate-950/35 px-2.5 py-1 text-[9px] font-bold text-cyan-200 backdrop-blur-xs">
                 <ShieldCheck size={11} className="text-cyan-400" />
-                <span>{isOnline ? guest.room : 'PRACTICE'}</span>
+                <span>{isOnline ? guest.room : t.practice.toUpperCase()}</span>
                 {isOnline && <span className="text-slate-400 font-mono font-normal">({connection?.latency ?? 0}ms)</span>}
                 <button onClick={() => { void copy(guest.id, 'id'); }} className="ml-1 p-0.5 hover:text-white" aria-label="Copy temporary session ID">{copied === 'id' ? <Check size={11} /> : <Copy size={11} />}</button>
-                {isOnline && <button onClick={shareRoom} className="hover:text-white underline">{copied === 'room' ? 'Copied' : 'Invite'}</button>}
+                {isOnline && <button onClick={shareRoom} className="hover:text-white underline">{copied === 'room' ? t.copied : t.invite}</button>}
               </div>
             </div>
           )}
@@ -573,8 +620,8 @@ export default function App() {
               {isOnline && (
                 <button
                   onClick={returnToMenu}
-                  aria-label="Leave arena"
-                  title="Leave arena"
+                  aria-label={t.leaveArena}
+                  title={t.leaveArena}
                   className="rounded-full border border-white/10 bg-slate-950/40 p-1.5 text-slate-300 shadow-md backdrop-blur-md transition-all hover:bg-red-500/20 hover:text-red-300 active:scale-95 sm:p-2"
                 >
                   <LogOut size={14} className="sm:size-4" />
@@ -582,16 +629,16 @@ export default function App() {
               )}
               <button 
                 onClick={togglePause}
-                aria-label={gameState === 'paused' ? 'Resume' : 'Pause'}
-                title="Pause (Esc)"
+                aria-label={gameState === 'paused' ? t.resume : t.pause}
+                title={`${t.pause} (Esc)`}
                 className="rounded-full border border-white/10 bg-slate-950/40 p-1.5 text-white shadow-md backdrop-blur-md transition-all hover:bg-slate-800/60 active:scale-95 sm:p-2"
               >
                 {gameState === 'paused' ? <Play size={14} className="sm:size-4" /> : <Pause size={14} className="sm:size-4" />}
               </button>
               <button 
                 onClick={event => { setMuted(!muted); gameAudio.unlock(); event.currentTarget.blur(); }}
-                aria-label={muted ? 'Unmute' : 'Mute'}
-                title={muted ? 'Unmute' : 'Mute'}
+                aria-label={muted ? t.unmute : t.mute}
+                title={muted ? t.unmute : t.mute}
                 className="rounded-full border border-white/10 bg-slate-950/40 p-1.5 text-white shadow-md backdrop-blur-md transition-all hover:bg-slate-800/60 active:scale-95 sm:p-2"
               >
                 {muted ? <VolumeX size={14} className="sm:size-4" /> : <Volume2 size={14} className="sm:size-4" />}
@@ -599,8 +646,8 @@ export default function App() {
               {/* Collapse/Expand Toggle Button */}
               <button
                 onClick={() => setCollapsedLeaderboard(!collapsedLeaderboard)}
-                aria-label={collapsedLeaderboard ? 'Expand leaderboard' : 'Minimize leaderboard'}
-                title={collapsedLeaderboard ? 'Expand leaderboard' : 'Minimize leaderboard'}
+                aria-label={collapsedLeaderboard ? t.expandLb : t.collapseLb}
+                title={collapsedLeaderboard ? t.expandLb : t.collapseLb}
                 className="rounded-full border border-white/10 bg-slate-950/40 p-1.5 text-slate-300 shadow-md backdrop-blur-md transition-all hover:bg-slate-800/60 active:scale-95 sm:p-2"
               >
                 {collapsedLeaderboard ? <ChevronDown size={14} className="sm:size-4" /> : <ChevronUp size={14} className="sm:size-4" />}
@@ -616,7 +663,7 @@ export default function App() {
               >
                 <div className="flex items-center gap-1 font-bold text-amber-300">
                   <Crown size={11} fill="currentColor" />
-                  <span className="truncate max-w-[4rem]">{topLeader?.name ?? 'Leader'}</span>
+                  <span className="truncate max-w-[4rem]">{topLeader?.name === 'YOU' ? t.you : (topLeader?.name ?? t.leader)}</span>
                 </div>
                 {userRankEntry && (
                   <div className="font-mono font-black text-cyan-300">
@@ -626,17 +673,17 @@ export default function App() {
               </div>
             ) : (
               // Full Modern Sleek Leaderboard
-              <section aria-label="Live arena leaderboard" className="pointer-events-none w-full overflow-hidden rounded-xl border border-white/10 bg-slate-950/35 shadow-xl backdrop-blur-md transition-all">
+              <section aria-label="Leaderboard" className="pointer-events-none w-full overflow-hidden rounded-xl border border-white/10 bg-slate-950/35 shadow-xl backdrop-blur-md transition-all">
                 {/* Header info */}
                 <header className="flex items-center justify-between border-b border-white/10 px-2 py-1.5 sm:px-3 sm:py-2">
                   <div className="flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     <span className="text-[9px] font-black tracking-wider text-slate-300 uppercase sm:text-[10px]">
-                      {isOnline ? guest?.room : 'SOLO'}
+                      {isOnline ? guest?.room : t.solo}
                     </span>
                   </div>
                   <div className="text-[8px] font-bold text-slate-400 sm:text-[9px]">
-                    {isOnline ? `${status.connectedCount} LIVE` : `${status.activeCount} BOTS`}
+                    {isOnline ? `${status.connectedCount} ${t.live}` : `${status.activeCount} ${t.bots}`}
                   </div>
                 </header>
 
@@ -674,12 +721,12 @@ export default function App() {
 
                           {/* Name */}
                           <span className="min-w-0 flex-1 truncate font-semibold">
-                            {entry.name}
-                            {isBiggest && <span title="En büyük boy"> 🐉</span>}
+                            {entry.name === 'YOU' ? t.you : entry.name}
+                            {isBiggest && <span title={t.sizeLeader}> 🐉</span>}
                           </span>
 
                           {/* Size */}
-                          <span className="font-mono tabular-nums text-slate-400 shrink-0" title={`Boy: ${entry.size}`}>
+                          <span className="font-mono tabular-nums text-slate-400 shrink-0" title={`${t.sizeTag}: ${entry.size}`}>
                             {entry.size}
                           </span>
 
@@ -694,12 +741,12 @@ export default function App() {
                   </ol>
                   {sizeLeader && topLeader && sizeLeader.id !== topLeader.id && (
                     <div className="mt-1 rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-2 py-1 text-[9px] font-bold text-emerald-200 sm:text-[10px]">
-                      🐉 Boy lideri: <span className="truncate">{sizeLeader.name}</span> ({sizeLeader.size})
+                      🐉 {t.sizeLeader} <span className="truncate">{sizeLeader.name === 'YOU' ? t.you : sizeLeader.name}</span> ({sizeLeader.size})
                     </div>
                   )}
                   {userRankEntry && (
                     <div className="mt-1 px-1 text-[8px] font-bold text-slate-400 sm:text-[9px]">
-                      Skor #{userRankEntry.rank} &middot; Boy #{status.sizeRank} ({status.size})
+                      {t.scoreTag} #{userRankEntry.rank} &middot; {t.sizeTag} #{status.sizeRank} ({status.size})
                     </div>
                   )}
                 </div>
@@ -709,7 +756,7 @@ export default function App() {
 
           {gameState === 'playing' && (
             <div className="pointer-events-none absolute bottom-5 left-5 text-[10px] text-slate-500">
-              <span className="desktop-controls">WASD / Mouse to steer &middot; Left/Right-click or Space to boost</span>
+              <span className="desktop-controls">{t.controlsHint}</span>
             </div>
           )}
         </>

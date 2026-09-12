@@ -5,6 +5,7 @@ import type { PlayerStatus } from './gameEngine';
 import { drawGame } from './gameRenderer';
 import { prepareGameArt } from './gameArt';
 import { gameAudio } from './gameAudio';
+import { t } from './i18n';
 import { readLoadout, skinById } from './shop';
 import type { OnlineClient } from './network/OnlineClient';
 import type { GuestSession } from './session';
@@ -236,7 +237,7 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
               const head = engine.player.segments[0];
               engine.snackRings.push({ x: head.x, y: head.y, radius: engine.player.radius * 2, color: '#ffd166', life: 1 });
               if (engine.snackRings.length > 20) engine.snackRings.shift();
-              engine.floatingScores.push({ x: head.x, y: head.y - 44, value: comboNow * 5, color: '#ffd166', life: 1, label: `SÜPER KOMBO ${comboNow}!` });
+              engine.floatingScores.push({ x: head.x, y: head.y - 44, value: comboNow * 5, color: '#ffd166', life: 1, label: t.frenzyCombo.replace('{n}', String(comboNow)) });
               if (engine.floatingScores.length > 16) engine.floatingScores.shift();
               engine.createExplosion(head.x, head.y, '#ffd166', 26, 1.8, true);
               engine.shake = Math.max(engine.shake, 6 + comboNow * 0.25);
@@ -248,14 +249,14 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
           if (multNow >= 5 && multNow > lastMult) {
             const head = engine.player.segments[0];
             engine.createExplosion(head.x, head.y, '#fff3b0', 30, 2, true);
-            engine.floatingScores.push({ x: head.x, y: head.y - 56, value: multNow * 10, color: '#fff3b0', life: 1, label: `SÜPER ÇARPAN x${multNow}!` });
+            engine.floatingScores.push({ x: head.x, y: head.y - 56, value: multNow * 10, color: '#fff3b0', life: 1, label: t.frenzyMult.replace('{n}', String(multNow)) });
             if (engine.floatingScores.length > 16) engine.floatingScores.shift();
             engine.shake = Math.max(engine.shake, 8);
             if (!current.muted) gameAudio.frenzy(16);
           }
           if (lastMult > 1 && multNow === 1) {
             const head = engine.player.segments[0];
-            engine.floatingScores.push({ x: head.x, y: head.y - 40, value: 0, color: '#94a3b8', life: 1, label: 'ÇARPAN BİTTİ' });
+            engine.floatingScores.push({ x: head.x, y: head.y - 40, value: 0, color: '#94a3b8', life: 1, label: t.multEnded });
             if (engine.floatingScores.length > 16) engine.floatingScores.shift();
             if (!current.muted) gameAudio.expired();
           }
@@ -322,7 +323,7 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
 
   return (
     <>
-      <canvas ref={canvasRef} className="fixed inset-0 block h-full w-full touch-none bg-slate-900 will-change-transform" aria-label="Wormate arena. Steer with the mouse, arrow keys, WASD, or drag on touch. Hold Space to boost." />
+      <canvas ref={canvasRef} className="fixed inset-0 block h-full w-full touch-none bg-slate-900 will-change-transform" aria-label={t.arenaAria} />
       {state === 'playing' && (
         <button
           className="touch-boost fixed bottom-7 right-6 z-10 flex h-20 w-20 touch-none flex-col items-center justify-center gap-1 rounded-full border border-orange-300/40 bg-orange-500/85 text-white shadow-lg active:scale-95 active:bg-orange-400"
@@ -342,7 +343,7 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
           onBlur={() => { inputRef.current.touchBoost = false; }}
         >
           <Zap size={23} fill="currentColor" />
-          <span className="text-[10px] font-extrabold tracking-widest">BOOST</span>
+          <span className="text-[10px] font-extrabold tracking-widest">{t.boostBtn}</span>
         </button>
       )}
     </>

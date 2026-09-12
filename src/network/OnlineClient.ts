@@ -2,6 +2,7 @@ import { GameEngine, getCameraZoom, Worm } from '../gameEngine';
 import type { PlayerStatus } from '../gameEngine';
 import { BONUS_BY_KIND } from '../constants';
 import { readLoadout, skinById } from '../shop';
+import { t } from '../i18n';
 import { NETWORK } from './protocol';
 import type { ArenaSnapshot, ClientMessage, WireWorm } from './protocol';
 import { parseServerMessage } from './validation';
@@ -23,8 +24,8 @@ export function arenaUrl(custom = '') {
   if (url.protocol === 'https:') url.protocol = 'wss:';
   if (url.protocol === 'http:') url.protocol = 'ws:';
   if (url.pathname === '/') url.pathname = NETWORK.PATH;
-  if (!['ws:', 'wss:'].includes(url.protocol) || url.username || url.password || url.search || url.hash || url.pathname !== NETWORK.PATH || url.href.length > 240) throw new Error('Use a ws:// or wss:// server address ending in /arena.');
-  if (window.location.protocol === 'https:' && url.protocol !== 'wss:') throw new Error('HTTPS pages require a secure wss:// arena server.');
+  if (!['ws:', 'wss:'].includes(url.protocol) || url.username || url.password || url.search || url.hash || url.pathname !== NETWORK.PATH || url.href.length > 240) throw new Error(t.arenaAddr);
+  if (window.location.protocol === 'https:' && url.protocol !== 'wss:') throw new Error(t.arenaTls);
   return url.href;
 }
 
@@ -59,24 +60,24 @@ export class OnlineClient {
       try { this.socket = new WebSocket(arenaUrl(endpoint)); }
       catch (error) { this.fail(error instanceof Error ? error.message : 'Cannot connect.'); return; }
       const ws = this.socket;
-      this.deadline = setTimeout(() => this.fail('Arena server did not respond. Start the Node server or check its address and allowed origins.'), 8000);
+      this.deadline = setTimeout(() => this.fail(t.srvNoResponse), 8000);
       ws.onopen = () => {
         this.send({ type: 'join', v: 1, name, room, ...this.viewport() });
       };
-      ws.onerror = () => this.fail('Cannot reach the live arena. Check the server address, TLS and allowed origins. Practice mode is still available.');
-      ws.onclose = () => this.fail('Connection ended. Your temporary session has been removed. Join again for a new ID.');
+      ws.onerror = () => this.fail(t.srvUnreachable);
+      ws.onclose = () => this.fail(t.connEnded);
       ws.onmessage = event => {
-        if (typeof event.data !== 'string') { this.fail('Unsupported server response.'); return; }
+        if (typeof event.data !== 'string') { this.fail(t.srvBadData); return; }
         const message = parseServerMessage(event.data);
-        if (!message) { this.fail('Invalid arena response. The connection was closed for safety.'); return; }
+        if (!message) { this.fail(t.srvBadData); return; }
         this.lastPacket = performance.now();
         if (message.type === 'welcome') {
-          if (this.id) { this.fail('Unexpected session response.'); return; }
+          if (this.id) { this.fail(t.sessionMismatch); return; }
           this.id = message.id;
           this.room = message.room;
           this.sendStyle();
         } else if (message.type === 'state') {
-          if (!this.id || message.you !== this.id) { this.fail('Session mismatch.'); return; }
+          if (!this.id || message.you !== this.id) { this.fail(t.sessionMismatch); return; }
           if (message.tick < this.lastStateTick || message.run < this.run) return;
           const first = !this.ready;
           this.receive(message);
@@ -85,7 +86,7 @@ export class OnlineClient {
             this.rejectConnect = null;
             if (this.deadline) clearTimeout(this.deadline);
             this.timer = setInterval(() => {
-              if (!document.hidden && performance.now() - this.lastPacket > 30000) { this.fail('The connection timed out. Rejoin to start a new session.'); return; }
+              if (!document.hidden && performance.now() - this.lastPacket > 30000) { this.fail(t.connTimeout); return; }
               this.send({ type: 'ping', at: Math.floor(performance.now()) });
             }, 5000);
             this.notifyConnected();
@@ -138,7 +139,7 @@ export class OnlineClient {
     this.send({ type: 'restart' });
     this.restartDeadline = setTimeout(() => {
       this.awaitingRespawn = false;
-      this.notifyConnected('Respawn was not confirmed. Please try again.');
+      this.notifyConnected(t.respawnRetry);
     }, 4000);
     return true;
   }
@@ -182,7 +183,7 @@ export class OnlineClient {
       this.socket = null;
     }
     if (voluntary && this.rejectConnect) {
-      this.rejectConnect(new Error('Connection cancelled.'));
+      this.rejectConnect(new Error(t.connCancelled));
       this.rejectConnect = null;
     }
   }

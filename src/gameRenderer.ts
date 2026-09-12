@@ -2,6 +2,7 @@ import { BONUS_BY_KIND, GAME_CONFIG as CONFIG } from './constants';
 import type { Food, GameEngine, Worm } from './gameEngine';
 import { GRID_CELL_SIZE, GRID_COLS, GRID_ROWS } from './gameEngine';
 import { getArenaPatterns, getBonusSprite, getGlow, getTreatSprite, getWormSegment } from './gameArt';
+import { t } from './i18n';
 
 type Context = CanvasRenderingContext2D;
 type Bounds = { left: number; right: number; top: number; bottom: number };
@@ -278,7 +279,7 @@ function drawWormBody(ctx: Context, worm: Worm, engine: GameEngine, reducedMotio
   ctx.font = `600 ${11 / zoom}px system-ui, sans-serif`;
   ctx.fillStyle = player ? '#edfdff' : '#dae9ebb8';
   const label = player
-    ? engine.isDemo ? 'Noodle' : worm.spawnProtection > 0 ? `YOU / SHIELD ${Math.ceil(worm.spawnProtection / 60)}s` : 'YOU'
+    ? engine.isDemo ? 'Noodle' : worm.spawnProtection > 0 ? `${t.you} / SHIELD ${Math.ceil(worm.spawnProtection / 60)}s` : t.you
     : worm.name;
   ctx.fillText(label, head.x, head.y - radius - 12 / zoom);
 }

@@ -54,6 +54,11 @@
 
 ## Ek işler (2026-09-12)
 
+- **Otomatik dil (6 dil, seçici yok):** `src/i18n.ts` — tarayıcı dilinden tr/en/es/fr/de/pt, bilinmeyene en.
+  Menü/HUD/mağaza/oturum/hata/ölüm/frenzy metinleri + sekme başlığı + `<html lang>` çevrildi.
+  Kapsam dışı (sonra): mağaza ürün adları, bonus rozet kodları (SPEED/CHOMP), canvas kafa etiketi kısmi.
+  Test: 31/31 geçti (`tsc` temiz, `vite build` OK).
+
 - **Büyük dünya:** arena 3200→4000, grid 25x25, spawn merkeze göre, yemek 1500/bonus 18/bot 18 (online 8).
 - **Duvar dışı void + mini harita:** dış alan desensiz karanlık, sınır ince çizgi; sol üstte konum/bonus/bot haritası + görüş çerçevesi.
 - **Arena akıcılık:** snapshot 15→20Hz, paket başı yemek 500 cap (donma şikayetine karşı).
