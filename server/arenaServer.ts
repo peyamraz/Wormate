@@ -43,6 +43,13 @@ export interface ArenaServerOptions {
 
 const round = (value: number) => Math.round(value * 10) / 10;
 export function serializeWorm(worm: Worm): WireWorm {
+  // Dev solucanlar paketi şişirmesin: 600 segment üstü seyreltilir (görselde kayıp yok).
+  const segs = worm.segments;
+  const stride = segs.length > 600 ? 2 : 1;
+  const points: number[] = [];
+  for (let i = 0; i < segs.length; i += stride) {
+    points.push(round(segs[i].x), round(segs[i].y));
+  }
   return {
     id: worm.id, name: worm.name, color: worm.color, pattern: worm.pattern,
     angle: worm.angle, radius: worm.radius, score: worm.score, isDead: worm.isDead,
@@ -52,7 +59,7 @@ export function serializeWorm(worm: Worm): WireWorm {
     growthPulse: worm.growthPulse, appetite: worm.appetite, lookOffset: worm.lookOffset,
     hat: worm.hat, glasses: worm.glasses, eyes: worm.eyes, mouth: worm.mouth,
     deathReason: worm.deathReason,
-    points: worm.segments.flatMap(point => [round(point.x), round(point.y)]),
+    points,
   };
 }
 

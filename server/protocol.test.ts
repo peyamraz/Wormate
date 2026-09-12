@@ -6,7 +6,7 @@ import { parseServerMessage } from '../src/network/validation';
 import { allowedOrigins, TokenBucket } from './security';
 import { createPracticeSession, getSession, clearSession } from '../src/session';
 import { GAME_CONFIG } from '../src/constants';
-import { GameEngine } from '../src/gameEngine';
+import { GameEngine, Worm } from '../src/gameEngine';
 import { serializeWorm } from './arenaServer';
 
 const input = { type: 'input', seq: 1, angle: 1, boost: true };
@@ -83,6 +83,22 @@ test('kill notices survive network validation', () => {
     events: [{ type: 'kill', playerId: worm.id, x: 2000, y: 2000, color: worm.color, value: 150 }],
   };
   assert.ok(parseServerMessage(JSON.stringify(message)), 'kill olayi kabul edilmeli');
+});
+
+test('giant worms are thinned in snapshots without breaking validation', () => {
+  const giant = new Worm(randomUUID(), 2600, 2600, GAME_CONFIG.COLORS[0], 0, 700, 'Giant');
+  giant.segments.forEach(p => { p.x = 2600; p.y = 2600; });
+  const wire = serializeWorm(giant);
+  assert.ok(wire.points.length < 1400, 'paket sismemeli');
+  assert.equal(wire.points.length % 2, 0);
+  const world = new GameEngine(undefined, false, 'online');
+  const viewer = world.addHuman(randomUUID(), 'Guest');
+  const message = {
+    type: 'state', v: 1, tick: 1, run: 1, you: viewer.id,
+    worms: [serializeWorm(viewer), wire],
+    foods: [], bonuses: [], status: world.getStatus(viewer), events: [],
+  };
+  assert.ok(parseServerMessage(JSON.stringify(message)), 'seyreltilmis solucan kabul edilmeli');
 });
 
 test('origin allowlist fails closed and production requires HTTPS', () => {

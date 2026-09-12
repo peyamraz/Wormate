@@ -38,7 +38,7 @@ export function parseServerMessage(raw: string): ServerMessage | null {
     if (typeof worm.pattern !== 'string' || !(WORM_PATTERNS as string[]).includes(worm.pattern) || !text(worm.deathReason, 160)) return null;
     if (!['isDead', 'isHuman', 'isBoosting'].every(key => typeof worm[key] === 'boolean')) return null;
     if (!['score', 'spawnProtection', 'speedTicks', 'chompTicks', 'multiplierTicks', 'combo', 'facePhase'].every(key => number(worm[key], 0, 999999999))) return null;
-    if (!number(worm.radius, 1, 40) || !number(worm.angle, -1e8, 1e8) || typeof worm.multiplier !== 'number' || ![1, 2, 5, 10, 100].includes(worm.multiplier)) return null;
+    if (!number(worm.radius, 1, 100) || !number(worm.angle, -1e8, 1e8) || typeof worm.multiplier !== 'number' || ![1, 2, 5, 10, 100].includes(worm.multiplier)) return null;
     if (!number(worm.growthPulse, 0, 1) || !number(worm.appetite, 0, 1) || !number(worm.lookOffset, -1, 1)) return null;
     if (typeof worm.hat !== 'string' || !SHOP_HATS.some(h => h.id === worm.hat)) return null;
     if (typeof worm.glasses !== 'string' || !SHOP_GLASSES.some(g => g.id === worm.glasses)) return null;
