@@ -61,7 +61,7 @@ test('two real sockets share an arena, receive distinct IDs, and leave cleanly',
     assert.equal(aState.you, a.id);
     assert.equal(bState.you, b.id);
     assert.equal(aState.status.humanCount, 2);
-    assert.equal(aState.status.botCount, 8);
+    assert.equal(aState.status.botCount, 10);
     assert.deepEqual(server.stats(), { connections: 2, sessions: 2, rooms: 1 });
 
     const closed = once(a.ws, 'close');

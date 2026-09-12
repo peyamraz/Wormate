@@ -64,10 +64,10 @@ test('rapid eating builds combo up to the frenzy cap', () => {
 });
 
 test('arena boundary is circular: edge kills, center lives', () => {
-  const edge = new Worm(randomUUID(), 3990, 2000, GAME_CONFIG.COLORS[0]);
+  const edge = new Worm(randomUUID(), 5190, 2600, GAME_CONFIG.COLORS[0]);
   edge.update(0, false);
   assert.equal(edge.isDead, true, 'cember disina cikan olmeli');
-  const middle = new Worm(randomUUID(), 2000, 2000, GAME_CONFIG.COLORS[0]);
+  const middle = new Worm(randomUUID(), 2600, 2600, GAME_CONFIG.COLORS[0]);
   middle.update(0, false);
   assert.equal(middle.isDead, false, 'merkez yasamali');
 });

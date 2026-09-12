@@ -19,6 +19,8 @@ function play(frequency: number, endFrequency: number, duration: number, type: O
 }
 
 export const gameAudio = {
+  _lastGulp: 0,
+  _lastZip: 0,
   unlock() {
     try {
       if (typeof window.AudioContext === 'undefined') return;
@@ -34,7 +36,7 @@ export const gameAudio = {
   },
   bonus(kind: string) {
     if (kind === 'speed') play(240, 720, 0.18, 'sawtooth');
-    else if (kind === 'chomp') play(160, 90, 0.16, 'square');
+    else if (kind === 'chomp') play(160, 90, 0.16, 'triangle');
     else if (kind === 'x100') play(420, 1260, 0.32, 'triangle');
     else play(380, 860, 0.2, 'triangle');
   },
@@ -50,9 +52,16 @@ export const gameAudio = {
     play(520, 260, 0.16, 'sine');
   },
   gulp() {
-    play(150, 70, 0.1, 'square');
+    // CHOMP şöleninde makineli tüfek etkisi yapmasın: yumuşak dalga + 120ms seyretme.
+    const now = performance.now();
+    if (now - this._lastGulp < 120) return;
+    this._lastGulp = now;
+    play(150, 70, 0.1, 'triangle');
   },
   zip() {
+    const now = performance.now();
+    if (now - this._lastZip < 120) return;
+    this._lastZip = now;
     play(700, 1500, 0.08, 'sine');
   },
 };

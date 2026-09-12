@@ -67,7 +67,7 @@ test('worm coordinates follow the enlarged arena bounds', () => {
   near.worms[0].points = near.worms[0].points.map((_, i) => i % 2 === 0 ? 3900 : 2000);
   assert.ok(parseServerMessage(JSON.stringify(near)), 'cember icindeki nokta kabul edilmeli');
   const far = base();
-  far.worms[0].points = far.worms[0].points.map((_, i) => i % 2 === 0 ? 4600 : 2000);
+  far.worms[0].points = far.worms[0].points.map((_, i) => i % 2 === 0 ? 5800 : 2600);
   assert.equal(parseServerMessage(JSON.stringify(far)), null, 'cember disindaki nokta reddedilmeli');
 });
 

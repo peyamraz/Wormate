@@ -103,8 +103,8 @@ export function distToEdge(x: number, y: number): number {
 }
 
 export const GRID_CELL_SIZE = 160;
-export const GRID_COLS = 25;
-export const GRID_ROWS = 25;
+export const GRID_COLS = 33;
+export const GRID_ROWS = 33;
 export const TOTAL_GRID_CELLS = GRID_COLS * GRID_ROWS;
 
 export function getCameraZoom(length: number, viewport: Viewport) {
@@ -319,7 +319,7 @@ export class GameEngine {
     if (this.onlineArena) this.player.isDead = true;
     this.camera = { x, y, zoom: getCameraZoom(this.player.segments.length, viewport) };
     if (mode === 'view') return;
-    for (let i = 0; i < (this.onlineArena ? 8 : CONFIG.BOT_COUNT); i++) this.spawnBot(i < 4 || isDemo);
+    for (let i = 0; i < (this.onlineArena ? 10 : CONFIG.BOT_COUNT); i++) this.spawnBot(i < 4 || isDemo);
 
     // A visible snack trail guarantees that the first few seconds are rewarding.
     for (let i = 1; i <= 20; i++) this.addFood(x + i * 28, y + Math.sin(i * 0.45) * 12);
@@ -370,8 +370,8 @@ export class GameEngine {
     let clearance = -1;
     for (let attempt = 0; attempt < 100; attempt++) {
       const candidate = attempt < 60
-        ? { x: 1400 + Math.random() * 1200, y: 1400 + Math.random() * 1200 }
-        : { x: 220 + Math.random() * 3560, y: 220 + Math.random() * 3560 };
+        ? { x: 1900 + Math.random() * 1400, y: 1900 + Math.random() * 1400 }
+        : { x: 220 + Math.random() * 4760, y: 220 + Math.random() * 4760 };
       const inside = clampToArena(candidate.x, candidate.y, 140);
       let nearest = Infinity;
       for (const worm of living) {
@@ -853,7 +853,7 @@ export class GameEngine {
     }
 
     this.bots = this.bots.filter(bot => !bot.isDead);
-    while (this.bots.length < (this.onlineArena ? 8 : CONFIG.BOT_COUNT)) this.spawnBot();
+    while (this.bots.length < (this.onlineArena ? 10 : CONFIG.BOT_COUNT)) this.spawnBot();
     while (this.foods.length < CONFIG.FOOD_COUNT) this.spawnFood();
 
     // Denser bonus flow: top the map back up quickly, keep orbs on the field

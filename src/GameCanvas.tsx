@@ -254,8 +254,7 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
             engine.shake = Math.max(engine.shake, 8);
             if (!current.muted) gameAudio.frenzy(16);
           }
-          if (lastMult > 1 && multNow === 1) {
-            const head = engine.player.segments[0];
+          if (lastMult > 1 && multNow === 1) {            const head = engine.player.segments[0];
             engine.floatingScores.push({ x: head.x, y: head.y - 40, value: 0, color: '#94a3b8', life: 1, label: t.multEnded });
             if (engine.floatingScores.length > 16) engine.floatingScores.shift();
             if (!current.muted) gameAudio.expired();

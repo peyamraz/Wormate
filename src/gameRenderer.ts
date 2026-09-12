@@ -445,17 +445,22 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
   ctx.beginPath();
   ctx.arc(CONFIG.ARENA_CENTER, CONFIG.ARENA_CENTER, CONFIG.ARENA_RADIUS, 0, TAU);
   ctx.stroke();
-  // Kenara yaklaşınca kırmızı nabız: görünmez ölüme karşı adil uyarı.
+  // Duvar uyarısı: yaklaşınca çemberin ekrandaki kısmı hafif kırmızı parlar.
   if (!engine.isDemo && !engine.player.isDead) {
     const head = engine.player.segments[0];
     const edge = distToEdge(head.x, head.y);
-    if (edge < 320) {
-      const pulse = reducedMotion ? 0.7 : 0.55 + 0.25 * Math.sin(engine.ticks * 0.2);
-      ctx.globalAlpha = Math.max(0, (1 - edge / 320)) * 0.4 * pulse;
+    if (edge < 420) {
+      const danger = Math.max(0, 1 - edge / 420);
+      ctx.globalAlpha = 0.06 + danger * 0.16;
       ctx.strokeStyle = '#ff2d55';
-      ctx.lineWidth = 90;
+      ctx.lineWidth = 130;
       ctx.beginPath();
-      ctx.arc(CONFIG.ARENA_CENTER, CONFIG.ARENA_CENTER, CONFIG.ARENA_RADIUS - 45, 0, TAU);
+      ctx.arc(CONFIG.ARENA_CENTER, CONFIG.ARENA_CENTER, CONFIG.ARENA_RADIUS - 60, 0, TAU);
+      ctx.stroke();
+      ctx.globalAlpha = 0.08 + danger * 0.2;
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.arc(CONFIG.ARENA_CENTER, CONFIG.ARENA_CENTER, CONFIG.ARENA_RADIUS - 4, 0, TAU);
       ctx.stroke();
       ctx.globalAlpha = 1;
     }

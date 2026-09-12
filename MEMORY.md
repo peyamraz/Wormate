@@ -78,7 +78,19 @@
   Spawn/yem/bonus/bot daire içine kelepçelenir, validasyon radyal. Ölüm mekaniği aynı.
 - Test: 37/37 (`tsc` temiz, build OK).
 
+- **Büyük arena 2 (TAMAM):** R 2000→2600 (dünya 5200, grid 33x33), yemek 2400/bonus 24/odada 10 bot.
+  Uçtan uca yürüyüş ~30sn→~40sn. Test: 37/37 (`tsc` temiz, build OK).
+
+- **CHOMP cızırtısı (TAMAM):** `gulp` kare→üçgen dalga + 120ms seyretme, `zip` de seyretmeli,
+  CHOMP pickup sesi yumuşatıldı. `tsc` temiz, build OK.
+
+- **Kenar alarmı (TAMAM):** 420px kala çemberin ekrandaki kısmı hafif kırmızı parlar
+  (geniş silik bant + ince çizgi, yaklaştıkça opaklaşır). Kafa işareti ve bip yok.
+
 ## Kararlar / notlar
+
+- Ölçek: şu an küçük ölçek — oda kapasitesi (16→20) ve process sharding (5000 kişi senaryosu) ERTELENDİ.
+  Daire büyütme (R 2600) de aynı sebeple bekliyor; oyuncu sayısı artınca yoğunlukla birlikte ele alınacak.
 
 - Para modeli (varsayılan): **skor = altın**, her oyun sonu cüzdana eklenir. Değişirse buraya işle.
 - Protokol değişirse (`LeaderboardEntry` +boy, cüzdan, kuşanan eşya) client+server aynı repoda birlikte bump edilir.

@@ -109,7 +109,7 @@ The WebSocket endpoint has an exact origin allowlist, strict message shapes,
 nickname/room limits, a 1 KB inbound payload cap, disabled compression, per-IP
 connection/upgrade limits, a per-socket message budget, a join deadline,
 heartbeat expiry, and bounded outgoing buffering. Four rooms with at most 16
-human sessions each are supported per process. Eight bots populate each live room.
+human sessions each are supported per process. Ten bots populate each live room.
 Snapshot interest filtering sends nearby scenery rather than the entire world.
 
 The HTTP server only exposes the built page and `/health`, never arbitrary files
