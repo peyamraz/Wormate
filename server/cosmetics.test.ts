@@ -236,6 +236,12 @@ test('tum bonus kupleri ve sekerler hatasiz uretilir', async () => {
       assert.ok(ops.filter(o => o.op === 'moveTo').length >= 8, 'wide oklar icermeli');
       continue;
     }
+    if (bonus.kind === 'speed' || bonus.kind === 'chomp') {
+      // Hiz ve somurme ikonludur: sekil cizgileri olmali, yazi olmamali.
+      assert.ok(ops.some(o => o.op === 'moveTo' || o.op === 'arc'), `${bonus.kind} ikon icermeli`);
+      assert.ok(!ops.some(o => o.op === 'fillText'), `${bonus.kind} yazi icermemeli`);
+      continue;
+    }
     const texts = ops.filter(o => o.op === 'fillText');
     assert.ok(texts.some(o => String(o.args[0]).length > 0), `${bonus.kind} etiket yazmali`);
   }

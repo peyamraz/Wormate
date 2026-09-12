@@ -125,6 +125,8 @@ profil/seviye, yem çeşitliliği, korsan şapka+göz bandı takan solucanlar).
   Yiyen devleşmez; kamera %30 açılır, süre bitince yumuşakça daralır. Mor rozet + 6 dilde
   etiket (WIDE/GENİŞ…), online senkronlu. Test: 51/51 (`tsc` temiz, build OK).
 - WIDE ikonu (TAMAM): küpte yazı yok, mor karoda dışa açılan 4 ok. Test: 51/51 (`tsc` temiz, build OK).
+- Kırmızı dış alan (TAMAM): çember dışı desensiz koyu kırmızı, keskin sınır çizgisi + hale.
+  Yemler zaten daire içine kelepçeli, kırmızı alan temiz. `tsc` temiz, build OK.
 - Orantılı büyüme (TAMAM): lokma kuyruğa yazılır (tick başına 1 segment), DEV şişmesi
   blend ile yumuşar, kamera/dev senkronlu. Test: 51/51 (`tsc` temiz, build OK).
 - Faz 2 (TAMAM — 2026-09-12): Giyim — 4 göz + 3 ağız stili, altınla, online senkronlu

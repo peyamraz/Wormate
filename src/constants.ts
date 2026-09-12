@@ -17,8 +17,8 @@ export const GAME_CONFIG = {
   FOOD_COUNT: 2400,
   MAX_FOOD_COUNT: 3000,
   FOOD_RADIUS: 10,
-  BONUS_TARGET_COUNT: 14,
-  BONUS_MAX_COUNT: 20,
+  BONUS_TARGET_COUNT: 8,
+  BONUS_MAX_COUNT: 14,
   BONUS_RESPAWN_TICKS: 45,
   BONUS_NEAR_PLAYER_TICKS: 150,
   BONUS_LIFETIME_TICKS: 5400,
@@ -68,14 +68,14 @@ export const BONUSES: {
   weight: number;
   multiplier: number;
 }[] = [
-  { kind: 'speed', label: 'SPEED', color: '#38bdf8', ticks: 480, weight: 0.22, multiplier: 1 },
-  { kind: 'chomp', label: 'CHOMP', color: '#fb923c', ticks: 480, weight: 0.18, multiplier: 1 },
+  { kind: 'speed', label: 'SPEED', color: '#38bdf8', ticks: 480, weight: 0.18, multiplier: 1 },
+  { kind: 'chomp', label: 'CHOMP', color: '#fb923c', ticks: 480, weight: 0.14, multiplier: 1 },
   { kind: 'x2', label: '2x', color: '#a3e635', ticks: 720, weight: 0.24, multiplier: 2 },
   { kind: 'x5', label: '5x', color: '#facc15', ticks: 540, weight: 0.14, multiplier: 5 },
   { kind: 'x10', label: '10x', color: '#f472b6', ticks: 360, weight: 0.08, multiplier: 10 },
-  { kind: 'x100', label: '100x', color: '#ffd166', ticks: 180, weight: 0.02, multiplier: 100 },
-  { kind: 'coin', label: 'ALTIN', color: '#ffd700', ticks: 0, weight: 0.08, multiplier: 1 },
-  { kind: 'wide', label: 'GENİŞ', color: '#8b5cf6', ticks: 480, weight: 0.06, multiplier: 1 },
+  { kind: 'x100', label: '100x', color: '#ffd166', ticks: 180, weight: 0.01, multiplier: 100 },
+  { kind: 'coin', label: 'ALTIN', color: '#ffd700', ticks: 0, weight: 0.13, multiplier: 1 },
+  { kind: 'wide', label: 'GENİŞ', color: '#8b5cf6', ticks: 480, weight: 0.08, multiplier: 1 },
 ];
 
 export const BONUS_BY_KIND = Object.fromEntries(BONUSES.map(bonus => [bonus.kind, bonus])) as Record<BonusKind, typeof BONUSES[number]>;

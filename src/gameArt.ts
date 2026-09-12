@@ -1,7 +1,6 @@
 import { BONUSES, GAME_CONFIG as CONFIG, TREATS } from './constants';
 import type { BonusKind, TreatKind, WormPattern, FlagSkin } from './constants';
 import { SHOP_SKINS } from './shop';
-import { bonusLabel } from './i18n';
 
 type Context = CanvasRenderingContext2D;
 type Paint = string | CanvasGradient;
@@ -1088,15 +1087,54 @@ export function getBonusSprite(kind: BonusKind) {
     ctx.lineTo(6, -10);
     ctx.lineTo(-4, -8);
     ctx.fill();
-    ctx.fillStyle = '#3b2048';
-    const gemLabel = bonusLabel(kind);
-    const gemFont = kind === 'speed' || kind === 'chomp' ? (gemLabel.length > 6 ? 6.5 : gemLabel.length > 4 ? 8 : 9) : 16;
-    ctx.font = `800 ${gemFont}px system-ui, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(gemLabel, 0, 3);
-    ctx.fillStyle = '#fffef8';
-    ctx.fillText(gemLabel, 0, 1);
+    if (kind === 'speed') {
+      // Şimşek: yazısız, uzaktan okunur.
+      ctx.fillStyle = '#fff7ae';
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(5, -17);
+      ctx.lineTo(-9, 2);
+      ctx.lineTo(-1, 2);
+      ctx.lineTo(-5, 17);
+      ctx.lineTo(9, -3);
+      ctx.lineTo(1, -3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    } else if (kind === 'chomp') {
+      // Mıknatıs: kırmızı nal + beyaz uçlar.
+      ctx.strokeStyle = '#ff4d5e';
+      ctx.lineWidth = 10;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(0, -6, 11, Math.PI * 0.12, Math.PI * 0.88);
+      ctx.stroke();
+      roundedRect(ctx, 5.5, -3, 9, 13, 3, '#f2f4f8');
+      roundedRect(ctx, -14.5, -3, 9, 13, 3, '#f2f4f8');
+    } else if (bonus.multiplier > 1) {
+      // Çarpan: yıldız + sayı (sayı durur).
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const rad = i % 2 === 0 ? 12 : 5;
+        const a = -Math.PI / 2 + i * Math.PI / 5;
+        const px = Math.cos(a) * rad, py = -5 + Math.sin(a) * rad;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      const num = `x${bonus.multiplier}`;
+      ctx.font = `800 ${num.length > 3 ? 11 : 14}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+      ctx.strokeText(num, 0, 12);
+      ctx.fillStyle = '#3b2048';
+      ctx.fillText(num, 0, 12);
+    }
   });
   bonusSprites.set(kind, cached);
   return cached;
