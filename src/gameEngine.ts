@@ -65,7 +65,7 @@ export interface PlayerStatus {
   multiplierSeconds: number;
   speedSeconds: number;
   chompSeconds: number;
-  giantSeconds: number;
+  wideSeconds: number;
   combo: number;
   activeCount: number;
   humanCount: number;
@@ -143,7 +143,9 @@ export class Worm {
   boostTicks = 0;
   speedTicks = 0;
   chompTicks = 0;
-  giantTicks = 0;
+  wideTicks = 0;
+  wideBlend = 0;
+  pendingGrowth = 0;
   multiplier = 1;
   multiplierTicks = 0;
   combo = 0;
@@ -201,7 +203,16 @@ export class Worm {
     this.spawnProtection = Math.max(0, this.spawnProtection - 1);
     this.speedTicks = Math.max(0, this.speedTicks - 1);
     this.chompTicks = Math.max(0, this.chompTicks - 1);
-    this.giantTicks = Math.max(0, this.giantTicks - 1);
+    this.wideTicks = Math.max(0, this.wideTicks - 1);
+    // Kamera açısı kademeli: sıçrama yok.
+    const wideTarget = this.wideTicks > 0 ? 1 : 0;
+    this.wideBlend += (wideTarget - this.wideBlend) * 0.08;
+    if (Math.abs(this.wideBlend - wideTarget) < 0.002) this.wideBlend = wideTarget;
+    if (this.pendingGrowth >= 1 && this.segments.length < CONFIG.WORM_MAX_LENGTH) {
+      const tailTip = this.segments[this.segments.length - 1];
+      this.segments.push({ x: tailTip.x, y: tailTip.y });
+      this.pendingGrowth -= 1;
+    }
     this.multiplierTicks = Math.max(0, this.multiplierTicks - 1);
     if (this.multiplierTicks === 0) this.multiplier = 1;
     this.comboTicks = Math.max(0, this.comboTicks - 1);
@@ -229,9 +240,8 @@ export class Worm {
   }
 
   grow(amount: number, awarded = amount * 10) {
-    const tail = this.segments[this.segments.length - 1];
-    const count = Math.min(amount * CONFIG.GROWTH_PER_FOOD, CONFIG.WORM_MAX_LENGTH - this.segments.length);
-    for (let i = 0; i < count; i++) this.segments.push({ ...tail });
+    // Boy anında değil kuyruğa yazılır; update() her tick 1 segment uzatır.
+    this.pendingGrowth = Math.min(this.pendingGrowth + amount * CONFIG.GROWTH_PER_FOOD, CONFIG.WORM_MAX_LENGTH);
     this.score = Math.min(999999999, this.score + Math.max(0, awarded));
     this.growthPulse = 1;
     this.appetite = 1;
@@ -242,7 +252,7 @@ export class Worm {
   applyBonus(kind: BonusKind) {
     const bonus = BONUS_BY_KIND[kind];
     if (kind === 'coin') return; // altın süreli efekt vermez, cüzdana işlenir
-    if (kind === 'giant') { this.giantTicks = Math.max(this.giantTicks, bonus.ticks); return; }
+    if (kind === 'wide') { this.wideTicks = Math.max(this.wideTicks, bonus.ticks); return; }
     if (kind === 'speed') this.speedTicks = Math.max(this.speedTicks, bonus.ticks);
     if (kind === 'chomp') this.chompTicks = Math.max(this.chompTicks, bonus.ticks);
     if (bonus.multiplier > 1) {
@@ -594,7 +604,7 @@ export class GameEngine {
       multiplierSeconds: Math.ceil(viewer.multiplierTicks / 60),
       speedSeconds: Math.ceil(viewer.speedTicks / 60),
       chompSeconds: Math.ceil(viewer.chompTicks / 60),
-      giantSeconds: Math.ceil(viewer.giantTicks / 60),
+      wideSeconds: Math.ceil(viewer.wideTicks / 60),
       combo: viewer.combo,
       activeCount: ranked.length,
       humanCount: ranked.filter(entry => !entry.isBot).length,
@@ -803,8 +813,7 @@ export class GameEngine {
       if (worm.isDead) continue;
       const head = worm.segments[0];
       const chompBonus = worm.isHuman && worm.chompTicks > 0 ? 22 : 0;
-      const giantBonus = worm.isHuman && worm.giantTicks > 0 ? 14 : 0;
-      const reach = worm.radius + (CONFIG.FOOD_RADIUS * 1.15) + (worm.isHuman ? 5 : 0) + chompBonus + giantBonus;
+      const reach = worm.radius + (CONFIG.FOOD_RADIUS * 1.15) + (worm.isHuman ? 5 : 0) + chompBonus;
       const searchRadius = reach + 35;
       const minCx = clamp(Math.floor((head.x - searchRadius) / GRID_CELL_SIZE), 0, GRID_COLS - 1);
       const maxCx = clamp(Math.floor((head.x + searchRadius) / GRID_CELL_SIZE), 0, GRID_COLS - 1);
@@ -915,8 +924,8 @@ export class GameEngine {
     this.camera.x += (head.x - this.camera.x) * 0.2;
     this.camera.y += (head.y - this.camera.y) * 0.2;
     // DEV bonusu kamerayı açar; süre bitince yumuşakça geri döner.
-    const giantView = this.player.giantTicks > 0 ? 0.7 : 1;
-    const targetZoom = getCameraZoom(this.player.segments.length, this.viewport) * giantView;
+    const wideView = 1 - 0.3 * this.player.wideBlend;
+    const targetZoom = getCameraZoom(this.player.segments.length, this.viewport) * wideView;
     this.camera.zoom += (targetZoom - this.camera.zoom) * CONFIG.CAMERA_ZOOM_SMOOTHING;
   }
 

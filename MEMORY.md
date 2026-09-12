@@ -121,9 +121,11 @@ profil/seviye, yem çeşitliliği, korsan şapka+göz bandı takan solucanlar).
   skor + AVLADIN bildirimi + sesi, %100 altın düşer. Minimap artı çizgisi. Test: 41/41 (`tsc` temiz, build OK).
 - Ölüm patlaması (TAMAM): beyaz flaş + şok halkası + iri ganimet (kurban iriliğine göre).
   Practice + online. Test: 48/48 (`tsc` temiz, build OK).
-- DEV bonusu (TAMAM): yiyen 8sn devleşir (1.6x gövde + geniş yeme alanı), kamera %30 açılır,
-  süre bitince yumuşakça döner. Mor rozet + 6 dilde etiket, online senkronlu.
-  Test: 50/50 (`tsc` temiz, build OK).
+- DEV bonusu (İPTAL — kullanıcı isteği): büyüme silindi, yerine WIDE kamera bonusu.
+  Yiyen devleşmez; kamera %30 açılır, süre bitince yumuşakça daralır. Mor rozet + 6 dilde
+  etiket (WIDE/GENİŞ…), online senkronlu. Test: 51/51 (`tsc` temiz, build OK).
+- Orantılı büyüme (TAMAM): lokma kuyruğa yazılır (tick başına 1 segment), DEV şişmesi
+  blend ile yumuşar, kamera/dev senkronlu. Test: 51/51 (`tsc` temiz, build OK).
 - Faz 2 (TAMAM — 2026-09-12): Giyim — 4 göz + 3 ağız stili, altınla, online senkronlu
   (style mesajı + snapshot + validasyon). Test: 42/42 (`tsc` temiz, build OK).
 - Faz 3 (TAMAM — 2026-09-12): Seviye/XP — toplam skordan üçgensel eşik, menüde profil

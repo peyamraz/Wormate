@@ -39,7 +39,7 @@ export type WireWorm = Pick<Worm,
   'id' | 'name' | 'color' | 'pattern' | 'angle' | 'radius' | 'score' | 'isDead' |
   'isHuman' | 'spawnProtection' | 'isBoosting' | 'speedTicks' | 'chompTicks' |
   'multiplier' | 'multiplierTicks' | 'combo' | 'facePhase' | 'growthPulse' | 'appetite' | 'lookOffset' |
-  'hat' | 'glasses' | 'eyes' | 'mouth' | 'giantTicks'
+  'hat' | 'glasses' | 'eyes' | 'mouth' | 'wideTicks' | 'wideBlend'
 > & { points: number[]; deathReason: string };
 
 export interface ArenaSnapshot {

@@ -300,9 +300,7 @@ export function drawHat(ctx: Context, worm: Worm, radius: number) {
 
 function drawWormBody(ctx: Context, worm: Worm, engine: GameEngine, reducedMotion: boolean, bounds: Bounds) {
   if (worm.isDead || !worm.segments.some(point => inView(point.x, point.y, bounds))) return;
-  // DEV bonusu gövdeyi şişirir; bitince söner.
-  const giant = worm.giantTicks > 0 ? 1.6 : 1;
-  const radius = worm.radius * giant * (engine.isDemo ? 1.14 : 1);
+  const radius = worm.radius * (engine.isDemo ? 1.14 : 1);
   const head = worm.segments[0];
   const step = Math.max(2, Math.round(radius * 0.58 / CONFIG.WORM_SEGMENT_SPACING));
   const player = worm === engine.player;

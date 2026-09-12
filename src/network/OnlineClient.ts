@@ -118,8 +118,8 @@ export class OnlineClient {
   }
   private cameraZoom() {
     const displayScale = Math.max(1, this.view.viewport.width / 1920, this.view.viewport.height / 1080);
-    const giantView = this.view.player.giantTicks > 0 ? 0.7 : 1;
-    return getCameraZoom(this.view.player.segments.length, this.viewport()) * giantView * displayScale;
+    const wideView = 1 - 0.3 * this.view.player.wideBlend;
+    return getCameraZoom(this.view.player.segments.length, this.viewport()) * wideView * displayScale;
   }
   sendStyle() {
     if (!this.ready && !this.id) return;
@@ -201,9 +201,9 @@ export class OnlineClient {
       const created = !worm || (target.id === this.id && freshRun);
       if (created || !worm) worm = new Worm(target.id, target.points[0], target.points[1], target.color, target.angle, target.points.length / 2, target.name, target.pattern);
       const previousLength = worm.segments.length;
-      for (const key of ['angle', 'radius', 'score', 'spawnProtection', 'speedTicks', 'chompTicks', 'multiplier', 'multiplierTicks', 'combo', 'facePhase', 'growthPulse', 'appetite', 'lookOffset'] as const) worm[key] = target[key];
+      for (const key of ['angle', 'radius', 'score', 'spawnProtection', 'speedTicks', 'chompTicks', 'wideTicks', 'wideBlend', 'multiplier', 'multiplierTicks', 'combo', 'facePhase', 'growthPulse', 'appetite', 'lookOffset'] as const) worm[key] = target[key];
       worm.hat = target.hat; worm.glasses = target.glasses; worm.eyes = target.eyes; worm.mouth = target.mouth;
-      worm.giantTicks = target.giantTicks;
+      worm.wideTicks = target.wideTicks; worm.wideBlend = target.wideBlend;
       worm.name = target.name; worm.color = target.color; worm.pattern = target.pattern;
       worm.isDead = target.isDead; worm.isHuman = target.isHuman; worm.isBoosting = target.isBoosting;
       worm.deathReason = target.deathReason;

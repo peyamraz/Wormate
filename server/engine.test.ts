@@ -39,6 +39,7 @@ test('leaderboard carries body size and ranks the size race separately', () => {
   const b = world.addHuman(randomUUID(), 'Bob');
   world.bots = [];
   a.grow(10, 50);
+  for (let i = 0; i < 25; i++) a.update(a.angle, false);
   const status = world.getStatus(b);
   const rowA = status.leaderboard.find(entry => entry.id === a.id);
   assert.ok(rowA && rowA.size === a.segments.length && rowA.size > 28);
@@ -99,9 +100,18 @@ test('boosting worms shed speed streaks from tail and body', () => {
   assert.ok(world.particles.length > before, 'boost iz birakmali');
 });
 
+test('growth stretches the tail gradually, not in one jump', () => {
+  const worm = new Worm(randomUUID(), 2600, 2600, GAME_CONFIG.COLORS[0]);
+  const before = worm.segments.length;
+  worm.grow(4, 0);
+  assert.equal(worm.segments.length, before, 'lokma aninda uzamamali');
+  worm.update(0, false);
+  worm.update(0, false);
+  assert.equal(worm.segments.length, before + 2, 'tick basina 1 segment');
+});
+
 test('sustained boost consumes body segments as fuel', () => {
-  const worm = new Worm(randomUUID(), 1600, 1600, GAME_CONFIG.COLORS[0]);
-  worm.grow(20, 0);
+  const worm = new Worm(randomUUID(), 2600, 2600, GAME_CONFIG.COLORS[0], 0, 60);
   const before = worm.segments.length;
   for (let i = 0; i < 40; i++) worm.update(0, true);
   assert.ok(worm.segments.length < before, 'holding boost must burn segments');
@@ -135,16 +145,16 @@ test('bonus orbs keep their distance instead of piling up', () => {
   assert.ok(a.segments.length > 0);
 });
 
-test('giant bonus swells the worm and expires on its own', () => {
+test('wide bonus opens the camera and expires on its own', () => {
   const world = new GameEngine(undefined, false, 'online');
   const a = world.addHuman(randomUUID(), 'Alice');
   world.bots = [];
-  a.applyBonus('giant');
-  assert.ok(a.giantTicks > 0, 'dev suresi baslamali');
-  assert.equal(world.getStatus(a).giantSeconds, 8);
+  a.applyBonus('wide');
+  assert.ok(a.wideTicks > 0, 'genis aci suresi baslamali');
+  assert.equal(world.getStatus(a).wideSeconds, 8);
   for (let i = 0; i < 480; i++) a.update(a.angle, false);
-  assert.equal(a.giantTicks, 0, 'sure bitince sonmeli');
-  assert.equal(world.getStatus(a).giantSeconds, 0);
+  assert.equal(a.wideTicks, 0, 'sure bitince sonmeli');
+  assert.equal(world.getStatus(a).wideSeconds, 0);
 });
 
 test('death sets a screen flash and a shockwave ring', () => {
@@ -225,6 +235,9 @@ test('bonus expiration and bounded growth prevent indefinite amplification', () 
   for (let i = 0; i < 180; i++) worm.update(0, false);
   assert.equal(worm.multiplier, 1);
   worm.grow(100000, 9999999999);
+  assert.equal(worm.segments.length, GAME_CONFIG.WORM_START_LENGTH, 'buyume kuyruga yazilir, aninda uzamaz');
+  assert.ok(worm.pendingGrowth > 800, 'kuyruk dolmali');
+  for (let i = 0; i < 950; i++) worm.update(0, false);
   assert.equal(worm.segments.length, GAME_CONFIG.WORM_MAX_LENGTH);
   assert.equal(worm.score, 999999999);
 });

@@ -98,10 +98,10 @@ test('kill notices survive network validation', () => {
   assert.ok(parseServerMessage(JSON.stringify(withKill)), 'gercek kill olayi paketten gecmeli');
 });
 
-test('giant worms are thinned in snapshots without breaking validation', () => {
-  const giant = new Worm(randomUUID(), 2600, 2600, GAME_CONFIG.COLORS[0], 0, 700, 'Giant');
-  giant.segments.forEach(p => { p.x = 2600; p.y = 2600; });
-  const wire = serializeWorm(giant);
+test('huge worms are thinned in snapshots without breaking validation', () => {
+  const big = new Worm(randomUUID(), 2600, 2600, GAME_CONFIG.COLORS[0], 0, 700, 'Giant');
+  big.segments.forEach(p => { p.x = 2600; p.y = 2600; });
+  const wire = serializeWorm(big);
   assert.ok(wire.points.length < 1400, 'paket sismemeli');
   assert.equal(wire.points.length % 2, 0);
   const world = new GameEngine(undefined, false, 'online');
