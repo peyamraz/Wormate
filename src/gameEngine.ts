@@ -349,10 +349,10 @@ export class GameEngine {
       }
     }
     while (this.foods.length < CONFIG.FOOD_COUNT) this.spawnFood(false);
-    this.addBonus(x + 210, y - 40, 'speed');
-    this.addBonus(x + 250, y + 70, 'chomp');
-    this.addBonus(x + 160, y + 110, 'x2');
-    this.addBonus(x - 240, y - 80, 'x5');
+    this.addBonus(x + 380, y - 220, 'speed');
+    this.addBonus(x - 400, y + 260, 'chomp');
+    this.addBonus(x + 150, y + 420, 'x2');
+    this.addBonus(x - 350, y - 320, 'x5');
     while (this.bonuses.length < CONFIG.BONUS_TARGET_COUNT) this.spawnBonus();
     this.rebuildFoodGrid();
   }
@@ -523,15 +523,24 @@ export class GameEngine {
 
   private addBonus(x: number, y: number, kind = this.rollBonusKind()) {
     if (this.bonuses.length >= CONFIG.BONUS_MAX_COUNT) return;
-    const at = clampToArena(x, y, 90);
-    this.bonuses.push({
-      id: this.nextBonusId++,
-      x: at.x,
-      y: at.y,
-      kind,
-      phase: Math.random() * Math.PI * 2,
-      bornAt: this.ticks,
-    });
+    // Ayrıklık kuralı: küpler üst üste yığılmaz, en az 350px aralık aranır.
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const jitter = attempt === 0 ? 0 : 150 + Math.random() * 350;
+      const aa = attempt === 0 ? 0 : Math.random() * Math.PI * 2;
+      const at = clampToArena(x + Math.cos(aa) * jitter, y + Math.sin(aa) * jitter, 90);
+      const clear = this.bonuses.every(b => (b.x - at.x) ** 2 + (b.y - at.y) ** 2 > 350 ** 2);
+      if (!clear) continue;
+      this.bonuses.push({
+        id: this.nextBonusId++,
+        x: at.x,
+        y: at.y,
+        kind,
+        phase: Math.random() * Math.PI * 2,
+        bornAt: this.ticks,
+      });
+      return;
+    }
+    // Yer bulunamazsa doğum iptal: kalabalık yerine seyreklik.
   }
 
   spawnBonus(nearPlayer = true) {
@@ -548,7 +557,7 @@ export class GameEngine {
     if (!players.length) return;
     const head = (players[Math.floor(Math.random() * players.length)] ?? this.player).segments[0];
     const angle = Math.random() * Math.PI * 2;
-    const radius = 240 + Math.random() * 280;
+    const radius = 420 + Math.random() * 480;
     this.addBonus(head.x + Math.cos(angle) * radius, head.y + Math.sin(angle) * radius);
   }
 

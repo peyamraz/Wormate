@@ -131,6 +131,8 @@ profil/seviye, yem çeşitliliği, korsan şapka+göz bandı takan solucanlar).
 - Büyüme tavanları (TAMAM): boy 280→900, kalınlık 3.2x, skora bağlı logaritmik hacim
   (1M skor ≈ +1.75x). Yenidoğan karınca, dev fil. Bonus sıklığı normale (14/20).
   Test: 45/45 (`tsc` temiz, build OK).
+- Bonus dağılımı (TAMAM): doğumda 350px ayrıklık kuralı, hız/chomp ağırlığı düşürüldü,
+  başlangıç küpleri dağıtıldı. Test: 46/46 (`tsc` temiz, build OK).
 - HARİÇ: gerçek parayla coin (Madeni paralar IAP) — web hobby'de yok. İsim Wormate kalıyor.
 
 ## Kararlar / notlar

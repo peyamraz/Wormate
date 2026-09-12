@@ -107,6 +107,24 @@ test('coin bonus grants no timed effect but scores', () => {
   assert.equal(a.score, 0);
 });
 
+test('bonus orbs keep their distance instead of piling up', () => {
+  const world = new GameEngine(undefined, false, 'online');
+  const a = world.addHuman(randomUUID(), 'Alice');
+  world.bots = [];
+  for (let i = 0; i < 40; i++) world.spawnBonus(false);
+  assert.ok(world.bonuses.length > 10, 'dagitimda yeterli kup dogmali');
+  let min = Infinity;
+  for (let i = 0; i < world.bonuses.length; i++) {
+    for (let j = i + 1; j < world.bonuses.length; j++) {
+      const dx = world.bonuses[i].x - world.bonuses[j].x;
+      const dy = world.bonuses[i].y - world.bonuses[j].y;
+      min = Math.min(min, Math.hypot(dx, dy));
+    }
+  }
+  assert.ok(min >= 340, `kupler ayrik durmali (min=${min.toFixed(0)})`);
+  assert.ok(a.segments.length > 0);
+});
+
 test('killer earns score, loot and a kill notice', () => {
   const world = new GameEngine(undefined, false, 'online');
   const a = world.addHuman(randomUUID(), 'Alice');
