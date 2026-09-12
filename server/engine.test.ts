@@ -82,6 +82,13 @@ test('multiplier countdown is visible in status seconds', () => {
   assert.equal(world.getStatus(a).multiplierSeconds, 11);
 });
 
+test('score fattens the worm even at full length', () => {
+  const worm = new Worm(randomUUID(), 2600, 2600, GAME_CONFIG.COLORS[0]);
+  worm.score = 1000000;
+  for (let i = 0; i < 60; i++) worm.update(0, false);
+  assert.ok(worm.radius > GAME_CONFIG.WORM_START_RADIUS * 1.5, `1M skor fil gibi yapmali (r=${worm.radius.toFixed(1)})`);
+});
+
 test('sustained boost consumes body segments as fuel', () => {
   const worm = new Worm(randomUUID(), 1600, 1600, GAME_CONFIG.COLORS[0]);
   worm.grow(20, 0);

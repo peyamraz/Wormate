@@ -56,7 +56,7 @@ export function parseServerMessage(raw: string): ServerMessage | null {
   const status = message.status;
   if (!isRecord(status) || !['score', 'size', 'multiplier', 'multiplierSeconds', 'speedSeconds', 'chompSeconds', 'combo'].every(key => number(status[key], 0, 999999999))) return null;
   if (!['activeCount', 'humanCount', 'botCount', 'connectedCount', 'sizeRank'].every(key => number(status[key], 0, 32))) return null;
-  if (!Array.isArray(status.leaderboard) || status.leaderboard.length > 6 || !status.leaderboard.every(row => isRecord(row) && identifier(row.id) && validName(row.name) && color(row.color) && number(row.rank, 1, 32) && number(row.score, 0, 999999999) && number(row.size, 1, 400) && typeof row.isBot === 'boolean' && typeof row.isPlayer === 'boolean')) return null;
+  if (!Array.isArray(status.leaderboard) || status.leaderboard.length > 6 || !status.leaderboard.every(row => isRecord(row) && identifier(row.id) && validName(row.name) && color(row.color) && number(row.rank, 1, 32) && number(row.score, 0, 999999999) && number(row.size, 1, CONFIG.WORM_MAX_LENGTH) && typeof row.isBot === 'boolean' && typeof row.isPlayer === 'boolean')) return null;
   if (!Array.isArray(message.events) || message.events.length > 32 || !message.events.every(event => isRecord(event) && ['eat', 'bonus', 'death', 'kill'].includes(String(event.type)) && identifier(event.playerId) && point(event) && color(event.color) && number(event.value, 0, 999999999) && (event.bonus === undefined || bonusKind(event.bonus)) && (event.food === undefined || food(event.food)))) return null;
   return message as unknown as ServerMessage;
 }

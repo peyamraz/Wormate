@@ -110,8 +110,8 @@ export const TOTAL_GRID_CELLS = GRID_COLS * GRID_ROWS;
 export function getCameraZoom(length: number, viewport: Viewport) {
   const screenScale = clamp(Math.min(viewport.width, viewport.height) / 650, 0.72, 1);
   const growth = Math.max(1, length / CONFIG.WORM_START_LENGTH);
-  // Üstel bilinçli küçük tutuldu: dev solucan ekranda dev görünsün, kamera boyu maskelemesin.
-  return Math.max(CONFIG.CAMERA_MIN_ZOOM, CONFIG.CAMERA_START_ZOOM * screenScale / growth ** 0.26);
+  // Üstel küçük: devler ekranda dev görünsün, kamera boyu maskelemesin.
+  return Math.max(CONFIG.CAMERA_MIN_ZOOM, CONFIG.CAMERA_START_ZOOM * screenScale / growth ** 0.22);
 }
 
 export class Worm {
@@ -155,7 +155,7 @@ export class Worm {
     this.color = color;
     this.pattern = pattern;
     this.facePhase = Math.floor(Math.random() * 280);
-    this.radius = CONFIG.WORM_START_RADIUS * Math.min(2.1, Math.max(1, length / CONFIG.WORM_START_LENGTH) ** 0.34);
+    this.radius = CONFIG.WORM_START_RADIUS * Math.min(CONFIG.WORM_MAX_RADIUS_MULT, Math.max(1, length / CONFIG.WORM_START_LENGTH) ** 0.34);
     this.spawnProtection = id === 'player' ? CONFIG.SPAWN_PROTECTION_TICKS : 90;
     this.decisionTicks = Math.floor(Math.random() * 10);
     this.segments = Array.from({ length }, (_, i) => ({
@@ -210,7 +210,9 @@ export class Worm {
       if (this.swallowWaves[i] > this.segments.length + 8) this.swallowWaves.splice(i, 1);
     }
     const growth = Math.max(1, this.segments.length / CONFIG.WORM_START_LENGTH);
-    const targetRadius = CONFIG.WORM_START_RADIUS * Math.min(2.1, growth ** 0.34);
+    // Hacim iki eksende: boy + skor. Skor logaritmik şişmanlatır, tavanı yoktur.
+    const scoreGirth = 1 + 0.25 * Math.log10(1 + Math.max(0, this.score) / 1000);
+    const targetRadius = CONFIG.WORM_START_RADIUS * Math.min(CONFIG.WORM_MAX_RADIUS_MULT, growth ** 0.34) * scoreGirth;
     this.radius += (targetRadius - this.radius) * 0.06;
     if (boosting && this.segments.length > CONFIG.WORM_START_LENGTH) {
       this.boostTicks++;
