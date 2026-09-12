@@ -31,6 +31,30 @@ test('guest names, room codes, protocol version and viewport are constrained', (
   ]) assert.equal(parseClientMessage(JSON.stringify(bad)), null);
 });
 
+test('style cosmetics are validated: known skin, hat and glasses only', () => {
+  const style = { type: 'style', color: GAME_CONFIG.COLORS[0], pattern: 'flag-tr', hat: 'crown', glasses: 'sun' };
+  assert.deepEqual(parseClientMessage(JSON.stringify(style)), style);
+  for (const bad of [
+    { ...style, color: '#ff0000' }, { ...style, pattern: 'flag-xx' }, { ...style, hat: 'tophat' },
+    { ...style, glasses: 'laser' }, { ...style, score: 100 }, { ...style, id: randomUUID() },
+  ]) assert.equal(parseClientMessage(JSON.stringify(bad)), null);
+});
+
+test('worm snapshots carry hat and glasses and survive validation', () => {
+  const world = new GameEngine(undefined, false, 'online');
+  const worm = world.addHuman(randomUUID(), 'Guest', { color: GAME_CONFIG.COLORS[1], pattern: 'stripes', hat: 'crown', glasses: 'sun' });
+  const message = {
+    type: 'state', v: 1, tick: 1, run: 1, you: worm.id,
+    worms: [serializeWorm(worm)], foods: [], bonuses: [], status: world.getStatus(worm), events: [],
+  };
+  const parsed = parseServerMessage(JSON.stringify(message));
+  assert.ok(parsed && parsed.type === 'state');
+  if (parsed.type === 'state') {
+    assert.equal(parsed.worms[0].hat, 'crown');
+    assert.equal(parsed.worms[0].glasses, 'sun');
+  }
+});
+
 test('origin allowlist fails closed and production requires HTTPS', () => {
   assert.deepEqual([...allowedOrigins('https://game.example.com', true)], ['https://game.example.com']);
   for (const origin of ['', '*', 'https://game.example.com/path', 'http://game.example.com']) assert.throws(() => allowedOrigins(origin, true));

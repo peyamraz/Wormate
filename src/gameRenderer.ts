@@ -71,6 +71,137 @@ function drawFace(ctx: Context, worm: Worm, radius: number, ticks: number, reduc
   ellipse(ctx, mouthX, 0, mouthWidth, radius * 0.255, '#592440');
   ellipse(ctx, mouthX + mouthWidth * 0.38, radius * 0.035, mouthWidth * 0.5, radius * 0.17, '#ff8f9f');
   if (bite > 0.25) ellipse(ctx, mouthX - mouthWidth * 0.44, -radius * 0.08, mouthWidth * 0.2, radius * 0.08, '#fff5dc');
+  drawGlasses(ctx, worm, radius);
+  drawHat(ctx, worm, radius);
+  ctx.restore();
+}
+
+function drawGlasses(ctx: Context, worm: Worm, radius: number) {
+  const id = worm.glasses;
+  if (!id || id === 'none') return;
+  const lens: Record<string, string> = {
+    sun: '#101820', cool: '#1c2733', heart: '#f46198', mono: '#2b3a4a', star: '#8a6d1c',
+  };
+  const fill = lens[id] ?? '#1c2733';
+  const ey = radius * 0.47;
+  const ex = -radius * 0.04;
+  const rw = radius * 0.46;
+  const rh = radius * 0.46;
+  const lensAt = (y: number) => {
+    ctx.fillStyle = fill;
+    ctx.globalAlpha = 0.88;
+    ctx.beginPath();
+    if (id === 'heart') {
+      ctx.arc(ex - rw * 0.28, y - rh * 0.18, rw * 0.52, 0, TAU);
+      ctx.arc(ex + rw * 0.28, y - rh * 0.18, rw * 0.52, 0, TAU);
+    } else if (id === 'star') {
+      for (let i = 0; i < 10; i++) {
+        const a = i / 10 * TAU - Math.PI / 2;
+        const rr = i % 2 === 0 ? rw : rw * 0.45;
+        const px = ex + Math.cos(a) * rr, py = y + Math.sin(a) * rr;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+    } else {
+      ctx.ellipse(ex, y, rw, rh, 0, 0, TAU);
+    }
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    if (id === 'sun' || id === 'cool') {
+      ctx.fillStyle = '#ffffff70';
+      ctx.beginPath();
+      ctx.ellipse(ex - rw * 0.3, y - rh * 0.35, rw * 0.28, rh * 0.18, -0.5, 0, TAU);
+      ctx.fill();
+    }
+  };
+  if (id === 'mono') {
+    ctx.strokeStyle = '#d9b45c';
+    ctx.lineWidth = Math.max(1.2, radius * 0.05);
+    ctx.beginPath();
+    ctx.ellipse(ex, ey, rw * 0.9, rh * 0.9, 0, 0, TAU);
+    ctx.stroke();
+  } else {
+    lensAt(ey);
+    lensAt(-ey);
+    ctx.strokeStyle = fill;
+    ctx.lineWidth = Math.max(1.2, radius * 0.06);
+    ctx.beginPath();
+    ctx.moveTo(ex, -ey + rh * 0.5);
+    ctx.quadraticCurveTo(ex + rw * 0.4, 0, ex, ey - rh * 0.5);
+    ctx.stroke();
+  }
+}
+
+function drawHat(ctx: Context, worm: Worm, radius: number) {
+  const id = worm.hat;
+  if (!id || id === 'none') return;
+  const x = -radius * 0.3;
+  ctx.save();
+  ctx.translate(x, 0);
+  ctx.rotate(-0.12);
+  if (id === 'crown') {
+    ctx.fillStyle = '#f5c542';
+    ctx.beginPath();
+    ctx.moveTo(-radius * 0.55, 0);
+    ctx.lineTo(-radius * 0.55, -radius * 0.55);
+    ctx.lineTo(-radius * 0.28, -radius * 0.3);
+    ctx.lineTo(0, -radius * 0.62);
+    ctx.lineTo(radius * 0.28, -radius * 0.3);
+    ctx.lineTo(radius * 0.55, -radius * 0.55);
+    ctx.lineTo(radius * 0.55, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#e11d48';
+    ctx.beginPath();
+    ctx.arc(0, -radius * 0.28, radius * 0.09, 0, TAU);
+    ctx.fill();
+  } else if (id === 'cowboy') {
+    ellipse(ctx, 0, 0, radius * 0.72, radius * 0.2, '#8a5a2b');
+    ctx.fillStyle = '#a06a35';
+    ctx.beginPath();
+    ctx.ellipse(0, -radius * 0.28, radius * 0.38, radius * 0.34, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#5d3a1a';
+    ctx.fillRect(-radius * 0.38, -radius * 0.32, radius * 0.76, radius * 0.12);
+  } else if (id === 'party') {
+    ctx.fillStyle = '#7c6cf0';
+    ctx.beginPath();
+    ctx.moveTo(-radius * 0.4, 0);
+    ctx.lineTo(radius * 0.4, 0);
+    ctx.lineTo(0, -radius * 1.05);
+    ctx.closePath();
+    ctx.fill();
+    ellipse(ctx, 0, -radius * 1.05, radius * 0.12, radius * 0.12, '#ffd166');
+  } else if (id === 'beanie') {
+    ctx.fillStyle = '#e05252';
+    ctx.beginPath();
+    ctx.ellipse(0, -radius * 0.25, radius * 0.55, radius * 0.5, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = '#f3f4f6';
+    ctx.fillRect(-radius * 0.55, -radius * 0.32, radius * 1.1, radius * 0.22);
+    ellipse(ctx, 0, -radius * 0.78, radius * 0.14, radius * 0.14, '#ffffff');
+  } else if (id === 'helmet') {
+    ctx.fillStyle = '#3f6d8e';
+    ctx.beginPath();
+    ctx.ellipse(0, -radius * 0.15, radius * 0.58, radius * 0.52, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = '#ffd166';
+    ctx.fillRect(-radius * 0.08, -radius * 0.67, radius * 0.16, radius * 0.5);
+  } else if (id === 'wizard') {
+    ctx.fillStyle = '#4c3a8c';
+    ctx.beginPath();
+    ctx.moveTo(-radius * 0.5, -radius * 0.1);
+    ctx.lineTo(radius * 0.5, -radius * 0.1);
+    ctx.lineTo(radius * 0.05, -radius * 1.25);
+    ctx.closePath();
+    ctx.fill();
+    ellipse(ctx, 0, -radius * 0.1, radius * 0.62, radius * 0.14, '#372a66');
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(-radius * 0.05, -radius * 0.7, radius * 0.07, 0, TAU);
+    ctx.fill();
+  }
   ctx.restore();
 }
 
@@ -101,7 +232,7 @@ function drawWormBody(ctx: Context, worm: Worm, engine: GameEngine, reducedMotio
 
   const pulse = reducedMotion ? 1 : 1 + worm.growthPulse * 0.055;
   const headSize = radius * SEGMENT_SIZE * 1.055 * pulse;
-  ctx.drawImage(getWormSegment(worm.color), head.x - headSize / 2, head.y - headSize / 2, headSize, headSize);
+  ctx.drawImage(getWormSegment(worm.color, worm.pattern), head.x - headSize / 2, head.y - headSize / 2, headSize, headSize);
   drawFace(ctx, worm, radius * pulse, engine.ticks, reducedMotion);
 
   if (player && worm.chompTicks > 0 && !engine.isDemo) {

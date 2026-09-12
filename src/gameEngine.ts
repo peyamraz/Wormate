@@ -58,6 +58,8 @@ export interface BonusOrb extends Point {
 
 export interface PlayerStatus {
   score: number;
+  size: number;
+  sizeRank: number;
   multiplier: number;
   multiplierSeconds: number;
   speedSeconds: number;
@@ -74,6 +76,7 @@ export interface LeaderboardEntry {
   id: string;
   name: string;
   score: number;
+  size: number;
   color: string;
   rank: number;
   isPlayer: boolean;
@@ -91,7 +94,8 @@ export const TOTAL_GRID_CELLS = GRID_COLS * GRID_ROWS;
 export function getCameraZoom(length: number, viewport: Viewport) {
   const screenScale = clamp(Math.min(viewport.width, viewport.height) / 650, 0.72, 1);
   const growth = Math.max(1, length / CONFIG.WORM_START_LENGTH);
-  return Math.max(CONFIG.CAMERA_MIN_ZOOM, CONFIG.CAMERA_START_ZOOM * screenScale / growth ** 0.38);
+  // Üstel bilinçli küçük tutuldu: dev solucan ekranda dev görünsün, kamera boyu maskelemesin.
+  return Math.max(CONFIG.CAMERA_MIN_ZOOM, CONFIG.CAMERA_START_ZOOM * screenScale / growth ** 0.26);
 }
 
 export class Worm {
@@ -102,6 +106,8 @@ export class Worm {
   radius = CONFIG.WORM_START_RADIUS;
   color: string;
   pattern: WormPattern;
+  hat = 'none';
+  glasses = 'none';
   facePhase: number;
   isBoosting = false;
   score = 0;
@@ -341,7 +347,7 @@ export class GameEngine {
 
   allWorms() { return [...(this.onlineArena ? this.humans.values() : [this.player]), ...this.bots]; }
 
-  addHuman(id: string, name: string): Worm {
+  addHuman(id: string, name: string, style?: { color: string; pattern: WormPattern; hat: string; glasses: string }): Worm {
     if (this.humans.has(id)) throw new Error('Duplicate session');
     const living = this.allWorms().filter(worm => !worm.isDead);
     let point = { x: 1600, y: 1600 };
@@ -358,8 +364,10 @@ export class GameEngine {
       if (clearance > 220 ** 2) break;
     }
     if (clearance < 90 ** 2) throw new Error('Arena is crowded. Try again.');
-    const worm = new Worm(id, point.x, point.y, CONFIG.COLORS[this.humans.size % CONFIG.COLORS.length], 0, CONFIG.WORM_START_LENGTH, name);
+    const worm = new Worm(id, point.x, point.y, style?.color ?? CONFIG.COLORS[this.humans.size % CONFIG.COLORS.length], 0, CONFIG.WORM_START_LENGTH, name, style?.pattern ?? 'solid');
     worm.isHuman = true;
+    worm.hat = style?.hat ?? 'none';
+    worm.glasses = style?.glasses ?? 'none';
     worm.spawnProtection = CONFIG.SPAWN_PROTECTION_TICKS;
     this.humans.set(id, worm);
     for (let i = 1; i <= 12; i++) this.addFood(point.x + i * 25, point.y + Math.sin(i * 0.5) * 10);
@@ -377,7 +385,7 @@ export class GameEngine {
     if (!previous?.isDead) return false;
     this.humans.delete(id);
     try {
-      const fresh = this.addHuman(id, previous.name);
+      const fresh = this.addHuman(id, previous.name, { color: previous.color, pattern: previous.pattern, hat: previous.hat, glasses: previous.glasses });
       fresh.color = previous.color;
       fresh.pattern = previous.pattern;
       this.worldEvents = this.worldEvents.filter(event => event.playerId !== id);
@@ -526,6 +534,7 @@ export class GameEngine {
         id: worm.id,
         name: worm === viewer ? 'YOU' : worm.name,
         score: worm.score,
+        size: worm.segments.length,
         color: worm.color,
         rank: index + 1,
         isPlayer: worm === viewer,
@@ -534,9 +543,13 @@ export class GameEngine {
     const leaders = ranked.slice(0, 5);
     const playerEntry = ranked.find(entry => entry.isPlayer);
     if (playerEntry && !leaders.some(entry => entry.isPlayer)) leaders.push(playerEntry);
+    const bySize = [...ranked].sort((a, b) => b.size - a.size || b.score - a.score);
+    const sizeRank = Math.max(1, bySize.findIndex(entry => entry.isPlayer) + 1);
 
     return {
       score: viewer.score,
+      size: viewer.segments.length,
+      sizeRank,
       multiplier: viewer.multiplier,
       multiplierSeconds: Math.ceil(viewer.multiplierTicks / 60),
       speedSeconds: Math.ceil(viewer.speedTicks / 60),

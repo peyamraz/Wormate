@@ -46,7 +46,8 @@ export const TREATS = [
 ] as const;
 
 export type TreatKind = typeof TREATS[number]['kind'];
-export type WormPattern = 'solid' | 'candy' | 'freckles';
+export type FlagSkin = 'flag-tr' | 'flag-az' | 'flag-de' | 'flag-fr' | 'flag-us' | 'flag-br' | 'flag-gb' | 'flag-it';
+export type WormPattern = 'solid' | 'candy' | 'freckles' | 'stripes' | 'dots' | FlagSkin;
 export type BonusKind = 'speed' | 'chomp' | 'x2' | 'x5' | 'x10' | 'x100';
 
 export const BONUSES: {
@@ -66,3 +67,8 @@ export const BONUSES: {
 ];
 
 export const BONUS_BY_KIND = Object.fromEntries(BONUSES.map(bonus => [bonus.kind, bonus])) as Record<BonusKind, typeof BONUSES[number]>;
+
+export const WORM_PATTERNS: WormPattern[] = [
+  'solid', 'candy', 'freckles', 'stripes', 'dots',
+  'flag-tr', 'flag-az', 'flag-de', 'flag-fr', 'flag-us', 'flag-br', 'flag-gb', 'flag-it',
+];

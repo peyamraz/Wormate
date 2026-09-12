@@ -9,10 +9,17 @@ import type { ConnectionInfo } from './network/OnlineClient';
 import { validName, validRoom } from './network/protocol';
 import { clearSession, createPracticeSession, getSession, setOnlineSession } from './session';
 import type { GuestSession } from './session';
-import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut, ChevronDown, ChevronUp, Bot } from 'lucide-react';
+import {
+  SHOP_GLASSES, SHOP_HATS, SHOP_SKINS,
+  buyGlasses, buyHat, buySkin, earnCoins, equip, readCoins, readLoadout, readOwned,
+} from './shop';
+import type { GlassesId, HatId, Loadout, Owned } from './shop';
+import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut, ChevronDown, ChevronUp, Bot, Coins, ShoppingBag } from 'lucide-react';
 
 const EMPTY_STATUS: PlayerStatus = {
   score: 0,
+  size: 0,
+  sizeRank: 0,
   multiplier: 1,
   multiplierSeconds: 0,
   speedSeconds: 0,
@@ -26,17 +33,11 @@ const EMPTY_STATUS: PlayerStatus = {
 };
 const compactScore = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 
+// Skorlar bilinçli olarak SADECE oturumluk tutulur: sekmeye her gelişte boş başlar.
+// Kalıcı olan tek şey mağaza cüzdanıdır (wormate_coins). Eski localStorage anahtarı bir kez temizlenir.
 function readHighScores(): number[] {
-  try {
-    const raw = localStorage.getItem('wormate_highscores') ?? '[]';
-    if (raw.length > 4096) return [];
-    const saved: unknown = JSON.parse(raw);
-    return Array.isArray(saved)
-      ? saved.filter((value): value is number => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 && value <= 999999999).sort((a, b) => b - a).slice(0, 5)
-      : [];
-  } catch {
-    return [];
-  }
+  try { localStorage.removeItem('wormate_highscores'); } catch { /* yoksay */ }
+  return [];
 }
 
 function releaseButtonFocus() {
@@ -63,22 +64,19 @@ export default function App() {
   const [notice, setNotice] = useState('');
   const [copied, setCopied] = useState('');
   const [collapsedLeaderboard, setCollapsedLeaderboard] = useState(false);
+  const [coins, setCoins] = useState(readCoins);
+  const [owned, setOwned] = useState<Owned>(readOwned);
+  const [loadout, setLoadout] = useState<Loadout>(readLoadout);
+  const [shopTab, setShopTab] = useState<'skin' | 'hat' | 'glasses'>('skin');
   const clientRef = useRef<OnlineClient | null>(null);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isOnline = guest?.mode === 'online';
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('wormate_highscores', JSON.stringify(highScores));
-    } catch {
-      // The game remains playable if local storage is unavailable.
-    }
-  }, [highScores]);
 
   const handleGameOver = useCallback((finalScore: number, reason: string) => {
     setScore(finalScore);
     setDeathReason(reason);
     setHighScores(previous => [...previous, finalScore].sort((a, b) => b - a).slice(0, 5));
+    setCoins(earnCoins(finalScore));
     setGameState('gameover');
   }, []);
 
@@ -211,6 +209,8 @@ export default function App() {
 
   const topLeader = status.leaderboard[0];
   const userRankEntry = status.leaderboard.find(e => e.isPlayer);
+  const sizeBest = status.leaderboard.reduce((m, e) => Math.max(m, e.size), 0);
+  const sizeLeader = status.leaderboard.find(e => e.size === sizeBest && sizeBest > 0);
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-slate-900 font-sans text-white select-none">
@@ -279,6 +279,102 @@ export default function App() {
               </div>
             </div>
 
+            {/* Mağaza: skor altınıyla deri / şapka / gözlük */}
+            <div className="w-full mb-6 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-slate-300">
+                  <ShoppingBag size={14} className="text-amber-400" /> Mağaza
+                </span>
+                <span className="flex items-center gap-1 rounded-full bg-yellow-400/15 border border-yellow-400/30 px-2.5 py-1 text-xs font-black text-yellow-300">
+                  <Coins size={12} /> {coins.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex gap-1.5 mb-3">
+                {(['skin', 'hat', 'glasses'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setShopTab(tab)}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-colors ${shopTab === tab ? 'bg-orange-500/25 text-orange-300 border border-orange-500/50' : 'bg-slate-900 text-slate-400 border border-slate-800'}`}
+                  >
+                    {tab === 'skin' ? 'Deri' : tab === 'hat' ? 'Şapka' : 'Gözlük'}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-3 gap-1.5 max-h-44 overflow-y-auto pr-0.5">
+                {shopTab === 'skin' && SHOP_SKINS.map(item => {
+                  const has = owned.skins.includes(item.id);
+                  const worn = loadout.skin === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        if (has) { setLoadout(equip('skin', item.id)); return; }
+                        const r = buySkin(item.id);
+                        setCoins(r.coins); setOwned(r.owned);
+                        if (r.ok) setLoadout(equip('skin', item.id));
+                      }}
+                      className={`rounded-xl border p-2 text-left transition-all ${worn ? 'border-cyan-400 bg-cyan-500/15' : 'border-slate-800 bg-slate-900 hover:border-slate-600'}`}
+                    >
+                      <span className="mx-auto mb-1 flex h-6 w-6 overflow-hidden rounded-full ring-1 ring-white/30" style={{ background: item.color }}>
+                        {item.pattern.startsWith('flag-') && <span className="m-auto text-[8px]">🏳</span>}
+                      </span>
+                      <span className="block truncate text-[10px] font-bold text-slate-200">{item.name}</span>
+                      <span className={`block text-[10px] font-black ${worn ? 'text-cyan-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
+                        {worn ? 'Kuşanıldı' : has ? 'Kuşan' : `🪙 ${item.price}`}
+                      </span>
+                    </button>
+                  );
+                })}
+                {shopTab === 'hat' && SHOP_HATS.map(item => {
+                  const has = (owned.hats as string[]).includes(item.id);
+                  const worn = loadout.hat === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        if (has) { setLoadout(equip('hat', item.id)); return; }
+                        const r = buyHat(item.id as HatId);
+                        setCoins(r.coins); setOwned(r.owned);
+                        if (r.ok) setLoadout(equip('hat', item.id));
+                      }}
+                      className={`rounded-xl border p-2 text-left transition-all ${worn ? 'border-cyan-400 bg-cyan-500/15' : 'border-slate-800 bg-slate-900 hover:border-slate-600'}`}
+                    >
+                      <span className="block truncate text-[10px] font-bold text-slate-200">{item.name}</span>
+                      <span className={`block text-[10px] font-black ${worn ? 'text-cyan-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
+                        {worn ? 'Kuşanıldı' : has ? 'Kuşan' : `🪙 ${item.price}`}
+                      </span>
+                    </button>
+                  );
+                })}
+                {shopTab === 'glasses' && SHOP_GLASSES.map(item => {
+                  const has = (owned.glasses as string[]).includes(item.id);
+                  const worn = loadout.glasses === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        if (has) { setLoadout(equip('glasses', item.id)); return; }
+                        const r = buyGlasses(item.id as GlassesId);
+                        setCoins(r.coins); setOwned(r.owned);
+                        if (r.ok) setLoadout(equip('glasses', item.id));
+                      }}
+                      className={`rounded-xl border p-2 text-left transition-all ${worn ? 'border-cyan-400 bg-cyan-500/15' : 'border-slate-800 bg-slate-900 hover:border-slate-600'}`}
+                    >
+                      <span className="block truncate text-[10px] font-bold text-slate-200">{item.name}</span>
+                      <span className={`block text-[10px] font-black ${worn ? 'text-cyan-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
+                        {worn ? 'Kuşanıldı' : has ? 'Kuşan' : `🪙 ${item.price}`}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-[10px] text-slate-500 font-medium">Her oyun sonu skorun /10 kadar altın kazanırsın.</p>
+            </div>
+
             {notice && (
               <div role="alert" className="w-full mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-medium">
                 {notice}
@@ -294,10 +390,10 @@ export default function App() {
 
             {highScores.length > 0 && (
               <div className="mt-6 w-full pt-6 border-t border-slate-800/80">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-400 mb-3">
-                  <span className="flex items-center gap-1.5"><Trophy size={14} className="text-yellow-400" /> High Scores</span>
-                  <span>Personal Best</span>
-                </div>
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-400 mb-3">
+                    <span className="flex items-center gap-1.5"><Trophy size={14} className="text-yellow-400" /> Session Scores</span>
+                    <span>This visit</span>
+                  </div>
                 <div className="space-y-1.5">
                   {highScores.map((s, idx) => (
                     <div key={idx} className="flex justify-between items-center text-xs py-1 px-2.5 rounded-lg bg-slate-950/60 border border-slate-800/40 font-mono">
@@ -491,6 +587,7 @@ export default function App() {
                       const isFirst = entry.rank === 1;
                       const isSecond = entry.rank === 2;
                       const isThird = entry.rank === 3;
+                      const isBiggest = entry.size === sizeBest && sizeBest > 0;
 
                       return (
                         <li
@@ -517,6 +614,12 @@ export default function App() {
                           {/* Name */}
                           <span className="min-w-0 flex-1 truncate font-semibold">
                             {entry.name}
+                            {isBiggest && <span title="En büyük boy"> 🐉</span>}
+                          </span>
+
+                          {/* Size */}
+                          <span className="font-mono tabular-nums text-slate-400 shrink-0" title={`Boy: ${entry.size}`}>
+                            {entry.size}
                           </span>
 
                           {/* Score (Compact on mobile, localized on desktop) */}
@@ -528,6 +631,16 @@ export default function App() {
                       );
                     })}
                   </ol>
+                  {sizeLeader && topLeader && sizeLeader.id !== topLeader.id && (
+                    <div className="mt-1 rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-2 py-1 text-[9px] font-bold text-emerald-200 sm:text-[10px]">
+                      🐉 Boy lideri: <span className="truncate">{sizeLeader.name}</span> ({sizeLeader.size})
+                    </div>
+                  )}
+                  {userRankEntry && (
+                    <div className="mt-1 px-1 text-[8px] font-bold text-slate-400 sm:text-[9px]">
+                      Skor #{userRankEntry.rank} &middot; Boy #{status.sizeRank} ({status.size})
+                    </div>
+                  )}
                 </div>
               </section>
             )}

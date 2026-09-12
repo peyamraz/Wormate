@@ -1,6 +1,7 @@
 import { GameEngine, getCameraZoom, Worm } from '../gameEngine';
 import type { PlayerStatus } from '../gameEngine';
 import { BONUS_BY_KIND } from '../constants';
+import { readLoadout, skinById } from '../shop';
 import { NETWORK } from './protocol';
 import type { ArenaSnapshot, ClientMessage, WireWorm } from './protocol';
 import { parseServerMessage } from './validation';
@@ -73,6 +74,7 @@ export class OnlineClient {
           if (this.id) { this.fail('Unexpected session response.'); return; }
           this.id = message.id;
           this.room = message.room;
+          this.sendStyle();
         } else if (message.type === 'state') {
           if (!this.id || message.you !== this.id) { this.fail('Session mismatch.'); return; }
           if (message.tick < this.lastStateTick || message.run < this.run) return;
@@ -117,6 +119,12 @@ export class OnlineClient {
   private cameraZoom() {
     const displayScale = Math.max(1, this.view.viewport.width / 1920, this.view.viewport.height / 1080);
     return getCameraZoom(this.view.player.segments.length, this.viewport()) * displayScale;
+  }
+  sendStyle() {
+    if (!this.ready && !this.id) return;
+    const loadout = readLoadout();
+    const skin = skinById(loadout.skin);
+    this.send({ type: 'style', color: skin.color, pattern: skin.pattern, hat: loadout.hat, glasses: loadout.glasses });
   }
   sendInput(angle: number, boost: boolean, force = false) {
     const now = performance.now();
@@ -193,6 +201,7 @@ export class OnlineClient {
       if (created || !worm) worm = new Worm(target.id, target.points[0], target.points[1], target.color, target.angle, target.points.length / 2, target.name, target.pattern);
       const previousLength = worm.segments.length;
       for (const key of ['angle', 'radius', 'score', 'spawnProtection', 'speedTicks', 'chompTicks', 'multiplier', 'multiplierTicks', 'combo', 'facePhase', 'growthPulse', 'appetite', 'lookOffset'] as const) worm[key] = target[key];
+      worm.hat = target.hat; worm.glasses = target.glasses;
       worm.name = target.name; worm.color = target.color; worm.pattern = target.pattern;
       worm.isDead = target.isDead; worm.isHuman = target.isHuman; worm.isBoosting = target.isBoosting;
       worm.deathReason = target.deathReason;

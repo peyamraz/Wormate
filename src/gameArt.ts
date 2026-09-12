@@ -1,5 +1,6 @@
 import { BONUSES, GAME_CONFIG as CONFIG, TREATS } from './constants';
 import type { BonusKind, TreatKind, WormPattern } from './constants';
+import { FLAG_STRIPES, SHOP_SKINS } from './shop';
 
 type Context = CanvasRenderingContext2D;
 type Paint = string | CanvasGradient;
@@ -416,6 +417,38 @@ export function getWormSegment(color: string, pattern: WormPattern = 'solid', pa
       ellipse(ctx, 7, 7, 2.8, 2.1, '#fff4de5c', 0.5);
       ellipse(ctx, 8, -11, 1.5, 1.2, '#fff4de77');
     }
+    if (pattern === 'stripes') {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(0, 0, 23, 0, TAU);
+      ctx.clip();
+      ctx.fillStyle = blend(base, '#001823', 0.38);
+      ctx.rotate(0.5);
+      for (const x of [-18, -6, 6, 18]) ctx.fillRect(x - 3, -26, 6, 52);
+      ctx.restore();
+    }
+    if (pattern === 'dots') {
+      ctx.fillStyle = blend(base, '#ffffff', 0.4);
+      for (const [x, y] of [[-11, -9], [2, -14], [13, -5], [-14, 4], [-2, 0], [10, 9], [-8, 12]] as const) {
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, TAU);
+        ctx.fill();
+      }
+    }
+    if (pattern.startsWith('flag-')) {
+      const stripes = FLAG_STRIPES[pattern as keyof typeof FLAG_STRIPES] ?? [base, base, base];
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(0, 0, 23, 0, TAU);
+      ctx.clip();
+      for (let i = 0; i < 3; i++) {
+        ctx.fillStyle = stripes[i % stripes.length];
+        ctx.globalAlpha = 0.85;
+        ctx.fillRect(-24, -24 + i * 16, 48, 16);
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
     ctx.strokeStyle = '#ffffff30';
     ctx.lineWidth = 3.2;
     ctx.beginPath();
@@ -515,11 +548,9 @@ export function prepareGameArt(ctx: Context) {
   for (const treat of TREATS) {
     for (let variant = 0; variant < CONFIG.FOOD_COLORS.length; variant++) getTreatSprite(treat.kind, variant);
   }
+  for (const skin of SHOP_SKINS) getWormSegment(skin.color, skin.pattern);
   for (const color of CONFIG.COLORS) {
-    getWormSegment(color);
-    getWormSegment(color, 'candy');
     getWormSegment(color, 'candy', true);
-    getWormSegment(color, 'freckles');
     getGlow(color);
   }
   for (const color of [...CONFIG.FOOD_COLORS, '#f0b56f', '#ffbd69', '#ff6983', '#38bdf8', '#fb923c', '#a3e635', '#facc15', '#f472b6', '#ffd166']) getGlow(color);

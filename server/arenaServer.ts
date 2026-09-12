@@ -50,6 +50,7 @@ export function serializeWorm(worm: Worm): WireWorm {
     speedTicks: worm.speedTicks, chompTicks: worm.chompTicks, multiplier: worm.multiplier,
     multiplierTicks: worm.multiplierTicks, combo: worm.combo, facePhase: worm.facePhase,
     growthPulse: worm.growthPulse, appetite: worm.appetite, lookOffset: worm.lookOffset,
+    hat: worm.hat, glasses: worm.glasses,
     deathReason: worm.deathReason,
     points: worm.segments.flatMap(point => [round(point.x), round(point.y)]),
   };
@@ -201,6 +202,13 @@ export function createArenaServer(options: ArenaServerOptions) {
         if (now - session.lastViewport < 200) return;
         session.lastViewport = now;
         session.viewport = { width: message.width, height: message.height };
+      } else if (message.type === 'style') {
+        const worm = session.room.world.humans.get(session.id);
+        if (!worm || worm.isDead) return;
+        worm.color = message.color;
+        worm.pattern = message.pattern as Worm['pattern'];
+        worm.hat = message.hat;
+        worm.glasses = message.glasses;
       } else if (message.type === 'restart') {
         const now = performance.now();
         if (session.lastRestart > 0 && now - session.lastRestart < 1000) {

@@ -23,6 +23,30 @@ test('human identity survives game over and restart but is removed on leave', ()
   assert.equal(world.getStatus().connectedCount, 0);
 });
 
+test('camera keeps big worms visibly bigger instead of masking growth', async () => {
+  const { getCameraZoom } = await import('../src/gameEngine');
+  const view = { width: 1280, height: 800 };
+  const small = getCameraZoom(28, view);
+  const big = getCameraZoom(280, view);
+  assert.ok(big < small, 'camera must still pull back when growing');
+  assert.ok(big > 0.82, 'but not collapse to the minimum zoom');
+  assert.ok(big / small > 0.45, 'growth must stay visible on screen');
+});
+
+test('leaderboard carries body size and ranks the size race separately', () => {
+  const world = new GameEngine(undefined, false, 'online');
+  const a = world.addHuman(randomUUID(), 'Alice');
+  const b = world.addHuman(randomUUID(), 'Bob');
+  world.bots = [];
+  a.grow(10, 50);
+  const status = world.getStatus(b);
+  const rowA = status.leaderboard.find(entry => entry.id === a.id);
+  assert.ok(rowA && rowA.size === a.segments.length && rowA.size > 28);
+  assert.equal(status.size, b.segments.length);
+  assert.equal(status.sizeRank, 2);
+  assert.equal(world.getStatus(a).sizeRank, 1);
+});
+
 test('food and multipliers are awarded to the actual eater in the shared world', () => {
   const world = new GameEngine(undefined, false, 'online');
   const a = world.addHuman(randomUUID(), 'Alice');

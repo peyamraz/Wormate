@@ -5,6 +5,7 @@ import type { PlayerStatus } from './gameEngine';
 import { drawGame } from './gameRenderer';
 import { prepareGameArt } from './gameArt';
 import { gameAudio } from './gameAudio';
+import { readLoadout, skinById } from './shop';
 import type { OnlineClient } from './network/OnlineClient';
 import type { GuestSession } from './session';
 
@@ -60,6 +61,14 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
     const rect = canvas.getBoundingClientRect();
     const engine = online?.view ?? new GameEngine({ width: rect.width, height: rect.height }, ['menu', 'connecting'].includes(propsRef.current.state));
     if (!online && guest) { engine.player.id = guest.id; engine.player.name = guest.name; }
+    if (!online) {
+      const loadout = readLoadout();
+      const skin = skinById(loadout.skin);
+      engine.player.color = skin.color;
+      engine.player.pattern = skin.pattern;
+      engine.player.hat = loadout.hat;
+      engine.player.glasses = loadout.glasses;
+    }
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     let dpr = 1;
     let frame = 0;
@@ -213,7 +222,7 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
             lastPublished = time;
             const status = online ? online.status : engine.getStatus();
             if (status) {
-              const statusKey = `${status.score}:${status.multiplier}:${status.multiplierSeconds}:${status.speedSeconds}:${status.chompSeconds}:${status.combo}:${status.activeCount}:${status.humanCount}:${status.botCount}:${status.connectedCount}:${status.leaderboard[0]?.score ?? 0}`;
+              const statusKey = `${status.score}:${status.size}:${status.sizeRank}:${status.multiplier}:${status.multiplierSeconds}:${status.speedSeconds}:${status.chompSeconds}:${status.combo}:${status.activeCount}:${status.humanCount}:${status.botCount}:${status.connectedCount}:${status.leaderboard[0]?.score ?? 0}:${status.leaderboard.reduce((m, e) => Math.max(m, e.size), 0)}`;
               if (statusKey !== lastStatusKey) {
                 lastStatusKey = statusKey;
                 current.onStatusUpdate(status);
