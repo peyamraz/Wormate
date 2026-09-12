@@ -3,6 +3,9 @@ export const VERSION = '1.5.0';
 export const GAME_CONFIG = {
   CANVAS_WIDTH: 4000,
   CANVAS_HEIGHT: 4000,
+  // Dairesel arena: merkez + yarıçap (kare ızgara sadece mekansal indeks içindir).
+  ARENA_CENTER: 2000,
+  ARENA_RADIUS: 2000,
   WORM_START_LENGTH: 28,
   WORM_MAX_LENGTH: 280,
   WORM_START_RADIUS: 14,

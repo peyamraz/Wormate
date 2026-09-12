@@ -59,10 +59,24 @@
   Kapsam dışı (sonra): mağaza ürün adları, bonus rozet kodları (SPEED/CHOMP), canvas kafa etiketi kısmi.
   Test: 31/31 geçti (`tsc` temiz, `vite build` OK).
 
+- **i18n 2. tur (TAMAM):** ürün adları sözlükten (`skinName/hatName/glassesName`), bonus küpü etiketi
+  (`HIZ/SPEED/VELOCIDAD/VITESSE/SPEED/VELOCIDADE`, CHOMP evrensel), kafa `SHIELD→KALKAN…`.
+  practice bonus yazısı da çevrildi. Test: 32/32 (`tsc` temiz, build OK).
+
 - **Büyük dünya:** arena 3200→4000, grid 25x25, spawn merkeze göre, yemek 1500/bonus 18/bot 18 (online 8).
 - **Duvar dışı void + mini harita:** dış alan desensiz karanlık, sınır ince çizgi; sol üstte konum/bonus/bot haritası + görüş çerçevesi.
 - **Arena akıcılık:** snapshot 15→20Hz, paket başı yemek 500 cap (donma şikayetine karşı).
 - Test: 29/29 geçti (`tsc` temiz, `vite build` OK).
+
+- **Kozmetik denetimi (TAMAM):** `server/cosmetics.test.ts` — 44 deri + 7 şapka + 6 gözlük +
+  bonus/yemek sprite'ları tek tek geometrik kontrolden geçer (simetri, ağız açıklığı, lens konumu).
+  Bulunan gerçek hata: taç yana kayıktı → simetrik zikzak banda çevrildi. Desenler belirginleştirildi.
+- Test: 36/36 (`tsc` temiz, build OK).
+
+- **Dairesel arena (TAMAM):** sınır artık R=2000 çember; zemin iç/dış dikişsiz aynı desen,
+  ince dairesel çizgi + kenara yaklaşınca kırmızı nabız uyarısı + mini haritada çember.
+  Spawn/yem/bonus/bot daire içine kelepçelenir, validasyon radyal. Ölüm mekaniği aynı.
+- Test: 37/37 (`tsc` temiz, build OK).
 
 ## Kararlar / notlar
 

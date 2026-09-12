@@ -64,11 +64,11 @@ test('worm coordinates follow the enlarged arena bounds', () => {
     status: world.getStatus(worm), events: [],
   });
   const near = base();
-  near.worms[0].points = near.worms[0].points.map(() => 3900);
-  assert.ok(parseServerMessage(JSON.stringify(near)), '3900 must be inside the 4000 arena');
+  near.worms[0].points = near.worms[0].points.map((_, i) => i % 2 === 0 ? 3900 : 2000);
+  assert.ok(parseServerMessage(JSON.stringify(near)), 'cember icindeki nokta kabul edilmeli');
   const far = base();
-  far.worms[0].points = far.worms[0].points.map(() => 4600);
-  assert.equal(parseServerMessage(JSON.stringify(far)), null, '4600 must be rejected');
+  far.worms[0].points = far.worms[0].points.map((_, i) => i % 2 === 0 ? 4600 : 2000);
+  assert.equal(parseServerMessage(JSON.stringify(far)), null, 'cember disindaki nokta reddedilmeli');
 });
 
 test('origin allowlist fails closed and production requires HTTPS', () => {
@@ -106,7 +106,7 @@ test('bonus cap follows BONUS_MAX_COUNT (regression: validator must not hardcode
   const world = new GameEngine(undefined, false, 'online');
   const worm = world.addHuman(randomUUID(), 'Guest');
   const makeBonuses = (count: number) =>
-    Array.from({ length: count }, (_, i) => ({ id: i + 1, x: 200 + i * 3, y: 200, kind: 'speed', phase: 0, bornAt: 0 }));
+    Array.from({ length: count }, (_, i) => ({ id: i + 1, x: 1900 + i * 3, y: 2000, kind: 'speed', phase: 0, bornAt: 0 }));
   const base = () => ({
     type: 'state', v: 1, tick: 1, run: 1, you: worm.id,
     worms: [serializeWorm(worm)], foods: [], status: world.getStatus(worm), events: [],

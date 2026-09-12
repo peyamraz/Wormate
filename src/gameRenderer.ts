@@ -1,6 +1,6 @@
 import { BONUS_BY_KIND, GAME_CONFIG as CONFIG } from './constants';
 import type { Food, GameEngine, Worm } from './gameEngine';
-import { GRID_CELL_SIZE, GRID_COLS, GRID_ROWS } from './gameEngine';
+import { distToEdge, GRID_CELL_SIZE, GRID_COLS, GRID_ROWS } from './gameEngine';
 import { getArenaPatterns, getBonusSprite, getGlow, getTreatSprite, getWormSegment } from './gameArt';
 import { t } from './i18n';
 
@@ -77,7 +77,7 @@ function drawFace(ctx: Context, worm: Worm, radius: number, ticks: number, reduc
   ctx.restore();
 }
 
-function drawGlasses(ctx: Context, worm: Worm, radius: number) {
+export function drawGlasses(ctx: Context, worm: Worm, radius: number) {
   const id = worm.glasses;
   if (!id || id === 'none') return;
   const lens: Record<string, string> = {
@@ -134,73 +134,99 @@ function drawGlasses(ctx: Context, worm: Worm, radius: number) {
   }
 }
 
-function drawHat(ctx: Context, worm: Worm, radius: number) {
+export function drawHat(ctx: Context, worm: Worm, radius: number) {
   const id = worm.hat;
   if (!id || id === 'none') return;
-  const x = -radius * 0.3;
+  // Kafa-lokal çerçeve: +x ağza bakar. Şapka başın arkasına (-x) ve y=0'a
+  // simetrik oturur; solucanla birlikte doğal döner, yana kaymaz.
+  const r = radius;
   ctx.save();
-  ctx.translate(x, 0);
-  ctx.rotate(-0.12);
   if (id === 'crown') {
+    // Baş bandı: y eksenine simetrik zikzak, sivri uçlar -x'e bakar.
+    const spikes: [number, number][] = [
+      [-0.2, -0.42], [-0.55, -0.42], [-0.42, -0.21], [-0.62, 0],
+      [-0.42, 0.21], [-0.55, 0.42], [-0.2, 0.42],
+    ];
+    ctx.fillStyle = '#b8860b';
+    ctx.beginPath();
+    spikes.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x * r, y * r) : ctx.lineTo(x * r, y * r));
+    ctx.closePath();
+    ctx.fill();
     ctx.fillStyle = '#f5c542';
     ctx.beginPath();
-    ctx.moveTo(-radius * 0.55, 0);
-    ctx.lineTo(-radius * 0.55, -radius * 0.55);
-    ctx.lineTo(-radius * 0.28, -radius * 0.3);
-    ctx.lineTo(0, -radius * 0.62);
-    ctx.lineTo(radius * 0.28, -radius * 0.3);
-    ctx.lineTo(radius * 0.55, -radius * 0.55);
-    ctx.lineTo(radius * 0.55, 0);
+    spikes.forEach(([x, y], i) => {
+      const px = x * 0.85 - 0.03, py = y * 0.82;
+      i === 0 ? ctx.moveTo(px * r, py * r) : ctx.lineTo(px * r, py * r);
+    });
     ctx.closePath();
     ctx.fill();
     ctx.fillStyle = '#e11d48';
     ctx.beginPath();
-    ctx.arc(0, -radius * 0.28, radius * 0.09, 0, TAU);
+    ctx.arc(-0.34 * r, 0, 0.09 * r, 0, TAU);
     ctx.fill();
-  } else if (id === 'cowboy') {
-    ellipse(ctx, 0, 0, radius * 0.72, radius * 0.2, '#8a5a2b');
-    ctx.fillStyle = '#a06a35';
-    ctx.beginPath();
-    ctx.ellipse(0, -radius * 0.28, radius * 0.38, radius * 0.34, 0, 0, TAU);
-    ctx.fill();
-    ctx.fillStyle = '#5d3a1a';
-    ctx.fillRect(-radius * 0.38, -radius * 0.32, radius * 0.76, radius * 0.12);
+  }
+  if (id === 'cowboy') {
+    ellipse(ctx, -0.35 * r, 0, 0.38 * r, 0.78 * r, '#6b4423');
+    ellipse(ctx, -0.35 * r, 0, 0.3 * r, 0.42 * r, '#a06a35');
+    ellipse(ctx, -0.42 * r, -0.08 * r, 0.2 * r, 0.28 * r, '#c08a4d');
+    ctx.fillStyle = '#4a2d15';
+    ctx.fillRect(-0.65 * r, -0.09 * r, 0.6 * r, 0.18 * r);
   } else if (id === 'party') {
-    ctx.fillStyle = '#7c6cf0';
+    ctx.fillStyle = '#5b4fc4';
     ctx.beginPath();
-    ctx.moveTo(-radius * 0.4, 0);
-    ctx.lineTo(radius * 0.4, 0);
-    ctx.lineTo(0, -radius * 1.05);
+    ctx.moveTo(-0.12 * r, -0.32 * r);
+    ctx.lineTo(-0.12 * r, 0.32 * r);
+    ctx.lineTo(-1.1 * r, 0);
     ctx.closePath();
     ctx.fill();
-    ellipse(ctx, 0, -radius * 1.05, radius * 0.12, radius * 0.12, '#ffd166');
-  } else if (id === 'beanie') {
-    ctx.fillStyle = '#e05252';
+    ctx.fillStyle = '#8f83e8';
     ctx.beginPath();
-    ctx.ellipse(0, -radius * 0.25, radius * 0.55, radius * 0.5, 0, Math.PI, 0);
+    ctx.moveTo(-0.35 * r, -0.22 * r);
+    ctx.lineTo(-0.35 * r, 0.22 * r);
+    ctx.lineTo(-1.1 * r, 0);
+    ctx.closePath();
+    ctx.fill();
+    ellipse(ctx, -1.1 * r, 0, 0.13 * r, 0.13 * r, '#ffd166');
+  } else if (id === 'beanie') {
+    ctx.fillStyle = '#c04545';
+    ctx.beginPath();
+    ctx.ellipse(-0.38 * r, 0, 0.48 * r, 0.56 * r, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#e06a6a';
+    ctx.beginPath();
+    ctx.ellipse(-0.5 * r, -0.12 * r, 0.3 * r, 0.34 * r, 0, 0, TAU);
     ctx.fill();
     ctx.fillStyle = '#f3f4f6';
-    ctx.fillRect(-radius * 0.55, -radius * 0.32, radius * 1.1, radius * 0.22);
-    ellipse(ctx, 0, -radius * 0.78, radius * 0.14, radius * 0.14, '#ffffff');
+    ctx.fillRect(-0.22 * r, -0.56 * r, 0.2 * r, 1.12 * r);
+    ellipse(ctx, -0.9 * r, 0, 0.15 * r, 0.15 * r, '#ffffff');
   } else if (id === 'helmet') {
-    ctx.fillStyle = '#3f6d8e';
-    ctx.beginPath();
-    ctx.ellipse(0, -radius * 0.15, radius * 0.58, radius * 0.52, 0, Math.PI, 0);
-    ctx.fill();
+    ellipse(ctx, -0.4 * r, 0, 0.52 * r, 0.6 * r, '#33566e');
+    ellipse(ctx, -0.44 * r, 0, 0.44 * r, 0.52 * r, '#3f6d8e');
+    ellipse(ctx, -0.52 * r, -0.15 * r, 0.2 * r, 0.28 * r, '#6ea3c4');
     ctx.fillStyle = '#ffd166';
-    ctx.fillRect(-radius * 0.08, -radius * 0.67, radius * 0.16, radius * 0.5);
+    ctx.fillRect(-0.52 * r, -0.5 * r, 0.14 * r, 1.0 * r);
   } else if (id === 'wizard') {
+    ellipse(ctx, -0.28 * r, 0, 0.16 * r, 0.64 * r, '#372a66');
     ctx.fillStyle = '#4c3a8c';
     ctx.beginPath();
-    ctx.moveTo(-radius * 0.5, -radius * 0.1);
-    ctx.lineTo(radius * 0.5, -radius * 0.1);
-    ctx.lineTo(radius * 0.05, -radius * 1.25);
+    ctx.moveTo(-0.28 * r, -0.36 * r);
+    ctx.lineTo(-0.28 * r, 0.36 * r);
+    ctx.lineTo(-1.35 * r, 0.08 * r);
     ctx.closePath();
     ctx.fill();
-    ellipse(ctx, 0, -radius * 0.1, radius * 0.62, radius * 0.14, '#372a66');
+    ctx.fillStyle = '#6a58c4';
+    ctx.beginPath();
+    ctx.moveTo(-0.5 * r, -0.26 * r);
+    ctx.lineTo(-0.5 * r, 0.26 * r);
+    ctx.lineTo(-1.35 * r, 0.08 * r);
+    ctx.closePath();
+    ctx.fill();
     ctx.fillStyle = '#ffd166';
     ctx.beginPath();
-    ctx.arc(-radius * 0.05, -radius * 0.7, radius * 0.07, 0, TAU);
+    ctx.arc(-0.72 * r, -0.02 * r, 0.07 * r, 0, TAU);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(-0.95 * r, 0.05 * r, 0.05 * r, 0, TAU);
     ctx.fill();
   }
   ctx.restore();
@@ -279,7 +305,7 @@ function drawWormBody(ctx: Context, worm: Worm, engine: GameEngine, reducedMotio
   ctx.font = `600 ${11 / zoom}px system-ui, sans-serif`;
   ctx.fillStyle = player ? '#edfdff' : '#dae9ebb8';
   const label = player
-    ? engine.isDemo ? 'Noodle' : worm.spawnProtection > 0 ? `${t.you} / SHIELD ${Math.ceil(worm.spawnProtection / 60)}s` : t.you
+    ? engine.isDemo ? 'Noodle' : worm.spawnProtection > 0 ? `${t.you} / ${t.shield} ${Math.ceil(worm.spawnProtection / 60)}s` : t.you
     : worm.name;
   ctx.fillText(label, head.x, head.y - radius - 12 / zoom);
 }
@@ -401,23 +427,39 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
   ctx.scale(zoom, zoom);
   ctx.translate(-x, -y);
 
-  // Background grid
-  const groundX = Math.max(0, bounds.left);
-  const groundY = Math.max(0, bounds.top);
-  const groundWidth = Math.min(CONFIG.CANVAS_WIDTH, bounds.right) - groundX;
-  const groundHeight = Math.min(CONFIG.CANVAS_HEIGHT, bounds.bottom) - groundY;
+  // Zemin dikişsiz: desen tüm görüş alanını kaplar, iç/dış farkı yoktur.
+  const groundWidth = bounds.right - bounds.left;
+  const groundHeight = bounds.bottom - bounds.top;
   if (groundWidth > 0 && groundHeight > 0) {
     const patterns = getArenaPatterns(ctx);
     ctx.fillStyle = patterns.fine ?? '#18282f';
-    ctx.fillRect(groundX, groundY, groundWidth, groundHeight);
+    ctx.fillRect(bounds.left, bounds.top, groundWidth, groundHeight);
     if (patterns.wide) {
       ctx.fillStyle = patterns.wide;
-      ctx.fillRect(groundX, groundY, groundWidth, groundHeight);
+      ctx.fillRect(bounds.left, bounds.top, groundWidth, groundHeight);
     }
   }
-  ctx.strokeStyle = '#fb718540';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+  // Sınır: ince dairesel çizgi (ölümcül, ama göze batmaz).
+  ctx.strokeStyle = 'rgba(251,113,133,0.4)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(CONFIG.ARENA_CENTER, CONFIG.ARENA_CENTER, CONFIG.ARENA_RADIUS, 0, TAU);
+  ctx.stroke();
+  // Kenara yaklaşınca kırmızı nabız: görünmez ölüme karşı adil uyarı.
+  if (!engine.isDemo && !engine.player.isDead) {
+    const head = engine.player.segments[0];
+    const edge = distToEdge(head.x, head.y);
+    if (edge < 320) {
+      const pulse = reducedMotion ? 0.7 : 0.55 + 0.25 * Math.sin(engine.ticks * 0.2);
+      ctx.globalAlpha = Math.max(0, (1 - edge / 320)) * 0.4 * pulse;
+      ctx.strokeStyle = '#ff2d55';
+      ctx.lineWidth = 90;
+      ctx.beginPath();
+      ctx.arc(CONFIG.ARENA_CENTER, CONFIG.ARENA_CENTER, CONFIG.ARENA_RADIUS - 45, 0, TAU);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
 
   // Collect visible foods using spatial grid
   const visibleFoods: Food[] = [];
@@ -573,6 +615,12 @@ function drawMinimap(ctx: Context, engine: GameEngine, width: number, height: nu
   ctx.beginPath();
   ctx.roundRect(x, y, size, size, 10);
   ctx.clip();
+  // Arena çemberi: kare kutu içinde daire — son hissi vermez, konumu gösterir.
+  ctx.strokeStyle = 'rgba(251,113,133,0.5)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.arc(x + pad + CONFIG.ARENA_CENTER * scale, y + pad + CONFIG.ARENA_CENTER * scale, CONFIG.ARENA_RADIUS * scale, 0, TAU);
+  ctx.stroke();
   for (const bonus of engine.bonuses) {
     const p = dot(bonus.x, bonus.y);
     ctx.fillStyle = BONUS_BY_KIND[bonus.kind].color;

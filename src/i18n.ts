@@ -1,6 +1,8 @@
 // Otomatik dil: tarayıcı dilinden seçilir, dil seçici YOK. Bilinmeyen dil → İngilizce.
 export type Lang = 'tr' | 'en' | 'es' | 'fr' | 'de' | 'pt';
 
+import type { BonusKind } from './constants';
+
 export function resolveLang(tag: string | undefined | null): Lang {
   const t = (tag ?? '').toLowerCase();
   if (t.startsWith('tr')) return 'tr';
@@ -47,6 +49,11 @@ export interface Texts {
   arenaAddr: string; arenaTls: string;
   boostBtn: string; arenaAria: string;
   frenzyCombo: string; frenzyMult: string; multEnded: string;
+  shield: string; bonusSpeed: string;
+  patSolid: string; patCandy: string; patFreckles: string; patStripes: string; patDots: string;
+  flagWord: string; cTR: string; cAZ: string; cDE: string; cFR: string; cUS: string; cBR: string; cGB: string; cIT: string;
+  hatNone: string; hatParty: string; hatBeanie: string; hatCowboy: string; hatHelmet: string; hatWizard: string; hatCrown: string;
+  glNone: string; glCool: string; glSun: string; glMono: string; glStar: string; glHeart: string;
 }
 
 const en: Texts = {
@@ -83,6 +90,11 @@ const en: Texts = {
   arenaTls: 'HTTPS pages require a secure wss:// arena server.',
   boostBtn: 'BOOST', arenaAria: 'Wormate arena. Steer with the mouse, arrow keys, WASD, or drag on touch. Hold Space to boost.',
   frenzyCombo: 'SUPER COMBO {n}!', frenzyMult: 'SUPER MULTIPLIER x{n}!', multEnded: 'MULTIPLIER OVER',
+  shield: 'SHIELD', bonusSpeed: 'SPEED',
+  patSolid: 'Solid', patCandy: 'Candy', patFreckles: 'Freckles', patStripes: 'Stripes', patDots: 'Dots',
+  flagWord: 'Flag', cTR: 'Turkey', cAZ: 'Azerbaijan', cDE: 'Germany', cFR: 'France', cUS: 'USA', cBR: 'Brazil', cGB: 'UK', cIT: 'Italy',
+  hatNone: 'Hatless', hatParty: 'Party Hat', hatBeanie: 'Beanie', hatCowboy: 'Cowboy Hat', hatHelmet: 'Helmet', hatWizard: 'Wizard Hat', hatCrown: 'Crown',
+  glNone: 'No glasses', glCool: 'Cool Glasses', glSun: 'Sunglasses', glMono: 'Monocle', glStar: 'Star Glasses', glHeart: 'Heart Glasses',
 };
 
 const tr: Texts = {
@@ -119,6 +131,11 @@ const tr: Texts = {
   arenaTls: 'HTTPS sayfalar güvenli wss:// arena serverı ister.',
   boostBtn: 'BOOST', arenaAria: 'Wormate arenası. Fare, ok tuşları, WASD veya dokunmatik sürükleme ile yönlendir. Hızlanmak için Space basılı tut.',
   frenzyCombo: 'SÜPER KOMBO {n}!', frenzyMult: 'SÜPER ÇARPAN x{n}!', multEnded: 'ÇARPAN BİTTİ',
+  shield: 'KALKAN', bonusSpeed: 'HIZ',
+  patSolid: 'Sade', patCandy: 'Şeker', patFreckles: 'Benekli', patStripes: 'Çizgili', patDots: 'Puantiye',
+  flagWord: 'Bayrak', cTR: 'Türkiye', cAZ: 'Azerbaycan', cDE: 'Almanya', cFR: 'Fransa', cUS: 'ABD', cBR: 'Brezilya', cGB: 'İngiltere', cIT: 'İtalya',
+  hatNone: 'Şapkasız', hatParty: 'Parti Şapkası', hatBeanie: 'Bere', hatCowboy: 'Kovboy Şapkası', hatHelmet: 'Kask', hatWizard: 'Sihirbaz Şapkası', hatCrown: 'Kral Tacı',
+  glNone: 'Gözlüksüz', glCool: 'Havalı Gözlük', glSun: 'Güneş Gözlüğü', glMono: 'Monokl', glStar: 'Yıldız Gözlük', glHeart: 'Kalp Gözlük',
 };
 
 const es: Texts = {
@@ -155,6 +172,11 @@ const es: Texts = {
   arenaTls: 'Las páginas HTTPS requieren un servidor wss:// seguro.',
   boostBtn: 'TURBO', arenaAria: 'Arena Wormate. Dirige con el ratón, flechas, WASD o arrastra en táctil. Mantén Espacio para turbo.',
   frenzyCombo: '¡SUPERCOMBO {n}!', frenzyMult: '¡SUPER MULTIPLICADOR x{n}!', multEnded: 'MULTIPLICADOR TERMINADO',
+  shield: 'ESCUDO', bonusSpeed: 'VELOCIDAD',
+  patSolid: 'Sólido', patCandy: 'Caramelo', patFreckles: 'Pecas', patStripes: 'Rayas', patDots: 'Puntos',
+  flagWord: 'Bandera', cTR: 'Turquía', cAZ: 'Azerbaiyán', cDE: 'Alemania', cFR: 'Francia', cUS: 'EE. UU.', cBR: 'Brasil', cGB: 'Reino Unido', cIT: 'Italia',
+  hatNone: 'Sin sombrero', hatParty: 'Gorro de fiesta', hatBeanie: 'Gorro', hatCowboy: 'Sombrero de vaquero', hatHelmet: 'Casco', hatWizard: 'Sombrero de mago', hatCrown: 'Corona',
+  glNone: 'Sin gafas', glCool: 'Gafas geniales', glSun: 'Gafas de sol', glMono: 'Monóculo', glStar: 'Gafas de estrella', glHeart: 'Gafas de corazón',
 };
 
 const fr: Texts = {
@@ -191,6 +213,11 @@ const fr: Texts = {
   arenaTls: 'Les pages HTTPS exigent un serveur wss:// sécurisé.',
   boostBtn: 'TURBO', arenaAria: "Arène Wormate. Dirige à la souris, flèches, ZQSD ou glisser tactile. Maintiens Espace pour le turbo.",
   frenzyCombo: 'SUPER COMBO {n} !', frenzyMult: 'SUPER MULTIPLICATEUR x{n} !', multEnded: 'MULTIPLICATEUR TERMINÉ',
+  shield: 'BOUCLIER', bonusSpeed: 'VITESSE',
+  patSolid: 'Uni', patCandy: 'Bonbon', patFreckles: 'Taches', patStripes: 'Rayures', patDots: 'Pois',
+  flagWord: 'Drapeau', cTR: 'Turquie', cAZ: 'Azerbaïdjan', cDE: 'Allemagne', cFR: 'France', cUS: 'USA', cBR: 'Brésil', cGB: 'Royaume-Uni', cIT: 'Italie',
+  hatNone: 'Sans chapeau', hatParty: 'Chapeau de fête', hatBeanie: 'Bonnet', hatCowboy: 'Chapeau de cowboy', hatHelmet: 'Casque', hatWizard: 'Chapeau de magicien', hatCrown: 'Couronne',
+  glNone: 'Sans lunettes', glCool: 'Lunettes cool', glSun: 'Lunettes de soleil', glMono: 'Monocle', glStar: 'Lunettes étoile', glHeart: 'Lunettes cœur',
 };
 
 const de: Texts = {
@@ -227,6 +254,11 @@ const de: Texts = {
   arenaTls: 'HTTPS-Seiten brauchen einen sicheren wss://-Server.',
   boostBtn: 'BOOST', arenaAria: 'Wormate-Arena. Steuern mit Maus, Pfeilen, WASD oder Touch-Drag. Leertaste halten für Boost.',
   frenzyCombo: 'SUPER-KOMBO {n}!', frenzyMult: 'SUPER-MULTI x{n}!', multEnded: 'MULTI VORBEI',
+  shield: 'SCHILD', bonusSpeed: 'SPEED',
+  patSolid: 'Einfarbig', patCandy: 'Candy', patFreckles: 'Sommersprossen', patStripes: 'Streifen', patDots: 'Punkte',
+  flagWord: 'Flagge', cTR: 'Türkei', cAZ: 'Aserbaidschan', cDE: 'Deutschland', cFR: 'Frankreich', cUS: 'USA', cBR: 'Brasilien', cGB: 'Großbritannien', cIT: 'Italien',
+  hatNone: 'Ohne Hut', hatParty: 'Partyhut', hatBeanie: 'Mütze', hatCowboy: 'Cowboyhut', hatHelmet: 'Helm', hatWizard: 'Zauberhut', hatCrown: 'Krone',
+  glNone: 'Ohne Brille', glCool: 'Coole Brille', glSun: 'Sonnenbrille', glMono: 'Monokel', glStar: 'Sternbrille', glHeart: 'Herzbrille',
 };
 
 const pt: Texts = {
@@ -263,9 +295,21 @@ const pt: Texts = {
   arenaTls: 'Páginas HTTPS exigem um servidor wss:// seguro.',
   boostBtn: 'TURBO', arenaAria: 'Arena Wormate. Dirija com mouse, setas, WASD ou arraste no toque. Segure Espaço para turbo.',
   frenzyCombo: 'SUPERCOMBO {n}!', frenzyMult: 'SUPER MULTIPLICADOR x{n}!', multEnded: 'MULTIPLICADOR ACABOU',
+  shield: 'ESCUDO', bonusSpeed: 'VELOCIDADE',
+  patSolid: 'Sólido', patCandy: 'Doce', patFreckles: 'Sardas', patStripes: 'Listras', patDots: 'Bolinhas',
+  flagWord: 'Bandeira', cTR: 'Turquia', cAZ: 'Azerbaijão', cDE: 'Alemanha', cFR: 'França', cUS: 'EUA', cBR: 'Brasil', cGB: 'Reino Unido', cIT: 'Itália',
+  hatNone: 'Sem chapéu', hatParty: 'Chapéu de festa', hatBeanie: 'Gorro', hatCowboy: 'Chapéu de caubói', hatHelmet: 'Capacete', hatWizard: 'Chapéu de mago', hatCrown: 'Coroa',
+  glNone: 'Sem óculos', glCool: 'Óculos descolados', glSun: 'Óculos de sol', glMono: 'Monóculo', glStar: 'Óculos estrela', glHeart: 'Óculos coração',
 };
 
 export const STRINGS: Record<Lang, Texts> = { tr, en, es, fr, de, pt };
 
 export const lang: Lang = detectLang();
 export const t: Texts = STRINGS[lang];
+
+// Bonus küpü üstündeki kısa kod: hız çevrilir, çarpanlar sayısal, CHOMP evrensel ses sözcüğüdür.
+export function bonusLabel(kind: BonusKind): string {
+  if (kind === 'speed') return t.bonusSpeed;
+  if (kind === 'chomp') return 'CHOMP';
+  return kind;
+}

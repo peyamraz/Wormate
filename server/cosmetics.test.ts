@@ -1,0 +1,175 @@
+// Mağazadaki HER deri/şapka/gözlük tek tek geometrik kontrolden geçer:
+// - sprite'lar hatasız üretilir, desen boyası gerçekten çizilir
+// - şapkalar ağzı kapatmaz ve yüze simetriktir (yana kayma yok)
+// - gözlük lensleri gözbebekleriyle aynı noktadadır
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+interface Op { op: string; args: unknown[]; fill: string; stroke: string; }
+
+class MockGradient { addColorStop() { /* kayıt dışı */ } }
+
+function makeCtx(ops: Op[]): any {
+  const ctx: any = {
+    fillStyle: '', strokeStyle: '', lineWidth: 1, globalAlpha: 1,
+    font: '', textAlign: '', textBaseline: '', lineCap: '', lineJoin: '',
+    lineDashOffset: 0,
+  };
+  const methods = ['save', 'restore', 'translate', 'rotate', 'scale', 'setTransform',
+    'beginPath', 'moveTo', 'lineTo', 'arc', 'ellipse', 'rect', 'fillRect',
+    'quadraticCurveTo', 'bezierCurveTo', 'closePath', 'fill', 'stroke', 'clip',
+    'fillText', 'strokeText', 'setLineDash', 'clearRect', 'drawImage'];
+  for (const m of methods) ctx[m] = (...a: unknown[]) => { ops.push({ op: m, args: [...a], fill: ctx.fillStyle, stroke: ctx.strokeStyle }); };
+  ctx.createRadialGradient = (...a: unknown[]) => { ops.push({ op: 'createRadialGradient', args: [...a], fill: '', stroke: '' }); return new MockGradient(); };
+  ctx.createLinearGradient = (...a: unknown[]) => { ops.push({ op: 'createLinearGradient', args: [...a], fill: '', stroke: '' }); return new MockGradient(); };
+  ctx.measureText = (s: string) => ({ width: String(s).length * 6 });
+  return ctx;
+}
+
+const created: { ops: Op[] }[] = [];
+(globalThis as any).document = {
+  createElement: () => {
+    const entry = { ops: [] as Op[] };
+    created.push(entry);
+    return { width: 0, height: 0, getContext: () => makeCtx(entry.ops) };
+  },
+};
+
+const num = (v: unknown) => typeof v === 'number' ? v : Number.NaN;
+
+// Bir op'un kapladığı noktalar (simetri/sınır hesabı için)
+function pointsOf(ops: Op[]): { x: number; y: number }[] {
+  const out: { x: number; y: number }[] = [];
+  for (const o of ops) {
+    const a = o.args;
+    if (o.op === 'moveTo' || o.op === 'lineTo') out.push({ x: num(a[0]), y: num(a[1]) });
+    else if (o.op === 'arc' || o.op === 'ellipse') out.push({ x: num(a[0]), y: num(a[1]) });
+    else if (o.op === 'fillRect') {
+      const x = num(a[0]), y = num(a[1]), w = num(a[2]), h = num(a[3]);
+      out.push({ x, y }, { x: x + w, y: y + h });
+    }
+  }
+  return out.filter(p => Number.isFinite(p.x) && Number.isFinite(p.y));
+}
+
+test('tum deri sprite lari hatasiz uretilir ve desen boyasi cizilir', async () => {
+  const { getWormSegment } = await import('../src/gameArt');
+  const { SHOP_SKINS, FLAG_STRIPES } = await import('../src/shop');
+  assert.ok(SHOP_SKINS.length >= 40, `zengin magaza beklenir, bulunan: ${SHOP_SKINS.length}`);
+  for (const skin of SHOP_SKINS) {
+    const before = created.length;
+    getWormSegment(skin.color, skin.pattern);
+    getWormSegment(skin.color, skin.pattern, true);
+    assert.ok(created.length > before, `${skin.id} sprite uretmeli`);
+    const ops = created[created.length - 1].ops;
+    assert.ok(ops.length > 6, `${skin.id} bos gorunmemeli`);
+    if (skin.pattern.startsWith('flag-')) {
+      const stripes = FLAG_STRIPES[skin.pattern as keyof typeof FLAG_STRIPES];
+      const painted = ops.some(o => o.op === 'fillRect' && stripes.includes(String(o.fill)));
+      assert.ok(painted, `${skin.id} bayrak seritleri boyanmali`);
+    }
+    if (skin.pattern === 'stripes') {
+      const bands = ops.filter(o => o.op === 'fillRect').length;
+      assert.ok(bands >= 3, `${skin.id} en az 3 cizgi bandi icermeli`);
+    }
+    if (skin.pattern === 'dots') {
+      const dots = ops.filter(o => o.op === 'arc').length;
+      assert.ok(dots >= 5, `${skin.id} en az 5 puantiye icermeli`);
+    }
+  }
+});
+
+test('tum sapkalar agzi kapatmaz ve simetriktir', async () => {
+  const { drawHat } = await import('../src/gameRenderer');
+  const { SHOP_HATS } = await import('../src/shop');
+  const r = 14;
+  for (const hat of SHOP_HATS) {
+    const ops: Op[] = [];
+    drawHat(makeCtx(ops) as CanvasRenderingContext2D, { hat: hat.id } as any, r);
+    if (hat.id === 'none') {
+      assert.equal(ops.length, 0, 'sapkasiz cizim yapilmamali');
+      continue;
+    }
+    assert.ok(ops.length > 5, `${hat.id} gorsel icermeli`);
+    const pts = pointsOf(ops);
+    assert.ok(pts.length > 0, `${hat.id} nokta icermeli`);
+    const maxX = Math.max(...pts.map(p => p.x));
+    const minX = Math.min(...pts.map(p => p.x));
+    const maxY = Math.max(...pts.map(p => p.y));
+    const minY = Math.min(...pts.map(p => p.y));
+    assert.ok(maxX <= 0.25 * r, `${hat.id} agzi kapatmamali (maxX=${maxX.toFixed(1)})`);
+    assert.ok(minX >= -1.5 * r, `${hat.id} kafadan kopmamali (minX=${minX.toFixed(1)})`);
+    assert.ok(Math.abs(maxY + minY) <= 0.25 * r, `${hat.id} simetrik olmali (y: ${minY.toFixed(1)}..${maxY.toFixed(1)})`);
+    for (const o of ops) {
+      if (o.op === 'fill' || o.op === 'stroke') {
+        const c = o.op === 'fill' ? o.fill : o.stroke;
+        assert.match(String(c), /^#[0-9a-f]{6}$/i, `${hat.id} gecersiz renk: ${c}`);
+      }
+    }
+  }
+});
+
+test('tum gozlukler gozbebegiyle ayni noktadadir', async () => {
+  const { drawGlasses } = await import('../src/gameRenderer');
+  const { SHOP_GLASSES } = await import('../src/shop');
+  const r = 14;
+  const ex = -0.04 * r, ey = 0.47 * r;
+  const near = (ops: Op[], x: number, y: number, tol: number) =>
+    ops.some(o => (o.op === 'ellipse' || o.op === 'arc') &&
+      Math.hypot(num(o.args[0]) - x, num(o.args[1]) - y) <= tol);
+  for (const g of SHOP_GLASSES) {
+    const ops: Op[] = [];
+    drawGlasses(makeCtx(ops) as CanvasRenderingContext2D, { glasses: g.id } as any, r);
+    if (g.id === 'none') {
+      assert.equal(ops.length, 0, 'gozluksuz cizim yapilmamali');
+      continue;
+    }
+    if (g.id === 'star') {
+      // Yildiz cizgilerle cizilir: tum kose noktalari bir gozun yakininda olmali.
+      const pts = pointsOf(ops);
+      assert.ok(pts.length > 10, 'yildiz kose icermeli');
+      for (const p of pts) {
+        const d = Math.min(Math.hypot(p.x - ex, p.y - ey), Math.hypot(p.x - ex, p.y + ey));
+        assert.ok(d <= 0.75 * r, `yildiz noktasi gozde olmali (d=${d.toFixed(1)})`);
+      }
+      continue;
+    }
+    if (g.id === 'heart') {
+      // Kalp iki yaydan olusur; yay merkezleri gozun hemen ustundedir.
+      const rw = 0.46 * r, rh = 0.46 * r;
+      for (const sy of [1, -1]) {
+        for (const sx of [-1, 1]) {
+          assert.ok(near(ops, ex + sx * 0.28 * rw, sy * ey - 0.18 * rh, 0.7), `kalp yayi gozde olmali (${sy > 0 ? 'sag' : 'sol'})`);
+        }
+      }
+      continue;
+    }
+    assert.ok(near(ops, ex, ey, 0.6), `${g.id} sag lens gozde olmali`);
+    if (g.id === 'mono') {
+      assert.ok(ops.filter(o => o.op === 'ellipse' || o.op === 'arc').length <= 2,
+        'monokl tek gozde olmali');
+    } else {
+      assert.ok(near(ops, ex, -ey, 0.6), `${g.id} sol lens gozde olmali`);
+      assert.ok(ops.some(o => o.op === 'stroke'), `${g.id} kopru cizgisi olmali`);
+    }
+  }
+});
+
+test('tum bonus kupleri ve sekerler hatasiz uretilir', async () => {
+  const { getBonusSprite, getTreatSprite } = await import('../src/gameArt');
+  const { BONUSES, TREATS } = await import('../src/constants');
+  for (const bonus of BONUSES) {
+    const before = created.length;
+    getBonusSprite(bonus.kind);
+    assert.ok(created.length > before, `${bonus.kind} kup uretmeli`);
+    const texts = created[created.length - 1].ops.filter(o => o.op === 'fillText');
+    assert.ok(texts.some(o => String(o.args[0]).length > 0), `${bonus.kind} etiket yazmali`);
+  }
+  for (const treat of TREATS) {
+    for (let v = 0; v < 3; v++) {
+      const before = created.length;
+      getTreatSprite(treat.kind, v);
+      assert.ok(created.length > before || v > 0, `${treat.kind}:${v} seker uretmeli`);
+    }
+  }
+});

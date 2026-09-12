@@ -1,6 +1,6 @@
 import { GameEngine, getCameraZoom, Worm } from '../gameEngine';
 import type { PlayerStatus } from '../gameEngine';
-import { BONUS_BY_KIND } from '../constants';
+import { bonusLabel } from '../i18n';
 import { readLoadout, skinById } from '../shop';
 import { t } from '../i18n';
 import { NETWORK } from './protocol';
@@ -233,7 +233,7 @@ export class OnlineClient {
         if (own) this.view.shake = 15;
       } else if (own) {
         this.view.createExplosion(event.x, event.y, event.color, 9, 1, true);
-        this.view.floatingScores.push({ x: event.x, y: event.y - 24, value: event.value, color: event.color, life: 1, label: event.bonus ? BONUS_BY_KIND[event.bonus].label : undefined });
+        this.view.floatingScores.push({ x: event.x, y: event.y - 24, value: event.value, color: event.color, life: 1, label: event.bonus ? bonusLabel(event.bonus) : undefined });
         if (event.food) this.view.snackBites.push({ ...event.food, target: this.view.player, life: 1 });
         if (event.bonus) this.view.pickupEvent = event.bonus;
         this.view.player.swallowWaves.push(0);

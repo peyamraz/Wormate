@@ -63,6 +63,15 @@ test('rapid eating builds combo up to the frenzy cap', () => {
   assert.equal(a.combo, 20, 'combo must cap at 20');
 });
 
+test('arena boundary is circular: edge kills, center lives', () => {
+  const edge = new Worm(randomUUID(), 3990, 2000, GAME_CONFIG.COLORS[0]);
+  edge.update(0, false);
+  assert.equal(edge.isDead, true, 'cember disina cikan olmeli');
+  const middle = new Worm(randomUUID(), 2000, 2000, GAME_CONFIG.COLORS[0]);
+  middle.update(0, false);
+  assert.equal(middle.isDead, false, 'merkez yasamali');
+});
+
 test('multiplier countdown is visible in status seconds', () => {
   const world = new GameEngine(undefined, false, 'online');
   const a = world.addHuman(randomUUID(), 'Alice');

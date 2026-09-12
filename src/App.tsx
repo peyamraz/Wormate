@@ -13,6 +13,7 @@ import { t } from './i18n';
 import {
   SHOP_GLASSES, SHOP_HATS, SHOP_SKINS,
   buyGlasses, buyHat, buySkin, earnCoins, equip, readCoins, readLoadout, readOwned,
+  skinName, hatName, glassesName,
 } from './shop';
 import type { GlassesId, HatId, Loadout, Owned } from './shop';
 import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut, ChevronDown, ChevronUp, ChevronLeft, Bot, Coins, ShoppingBag, User, LogIn, Palette, Glasses } from 'lucide-react';
@@ -380,7 +381,7 @@ export default function App() {
                       <span className="mx-auto mb-1 flex h-6 w-6 overflow-hidden rounded-full ring-1 ring-white/30" style={{ background: item.color }}>
                         {item.pattern.startsWith('flag-') && <span className="m-auto text-[8px]">🏳</span>}
                       </span>
-                      <span className="block truncate text-[10px] font-bold text-slate-200">{item.name}</span>
+                      <span className="block truncate text-[10px] font-bold text-slate-200">{skinName(item)}</span>
                       <span className={`block text-[10px] font-black ${worn ? 'text-cyan-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
                         {worn ? t.equipped : has ? t.equip : `🪙 ${item.price}`}
                       </span>
@@ -402,7 +403,7 @@ export default function App() {
                       }}
                       className={`rounded-xl border p-2 text-left transition-all ${worn ? 'border-cyan-400 bg-cyan-500/15' : 'border-slate-800 bg-slate-900 hover:border-slate-600'}`}
                     >
-                      <span className="block truncate text-[10px] font-bold text-slate-200">{item.name}</span>
+                      <span className="block truncate text-[10px] font-bold text-slate-200">{hatName(item.id)}</span>
                       <span className={`block text-[10px] font-black ${worn ? 'text-cyan-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
                         {worn ? t.equipped : has ? t.equip : `🪙 ${item.price}`}
                       </span>
@@ -424,7 +425,7 @@ export default function App() {
                       }}
                       className={`rounded-xl border p-2 text-left transition-all ${worn ? 'border-cyan-400 bg-cyan-500/15' : 'border-slate-800 bg-slate-900 hover:border-slate-600'}`}
                     >
-                      <span className="block truncate text-[10px] font-bold text-slate-200">{item.name}</span>
+                      <span className="block truncate text-[10px] font-bold text-slate-200">{glassesName(item.id)}</span>
                       <span className={`block text-[10px] font-black ${worn ? 'text-cyan-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
                         {worn ? t.equipped : has ? t.equip : `🪙 ${item.price}`}
                       </span>

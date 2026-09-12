@@ -1,5 +1,6 @@
 import { GAME_CONFIG as CONFIG } from './constants';
 import type { FlagSkin, WormPattern } from './constants';
+import { t } from './i18n';
 
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
 export type HatId = 'none' | 'crown' | 'cowboy' | 'party' | 'beanie' | 'helmet' | 'wizard';
@@ -7,15 +8,14 @@ export type GlassesId = 'none' | 'sun' | 'cool' | 'heart' | 'mono' | 'star';
 
 export interface ShopSkin {
   id: string;
-  name: string;
   price: number;
   rarity: Rarity;
   color: string;
   pattern: WormPattern;
 }
 
-export interface ShopHat { id: HatId; name: string; price: number; rarity: Rarity; }
-export interface ShopGlasses { id: GlassesId; name: string; price: number; rarity: Rarity; }
+export interface ShopHat { id: HatId; price: number; rarity: Rarity; }
+export interface ShopGlasses { id: GlassesId; price: number; rarity: Rarity; }
 
 export interface Loadout { skin: string; hat: HatId; glasses: GlassesId; }
 
@@ -31,11 +31,42 @@ export const FLAG_STRIPES: Record<FlagSkin, string[]> = {
   'flag-it': ['#009246', '#ffffff', '#ce2b37'],
 };
 
-const PATTERN_TR: Record<string, string> = {
-  solid: 'Sade', candy: 'Şeker', freckles: 'Benekli', stripes: 'Çizgili', dots: 'Puantiye',
-  'flag-tr': 'Türkiye', 'flag-az': 'Azerbaycan', 'flag-de': 'Almanya', 'flag-fr': 'Fransa',
-  'flag-us': 'ABD', 'flag-br': 'Brezilya', 'flag-gb': 'İngiltere', 'flag-it': 'İtalya',
+// Görünen adlar o anki dile göre üretilir (mağaza adları sözlükte yaşar).
+const FLAG_COUNTRY: Record<FlagSkin, string> = {
+  'flag-tr': t.cTR, 'flag-az': t.cAZ, 'flag-de': t.cDE, 'flag-fr': t.cFR,
+  'flag-us': t.cUS, 'flag-br': t.cBR, 'flag-gb': t.cGB, 'flag-it': t.cIT,
 };
+
+function patternWord(pattern: WormPattern): string {
+  switch (pattern) {
+    case 'solid': return t.patSolid;
+    case 'candy': return t.patCandy;
+    case 'freckles': return t.patFreckles;
+    case 'stripes': return t.patStripes;
+    case 'dots': return t.patDots;
+    default: return pattern;
+  }
+}
+
+export function skinName(skin: ShopSkin): string {
+  if (skin.pattern.startsWith('flag-')) {
+    return `${t.flagWord}: ${FLAG_COUNTRY[skin.pattern as FlagSkin] ?? skin.pattern}`;
+  }
+  const n = Number(skin.id.split('-').pop());
+  const suffix = Number.isFinite(n) ? ` ${n + 1}` : '';
+  return `${patternWord(skin.pattern)}${suffix}`;
+}
+
+const HAT_NAMES: Record<HatId, string> = {
+  none: t.hatNone, party: t.hatParty, beanie: t.hatBeanie, cowboy: t.hatCowboy,
+  helmet: t.hatHelmet, wizard: t.hatWizard, crown: t.hatCrown,
+};
+const GLASSES_NAMES: Record<GlassesId, string> = {
+  none: t.glNone, cool: t.glCool, sun: t.glSun, mono: t.glMono, star: t.glStar, heart: t.glHeart,
+};
+
+export function hatName(id: HatId): string { return HAT_NAMES[id]; }
+export function glassesName(id: GlassesId): string { return GLASSES_NAMES[id]; }
 
 function rarityFor(price: number): Rarity {
   if (price >= 800) return 'legendary';
@@ -49,8 +80,8 @@ function buildSkins(): ShopSkin[] {
   // 1) Sade renkler — ilk renk bedava (varsayılan), diğerleri ucuz
   CONFIG.COLORS.forEach((color, i) => {
     skins.push({
-      id: `solid-${i}`, name: `Sade ${i + 1}`, price: i === 0 ? 0 : 120,
-      rarity: i === 0 ? 'common' : 'common', color, pattern: 'solid',
+      id: `solid-${i}`, price: i === 0 ? 0 : 120,
+      rarity: 'common', color, pattern: 'solid',
     });
   });
   // 2) Desenler — her renkte candy/freckles/stripes/dots
@@ -59,7 +90,7 @@ function buildSkins(): ShopSkin[] {
   CONFIG.COLORS.slice(0, 6).forEach((color, i) => {
     for (const pattern of patterns) {
       skins.push({
-        id: `${pattern}-${i}`, name: `${PATTERN_TR[pattern]} ${i + 1}`,
+        id: `${pattern}-${i}`,
         price: patternPrice[pattern], rarity: rarityFor(patternPrice[pattern]),
         color, pattern,
       });
@@ -74,7 +105,7 @@ function buildSkins(): ShopSkin[] {
   for (const flag of flags) {
     const stripes = FLAG_STRIPES[flag];
     skins.push({
-      id: flag, name: `Bayrak: ${PATTERN_TR[flag]}`,
+      id: flag,
       price: flagNames[flag], rarity: rarityFor(flagNames[flag]),
       color: stripes[0], pattern: flag,
     });
@@ -85,22 +116,22 @@ function buildSkins(): ShopSkin[] {
 export const SHOP_SKINS: ShopSkin[] = buildSkins();
 
 export const SHOP_HATS: ShopHat[] = [
-  { id: 'none', name: 'Şapkasız', price: 0, rarity: 'common' },
-  { id: 'party', name: 'Parti Şapkası', price: 200, rarity: 'common' },
-  { id: 'beanie', name: 'Bere', price: 350, rarity: 'rare' },
-  { id: 'cowboy', name: 'Kovboy Şapkası', price: 600, rarity: 'epic' },
-  { id: 'helmet', name: 'Kask', price: 700, rarity: 'epic' },
-  { id: 'wizard', name: 'Sihirbaz Şapkası', price: 900, rarity: 'legendary' },
-  { id: 'crown', name: 'Kral Tacı', price: 1000, rarity: 'legendary' },
+  { id: 'none', price: 0, rarity: 'common' },
+  { id: 'party', price: 200, rarity: 'common' },
+  { id: 'beanie', price: 350, rarity: 'rare' },
+  { id: 'cowboy', price: 600, rarity: 'epic' },
+  { id: 'helmet', price: 700, rarity: 'epic' },
+  { id: 'wizard', price: 900, rarity: 'legendary' },
+  { id: 'crown', price: 1000, rarity: 'legendary' },
 ];
 
 export const SHOP_GLASSES: ShopGlasses[] = [
-  { id: 'none', name: 'Gözlüksüz', price: 0, rarity: 'common' },
-  { id: 'cool', name: 'Havalı Gözlük', price: 150, rarity: 'common' },
-  { id: 'sun', name: 'Güneş Gözlüğü', price: 300, rarity: 'rare' },
-  { id: 'mono', name: 'Monokl', price: 450, rarity: 'epic' },
-  { id: 'star', name: 'Yıldız Gözlük', price: 650, rarity: 'epic' },
-  { id: 'heart', name: 'Kalp Gözlük', price: 800, rarity: 'legendary' },
+  { id: 'none', price: 0, rarity: 'common' },
+  { id: 'cool', price: 150, rarity: 'common' },
+  { id: 'sun', price: 300, rarity: 'rare' },
+  { id: 'mono', price: 450, rarity: 'epic' },
+  { id: 'star', price: 650, rarity: 'epic' },
+  { id: 'heart', price: 800, rarity: 'legendary' },
 ];
 
 // ---------- cüzdan + envanter (localStorage) ----------

@@ -1,6 +1,7 @@
 import { BONUSES, GAME_CONFIG as CONFIG, TREATS } from './constants';
 import type { BonusKind, TreatKind, WormPattern } from './constants';
 import { FLAG_STRIPES, SHOP_SKINS } from './shop';
+import { bonusLabel } from './i18n';
 
 type Context = CanvasRenderingContext2D;
 type Paint = string | CanvasGradient;
@@ -422,16 +423,16 @@ export function getWormSegment(color: string, pattern: WormPattern = 'solid', pa
       ctx.beginPath();
       ctx.arc(0, 0, 23, 0, TAU);
       ctx.clip();
-      ctx.fillStyle = blend(base, '#001823', 0.38);
+      ctx.fillStyle = blend(base, '#001823', 0.5);
       ctx.rotate(0.5);
-      for (const x of [-18, -6, 6, 18]) ctx.fillRect(x - 3, -26, 6, 52);
+      for (const x of [-18, -6, 6, 18]) ctx.fillRect(x - 3.5, -26, 7, 52);
       ctx.restore();
     }
     if (pattern === 'dots') {
-      ctx.fillStyle = blend(base, '#ffffff', 0.4);
+      ctx.fillStyle = blend(base, '#ffffff', 0.5);
       for (const [x, y] of [[-11, -9], [2, -14], [13, -5], [-14, 4], [-2, 0], [10, 9], [-8, 12]] as const) {
         ctx.beginPath();
-        ctx.arc(x, y, 3, 0, TAU);
+        ctx.arc(x, y, 3.6, 0, TAU);
         ctx.fill();
       }
     }
@@ -443,10 +444,8 @@ export function getWormSegment(color: string, pattern: WormPattern = 'solid', pa
       ctx.clip();
       for (let i = 0; i < 3; i++) {
         ctx.fillStyle = stripes[i % stripes.length];
-        ctx.globalAlpha = 0.85;
         ctx.fillRect(-24, -24 + i * 16, 48, 16);
       }
-      ctx.globalAlpha = 1;
       ctx.restore();
     }
     ctx.strokeStyle = '#ffffff30';
@@ -588,12 +587,14 @@ export function getBonusSprite(kind: BonusKind) {
     ctx.lineTo(-4, -8);
     ctx.fill();
     ctx.fillStyle = '#3b2048';
-    ctx.font = `800 ${kind === 'speed' || kind === 'chomp' ? 9 : 16}px system-ui, sans-serif`;
+    const gemLabel = bonusLabel(kind);
+    const gemFont = kind === 'speed' || kind === 'chomp' ? (gemLabel.length > 6 ? 6.5 : gemLabel.length > 4 ? 8 : 9) : 16;
+    ctx.font = `800 ${gemFont}px system-ui, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(bonus.label, 0, 3);
+    ctx.fillText(gemLabel, 0, 3);
     ctx.fillStyle = '#fffef8';
-    ctx.fillText(bonus.label, 0, 1);
+    ctx.fillText(gemLabel, 0, 1);
   });
   bonusSprites.set(kind, cached);
   return cached;

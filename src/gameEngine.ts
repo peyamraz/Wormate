@@ -1,4 +1,5 @@
 import { BONUSES, BONUS_BY_KIND, GAME_CONFIG as CONFIG, TREATS } from './constants';
+import { bonusLabel } from './i18n';
 import type { BonusKind, TreatKind, WormPattern } from './constants';
 import type { WorldEvent } from './network/protocol';
 
@@ -86,6 +87,21 @@ export interface LeaderboardEntry {
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const distanceSquared = (a: Point, b: Point) => (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
 
+// Daire içine kelepçele: arena dışı ölümcül olduğu için spawn'lar ve yemler hep içeride tutulur.
+export function clampToArena(x: number, y: number, pad: number): Point {
+  const dx = x - CONFIG.ARENA_CENTER;
+  const dy = y - CONFIG.ARENA_CENTER;
+  const d = Math.hypot(dx, dy);
+  const max = CONFIG.ARENA_RADIUS - pad;
+  if (d <= max) return { x, y };
+  const k = max / Math.max(1, d);
+  return { x: CONFIG.ARENA_CENTER + dx * k, y: CONFIG.ARENA_CENTER + dy * k };
+}
+
+export function distToEdge(x: number, y: number): number {
+  return CONFIG.ARENA_RADIUS - Math.hypot(x - CONFIG.ARENA_CENTER, y - CONFIG.ARENA_CENTER);
+}
+
 export const GRID_CELL_SIZE = 160;
 export const GRID_COLS = 25;
 export const GRID_ROWS = 25;
@@ -159,7 +175,7 @@ export class Worm {
     head.x += Math.cos(this.angle) * speed;
     head.y += Math.sin(this.angle) * speed;
 
-    if (head.x < this.radius || head.y < this.radius || head.x > CONFIG.CANVAS_WIDTH - this.radius || head.y > CONFIG.CANVAS_HEIGHT - this.radius) {
+    if (distToEdge(head.x, head.y) < this.radius) {
       this.isDead = true;
       return;
     }
@@ -350,17 +366,18 @@ export class GameEngine {
   addHuman(id: string, name: string, style?: { color: string; pattern: WormPattern; hat: string; glasses: string }): Worm {
     if (this.humans.has(id)) throw new Error('Duplicate session');
     const living = this.allWorms().filter(worm => !worm.isDead);
-    let point = { x: 1600, y: 1600 };
+    let point = { x: CONFIG.ARENA_CENTER, y: CONFIG.ARENA_CENTER };
     let clearance = -1;
     for (let attempt = 0; attempt < 100; attempt++) {
       const candidate = attempt < 60
         ? { x: 1400 + Math.random() * 1200, y: 1400 + Math.random() * 1200 }
         : { x: 220 + Math.random() * 3560, y: 220 + Math.random() * 3560 };
+      const inside = clampToArena(candidate.x, candidate.y, 140);
       let nearest = Infinity;
       for (const worm of living) {
-        for (let i = 0; i < worm.segments.length; i += 3) nearest = Math.min(nearest, distanceSquared(candidate, worm.segments[i]));
+        for (let i = 0; i < worm.segments.length; i += 3) nearest = Math.min(nearest, distanceSquared(inside, worm.segments[i]));
       }
-      if (nearest > clearance) { clearance = nearest; point = candidate; }
+      if (nearest > clearance) { clearance = nearest; point = inside; }
       if (clearance > 220 ** 2) break;
     }
     if (clearance < 90 ** 2) throw new Error('Arena is crowded. Try again.');
@@ -442,8 +459,9 @@ export class GameEngine {
       angle = Math.atan2(CONFIG.CANVAS_HEIGHT / 2 - y, CONFIG.CANVAS_WIDTH / 2 - x);
     }
 
+    const at = clampToArena(x, y, 170);
     this.bots.push(new Worm(
-      `bot-${id}`, x, y, CONFIG.COLORS[1 + id % (CONFIG.COLORS.length - 1)], angle,
+      `bot-${id}`, at.x, at.y, CONFIG.COLORS[1 + id % (CONFIG.COLORS.length - 1)], angle,
       26 + id % 5 * 7, CONFIG.BOT_NAMES[id % CONFIG.BOT_NAMES.length],
       id % 5 === 2 ? 'candy' : id % 5 === 4 ? 'freckles' : 'solid',
     ));
@@ -453,8 +471,7 @@ export class GameEngine {
     if (this.foods.length >= CONFIG.MAX_FOOD_COUNT) return;
     const treat = TREATS[Math.floor(Math.random() * TREATS.length)];
     const variant = Math.floor(Math.random() * CONFIG.FOOD_COLORS.length);
-    const fx = clamp(x, 30, CONFIG.CANVAS_WIDTH - 30);
-    const fy = clamp(y, 30, CONFIG.CANVAS_HEIGHT - 30);
+    const { x: fx, y: fy } = clampToArena(x, y, 40);
     const food: Food = {
       id: this.nextFoodId++,
       x: fx,
@@ -498,10 +515,11 @@ export class GameEngine {
 
   private addBonus(x: number, y: number, kind = this.rollBonusKind()) {
     if (this.bonuses.length >= CONFIG.BONUS_MAX_COUNT) return;
+    const at = clampToArena(x, y, 90);
     this.bonuses.push({
       id: this.nextBonusId++,
-      x: clamp(x, 80, CONFIG.CANVAS_WIDTH - 80),
-      y: clamp(y, 80, CONFIG.CANVAS_HEIGHT - 80),
+      x: at.x,
+      y: at.y,
       kind,
       phase: Math.random() * Math.PI * 2,
       bornAt: this.ticks,
@@ -624,7 +642,7 @@ export class GameEngine {
         value: 50,
         color: info.color,
         life: 1,
-        label: info.multiplier > 1 ? `${info.label} SCORE` : info.label,
+        label: bonusLabel(bonus.kind),
       });
       if (this.floatingScores.length > 16) this.floatingScores.shift();
       this.shake = Math.max(this.shake, info.multiplier >= 10 ? 8 : 3.2);
@@ -637,8 +655,8 @@ export class GameEngine {
     const head = bot.segments[0];
     const margin = 160;
 
-    if (head.x < margin || head.y < margin || head.x > CONFIG.CANVAS_WIDTH - margin || head.y > CONFIG.CANVAS_HEIGHT - margin) {
-      bot.targetAngle = Math.atan2(CONFIG.CANVAS_HEIGHT / 2 - head.y, CONFIG.CANVAS_WIDTH / 2 - head.x);
+    if (distToEdge(head.x, head.y) < margin) {
+      bot.targetAngle = Math.atan2(CONFIG.ARENA_CENTER - head.y, CONFIG.ARENA_CENTER - head.x);
       return;
     }
     const protectedPlayer = this.allWorms().find(worm => worm.isHuman && !worm.isDead && worm.spawnProtection > 0 && distanceSquared(head, worm.segments[0]) < 235 ** 2);

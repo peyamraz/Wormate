@@ -8,8 +8,10 @@ const text = (value: unknown, max: number): value is string => typeof value === 
 const uuid = (value: unknown): value is string => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value);
 const identifier = (value: unknown) => uuid(value) || (typeof value === 'string' && /^bot-\d{1,10}$/.test(value));
 const color = (value: unknown) => typeof value === 'string' && [...CONFIG.COLORS, ...CONFIG.FOOD_COLORS, ...BONUSES.map(bonus => bonus.color), '#f0b56f'].includes(value);
+const inArena = (x: number, y: number, pad: number) =>
+  (x - CONFIG.ARENA_CENTER) ** 2 + (y - CONFIG.ARENA_CENTER) ** 2 <= (CONFIG.ARENA_RADIUS + pad) ** 2;
 const bonusKind = (value: unknown) => BONUSES.some(bonus => bonus.kind === value);
-const point = (value: Record<string, unknown>) => number(value.x, -100, CONFIG.CANVAS_WIDTH + 100) && number(value.y, -100, CONFIG.CANVAS_HEIGHT + 100);
+const point = (value: Record<string, unknown>) => number(value.x) && number(value.y) && inArena(value.x as number, value.y as number, 150);
 
 function food(value: unknown) {
   return isRecord(value) && point(value) && number(value.id) && TREATS.some(treat => treat.kind === value.kind)
@@ -40,7 +42,11 @@ export function parseServerMessage(raw: string): ServerMessage | null {
     if (!number(worm.growthPulse, 0, 1) || !number(worm.appetite, 0, 1) || !number(worm.lookOffset, -1, 1)) return null;
     if (typeof worm.hat !== 'string' || !SHOP_HATS.some(h => h.id === worm.hat)) return null;
     if (typeof worm.glasses !== 'string' || !SHOP_GLASSES.some(g => g.id === worm.glasses)) return null;
-    if (!Array.isArray(worm.points) || worm.points.length < 2 || worm.points.length > CONFIG.WORM_MAX_LENGTH * 2 || worm.points.length % 2 || !worm.points.every(p => number(p, -500, CONFIG.CANVAS_WIDTH + 500))) return null;
+    if (!Array.isArray(worm.points) || worm.points.length < 2 || worm.points.length > CONFIG.WORM_MAX_LENGTH * 2 || worm.points.length % 2) return null;
+    for (let i = 0; i < worm.points.length; i += 2) {
+      if (!number(worm.points[i]) || !number(worm.points[i + 1])) return null;
+      if (!inArena(worm.points[i] as number, worm.points[i + 1] as number, 500)) return null;
+    }
   }
   if (!wormIds.has(message.you)) return null;
   if (!Array.isArray(message.foods) || message.foods.length > CONFIG.MAX_FOOD_COUNT || !message.foods.every(food)) return null;
