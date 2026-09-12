@@ -139,6 +139,7 @@ test('killer earns score, loot and a kill notice', () => {
   assert.equal(a.isDead, false, 'katil yasamali');
   assert.ok(a.score >= GAME_CONFIG.KILL_SCORE, 'katil odullenmeli');
   assert.ok(world.worldEvents.some(e => e.type === 'kill' && e.playerId === a.id), 'kill bildirimi olmali');
+  assert.ok(world.worldEvents.filter(e => e.type === 'kill').every(e => e.color === '#fb7185'), 'kill rengi allowlistte olmali');
   assert.ok(world.bonuses.some(bonus => bonus.kind === 'coin'), 'olum altin dusurmeli');
   assert.ok(world.foods.length > 0, 'olum loot birakmali');
 });

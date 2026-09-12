@@ -83,6 +83,19 @@ test('kill notices survive network validation', () => {
     events: [{ type: 'kill', playerId: worm.id, x: 2000, y: 2000, color: worm.color, value: 150 }],
   };
   assert.ok(parseServerMessage(JSON.stringify(message)), 'kill olayi kabul edilmeli');
+  // Motorun gercek urettigi kill olayi da paketten gecmeli (renk allowlist sarti).
+  const killer = world.addHuman(randomUUID(), 'Hunter');
+  killer.spawnProtection = 0;
+  worm.spawnProtection = 0;
+  worm.angle = Math.PI;
+  worm.segments = [{ x: 2600, y: 2600 }, { x: 2595, y: 2600 }, { x: 2590, y: 2600 }];
+  killer.segments = [{ x: 2570, y: 2600 }, { x: 2570, y: 3500 }, { x: 2565, y: 3500 }];
+  killer.angle = 0;
+  world.stepOnline(new Map([[worm.id, { angle: Math.PI, boost: false }], [killer.id, { angle: 0, boost: false }]]));
+  const kill = world.worldEvents.find(e => e.type === 'kill');
+  assert.ok(kill, 'motor kill olayi uretmeli');
+  const withKill = { ...message, you: killer.id, worms: [serializeWorm(killer)], status: world.getStatus(killer), events: [kill] };
+  assert.ok(parseServerMessage(JSON.stringify(withKill)), 'gercek kill olayi paketten gecmeli');
 });
 
 test('giant worms are thinned in snapshots without breaking validation', () => {

@@ -871,7 +871,8 @@ export class GameEngine {
       if (!killer.isDead) {
         killer.score = Math.min(999999999, killer.score + CONFIG.KILL_SCORE);
         const head = worm.segments[0];
-        this.recordEvent({ type: 'kill', playerId: killer.id, x: head.x, y: head.y, color: '#ff5d5d', value: CONFIG.KILL_SCORE });
+        // Renk allowlist'te olmali, yoksa istemci paketi reddeder.
+        this.recordEvent({ type: 'kill', playerId: killer.id, x: head.x, y: head.y, color: '#fb7185', value: CONFIG.KILL_SCORE });
         if (killer === this.player) {
           this.floatingScores.push({ x: head.x, y: head.y - 30, value: CONFIG.KILL_SCORE, color: '#ff5d5d', life: 1, label: t.killNotice });
           if (this.floatingScores.length > 16) this.floatingScores.shift();

@@ -133,6 +133,9 @@ profil/seviye, yem çeşitliliği, korsan şapka+göz bandı takan solucanlar).
   Test: 45/45 (`tsc` temiz, build OK).
 - Snapshot diyeti + validasyon tavanları (TAMAM): 600+ segment seyreltilir, yarıçap
   sınırı 40→100. Test: 47/47 (`tsc` temiz, build OK).
+- Kill kopuşu (TAMAM): kill olayı `#ff5d5d` rengi allowlist dışındaydı → avlanan
+  oyuncu anında kopuyordu. Renk `#fb7185`, motor+paket testiyle kilitlendi.
+  Test: 47/47 (`tsc` temiz, build OK). NOT: server deploy şart!
 - Bonus dağılımı (TAMAM): doğumda 350px ayrıklık kuralı, hız/chomp ağırlığı düşürüldü,
   başlangıç küpleri dağıtıldı. Test: 46/46 (`tsc` temiz, build OK).
 - HARİÇ: gerçek parayla coin (Madeni paralar IAP) — web hobby'de yok. İsim Wormate kalıyor.
