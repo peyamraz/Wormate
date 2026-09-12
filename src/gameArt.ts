@@ -389,6 +389,7 @@ export function getTreatSprite(kind: TreatKind, variant: number) {
 }
 
 export function getWormSegment(color: string, pattern: WormPattern = 'solid', pale = false) {
+  // LEGACY: oyun artik getWormTube kullaniyor (duz boru). Test disi kullanim kalmadi.
   const key = `${color}:${pattern}:${pattern === 'candy' && pale}`;
   let cached = segments.get(key);
   if (cached) return cached;
@@ -439,6 +440,179 @@ export function getWormSegment(color: string, pattern: WormPattern = 'solid', pa
     if (pattern.startsWith('flag-')) {
       paintFlag(ctx, pattern);
     }
+  });
+  segments.set(key, cached);
+  return cached;
+}
+
+// --- yassı boru diskleri: bombeli dilimler yerine düz desen, bayraklar okunur ---
+const tubes = new Map<string, HTMLCanvasElement>();
+
+function clipTubeDisc(ctx: Context) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(0, 0, 23, 0, TAU);
+  ctx.clip();
+}
+
+function tubeHBands(ctx: Context, colors: string[]) {
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fillRect(-24, -24 + i * 16, 48, 16);
+  }
+}
+
+function tubeVBands(ctx: Context, colors: string[]) {
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fillRect(-24 + i * 16, -24, 16, 48);
+  }
+}
+
+function tubeStar(ctx: Context, x: number, y: number, R: number, r: number) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const rad = i % 2 === 0 ? R : r;
+    const a = -Math.PI / 2 + i * Math.PI / 5;
+    const px = x + Math.cos(a) * rad, py = y + Math.sin(a) * rad;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+}
+
+function tubeFlag(ctx: Context, pattern: string) {
+  clipTubeDisc(ctx);
+  if (pattern === 'flag-tr') {
+    ctx.fillStyle = '#e30a17';
+    ctx.fillRect(-24, -24, 48, 48);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(-4, 0, 10, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#e30a17';
+    ctx.beginPath(); ctx.arc(-1.5, 0, 8, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    tubeStar(ctx, 8, 0, 5, 2);
+    ctx.fill();
+  } else if (pattern === 'flag-az') {
+    tubeHBands(ctx, ['#00b5e2', '#ef3340', '#00a651']);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(-1, 0, 6.5, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#ef3340';
+    ctx.beginPath(); ctx.arc(0.5, 0, 5.2, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    tubeStar(ctx, 6.5, 0, 3.4, 1.4);
+    ctx.fill();
+  } else if (pattern === 'flag-de') {
+    tubeHBands(ctx, ['#111111', '#dd0000', '#ffce00']);
+  } else if (pattern === 'flag-fr') {
+    tubeVBands(ctx, ['#0055a4', '#ffffff', '#ef4135']);
+  } else if (pattern === 'flag-us') {
+    for (let i = 0; i < 7; i++) {
+      ctx.fillStyle = i % 2 === 0 ? '#b31942' : '#ffffff';
+      ctx.fillRect(-24, -24 + i * (48 / 7), 48, 48 / 7 + 1);
+    }
+    ctx.fillStyle = '#0a3161';
+    ctx.fillRect(-24, -24, 22, 26);
+    ctx.fillStyle = '#ffffff';
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 3; col++) {
+        ctx.beginPath();
+        ctx.arc(-19 + col * 7, -18 + row * 8, 1.6, 0, TAU);
+        ctx.fill();
+      }
+    }
+  } else if (pattern === 'flag-br') {
+    ctx.fillStyle = '#009b3a';
+    ctx.fillRect(-24, -24, 48, 48);
+    ctx.fillStyle = '#ffdf00';
+    ctx.beginPath();
+    ctx.moveTo(0, -19); ctx.lineTo(19, 0); ctx.lineTo(0, 19); ctx.lineTo(-19, 0);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#002776';
+    ctx.beginPath(); ctx.arc(0, 0, 7.5, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(0, 0, 7.5, 0.4, 2.4); ctx.stroke();
+  } else if (pattern === 'flag-gb') {
+    ctx.fillStyle = '#012169';
+    ctx.fillRect(-24, -24, 48, 48);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 7;
+    ctx.beginPath();
+    ctx.moveTo(-24, -24); ctx.lineTo(24, 24);
+    ctx.moveTo(24, -24); ctx.lineTo(-24, 24);
+    ctx.stroke();
+    ctx.strokeStyle = '#c8102e';
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.moveTo(-24, -24); ctx.lineTo(24, 24);
+    ctx.moveTo(24, -24); ctx.lineTo(-24, 24);
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-24, -7, 48, 14);
+    ctx.fillRect(-7, -24, 14, 48);
+    ctx.fillStyle = '#c8102e';
+    ctx.fillRect(-24, -4, 48, 8);
+    ctx.fillRect(-4, -24, 8, 48);
+  } else if (pattern === 'flag-it') {
+    tubeVBands(ctx, ['#009246', '#ffffff', '#ce2b37']);
+  }
+  ctx.restore();
+}
+
+function paintBodyPattern(ctx: Context, pattern: WormPattern, base: string) {
+  if (pattern === 'freckles') {
+    ellipse(ctx, -9, -6, 3.1, 2.2, '#fff4de88', -0.4);
+    ellipse(ctx, 7, 7, 2.8, 2.1, '#fff4de5c', 0.5);
+    ellipse(ctx, 8, -11, 1.5, 1.2, '#fff4de77');
+  }
+  if (pattern === 'stripes') {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(0, 0, 23, 0, TAU);
+    ctx.clip();
+    ctx.fillStyle = blend(base, '#001823', 0.5);
+    ctx.rotate(0.5);
+    for (const x of [-18, -6, 6, 18]) ctx.fillRect(x - 3.5, -26, 7, 52);
+    ctx.restore();
+  }
+  if (pattern === 'dots') {
+    ctx.fillStyle = blend(base, '#ffffff', 0.5);
+    for (const [x, y] of [[-11, -9], [2, -14], [13, -5], [-14, 4], [-2, 0], [10, 9], [-8, 12]] as const) {
+      ctx.beginPath();
+      ctx.arc(x, y, 3.6, 0, TAU);
+      ctx.fill();
+    }
+  }
+  if (pattern.startsWith('flag-')) {
+    tubeFlag(ctx, pattern);
+  }
+}
+
+export function getWormTube(color: string, pattern: WormPattern = 'solid', pale = false) {
+  const key = `tube:${color}:${pattern}:${pattern === 'candy' && pale}`;
+  let cached = tubes.get(key);
+  if (cached) return cached;
+  cached = sprite(ctx => {
+    const base = pattern === 'candy' && pale ? blend(color, '#fff4d3', 0.7) : color;
+    ellipse(ctx, 0, 0, 24, 24, base);
+    // Hafif üst ışık — bombesiz, deseni ezmez.
+    const sheen = ctx.createLinearGradient(0, -24, 0, 24);
+    sheen.addColorStop(0, 'rgba(255,255,255,0.14)');
+    sheen.addColorStop(0.35, 'rgba(255,255,255,0)');
+    sheen.addColorStop(1, 'rgba(0,0,0,0.16)');
+    ellipse(ctx, 0, 0, 24, 24, sheen);
+    paintBodyPattern(ctx, pattern, base);
+    ctx.strokeStyle = 'rgba(0,0,0,0.28)';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(0, 0, 23.2, 0, TAU);
+    ctx.stroke();
+  });
+  tubes.set(key, cached);
+  return cached;
+}
+
 function clipDisc(ctx: Context) {
   ctx.save();
   ctx.beginPath();
@@ -550,16 +724,6 @@ function paintFlag(ctx: Context, pattern: string) {
   }
   ctx.restore();
 }
-    ctx.strokeStyle = '#ffffff30';
-    ctx.lineWidth = 3.2;
-    ctx.beginPath();
-    ctx.arc(-1, -1, 19, 3.6, 4.7);
-    ctx.stroke();
-    ellipse(ctx, -8, -11, 7.5, 3, '#ffffff1e', -0.65);
-  });
-  segments.set(key, cached);
-  return cached;
-}
 
 export function getGlow(color: string) {
   let cached = glows.get(color);
@@ -649,9 +813,9 @@ export function prepareGameArt(ctx: Context) {
   for (const treat of TREATS) {
     for (let variant = 0; variant < CONFIG.FOOD_COLORS.length; variant++) getTreatSprite(treat.kind, variant);
   }
-  for (const skin of SHOP_SKINS) getWormSegment(skin.color, skin.pattern);
+  for (const skin of SHOP_SKINS) getWormTube(skin.color, skin.pattern);
   for (const color of CONFIG.COLORS) {
-    getWormSegment(color, 'candy', true);
+    getWormTube(color, 'candy', true);
     getGlow(color);
   }
   for (const color of [...CONFIG.FOOD_COLORS, '#f0b56f', '#ffbd69', '#ff6983', '#38bdf8', '#fb923c', '#a3e635', '#facc15', '#f472b6', '#ffd166']) getGlow(color);

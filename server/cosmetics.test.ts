@@ -53,13 +53,13 @@ function pointsOf(ops: Op[]): { x: number; y: number }[] {
 }
 
 test('tum deri sprite lari hatasiz uretilir ve desen boyasi cizilir', async () => {
-  const { getWormSegment } = await import('../src/gameArt');
+  const { getWormTube } = await import('../src/gameArt');
   const { SHOP_SKINS } = await import('../src/shop');
   assert.ok(SHOP_SKINS.length >= 40, `zengin magaza beklenir, bulunan: ${SHOP_SKINS.length}`);
   for (const skin of SHOP_SKINS) {
     const before = created.length;
-    getWormSegment(skin.color, skin.pattern);
-    getWormSegment(skin.color, skin.pattern, true);
+    getWormTube(skin.color, skin.pattern);
+    getWormTube(skin.color, skin.pattern, true);
     assert.ok(created.length > before, `${skin.id} sprite uretmeli`);
     const ops = created[created.length - 1].ops;
     assert.ok(ops.length > 6, `${skin.id} bos gorunmemeli`);

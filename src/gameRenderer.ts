@@ -1,7 +1,7 @@
 import { BONUS_BY_KIND, GAME_CONFIG as CONFIG } from './constants';
 import type { Food, GameEngine, Worm } from './gameEngine';
 import { distToEdge, GRID_CELL_SIZE, GRID_COLS, GRID_ROWS } from './gameEngine';
-import { getArenaPatterns, getBonusSprite, getGlow, getTreatSprite, getWormSegment } from './gameArt';
+import { getArenaPatterns, getBonusSprite, getGlow, getTreatSprite, getWormTube } from './gameArt';
 import { t } from './i18n';
 
 type Context = CanvasRenderingContext2D;
@@ -239,7 +239,17 @@ function drawWormBody(ctx: Context, worm: Worm, engine: GameEngine, reducedMotio
   const step = Math.max(2, Math.round(radius * 0.58 / CONFIG.WORM_SEGMENT_SPACING));
   const player = worm === engine.player;
 
-  // Overlapping domed sprites give the body depth without per-frame gradients.
+  // Düz boru zemini: disklerin altından boşluksuz tek gövde.
+  ctx.strokeStyle = worm.color;
+  ctx.lineWidth = radius * 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(worm.segments[0].x, worm.segments[0].y);
+  for (let i = 1; i < worm.segments.length; i++) ctx.lineTo(worm.segments[i].x, worm.segments[i].y);
+  ctx.stroke();
+
+  // Yassı desen diskleri: bombesiz, bayrak/deseni ezmez.
   for (let i = worm.segments.length - 1; i > 0; i -= step) {
     const point = worm.segments[i];
     if (!inView(point.x, point.y, bounds)) continue;
@@ -254,12 +264,12 @@ function drawWormBody(ctx: Context, worm: Worm, engine: GameEngine, reducedMotio
     }
     const size = radius * taper * (1 + swallow) * SEGMENT_SIZE;
     const pale = Math.floor(i / (step * 3)) % 2 === 0;
-    ctx.drawImage(getWormSegment(worm.color, worm.pattern, pale), point.x - size / 2, point.y - size / 2, size, size);
+    ctx.drawImage(getWormTube(worm.color, worm.pattern, pale), point.x - size / 2, point.y - size / 2, size, size);
   }
 
   const pulse = reducedMotion ? 1 : 1 + worm.growthPulse * 0.055;
   const headSize = radius * SEGMENT_SIZE * 1.055 * pulse;
-  ctx.drawImage(getWormSegment(worm.color, worm.pattern), head.x - headSize / 2, head.y - headSize / 2, headSize, headSize);
+  ctx.drawImage(getWormTube(worm.color, worm.pattern), head.x - headSize / 2, head.y - headSize / 2, headSize, headSize);
   drawFace(ctx, worm, radius * pulse, engine.ticks, reducedMotion);
 
   if (player && worm.chompTicks > 0 && !engine.isDemo) {

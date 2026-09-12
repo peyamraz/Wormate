@@ -93,6 +93,9 @@
 - **Kenar alarmı (TAMAM):** 420px kala çemberin ekrandaki kısmı hafif kırmızı parlar
   (geniş silik bant + ince çizgi, yaklaştıkça opaklaşır). Kafa işareti ve bip yok.
 
+- **Düz boru gövde (TAMAM):** bombeli dilimler gitti; tek renk tüp zemini + yassı desen diski.
+  Desen ve bayrak artık kesintisiz okunur. Önizleme de aynı sprite. Test: 37/37 (`tsc` temiz, build OK).
+
 ## Kararlar / notlar
 
 - Ölçek: şu an küçük ölçek — oda kapasitesi (16→20) ve process sharding (5000 kişi senaryosu) ERTELENDİ.
