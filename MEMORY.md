@@ -121,10 +121,9 @@ profil/seviye, yem çeşitliliği, korsan şapka+göz bandı takan solucanlar).
   skor + AVLADIN bildirimi + sesi, %100 altın düşer. Minimap artı çizgisi. Test: 41/41 (`tsc` temiz, build OK).
 - Ölüm patlaması (TAMAM): beyaz flaş + şok halkası + iri ganimet (kurban iriliğine göre).
   Practice + online. Test: 48/48 (`tsc` temiz, build OK).
-- DEV bonusu (İPTAL — kullanıcı isteği): büyüme silindi, yerine WIDE kamera bonusu.
-  Yiyen devleşmez; kamera %30 açılır, süre bitince yumuşakça daralır. Mor rozet + 6 dilde
-  etiket (WIDE/GENİŞ…), online senkronlu. Test: 51/51 (`tsc` temiz, build OK).
-- WIDE ikonu (TAMAM): küpte yazı yok, mor karoda dışa açılan 4 ok. Test: 51/51 (`tsc` temiz, build OK).
+- Çarpan / HIZ / CHOMP ikonları (TAMAM): x2/x5/x10/x100 yıldız+sayı (sayı durur), HIZ→şimşek, CHOMP→mıknatıs.
+  Nadirlik: x100 %1, hedef 8/14 küp, HIZ/CHOMP ağırlığı %18/%14.
+  HUD rozetleri kup ikonlarıyla birebir aynı dil. Test: 52/52 (`tsc` temiz, build OK).
 - Kırmızı dış alan (TAMAM): çember dışı desensiz koyu kırmızı, keskin sınır çizgisi + hale.
   Yemler zaten daire içine kelepçeli, kırmızı alan temiz. `tsc` temiz, build OK.
 - Orantılı büyüme (TAMAM): lokma kuyruğa yazılır (tick başına 1 segment), DEV şişmesi

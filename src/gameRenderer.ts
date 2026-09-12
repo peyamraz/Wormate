@@ -538,21 +538,35 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
   ctx.scale(zoom, zoom);
   ctx.translate(-x, -y);
 
-  // Zemin dikişsiz: desen tüm görüş alanını kaplar, iç/dış farkı yoktur.
+  // Dış alan: koyu kırmızı boşluk (yem yok, desen yok). Zemin deseni SADECE çember içinde.
   const groundWidth = bounds.right - bounds.left;
   const groundHeight = bounds.bottom - bounds.top;
+  ctx.fillStyle = '#26060c';
+  ctx.fillRect(bounds.left, bounds.top, groundWidth, groundHeight);
   if (groundWidth > 0 && groundHeight > 0) {
     const patterns = getArenaPatterns(ctx);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(CONFIG.ARENA_CENTER, CONFIG.ARENA_CENTER, CONFIG.ARENA_RADIUS, 0, TAU);
+    ctx.clip();
     ctx.fillStyle = patterns.fine ?? '#18282f';
     ctx.fillRect(bounds.left, bounds.top, groundWidth, groundHeight);
     if (patterns.wide) {
       ctx.fillStyle = patterns.wide;
       ctx.fillRect(bounds.left, bounds.top, groundWidth, groundHeight);
     }
+    ctx.restore();
   }
-  // Sınır: ince dairesel çizgi (ölümcül, ama göze batmaz).
-  ctx.strokeStyle = 'rgba(251,113,133,0.4)';
-  ctx.lineWidth = 2.5;
+  // Sınır: keskin kırmızı çizgi + yumuşak dış hale.
+  ctx.globalAlpha = 0.3;
+  ctx.strokeStyle = '#ff2d55';
+  ctx.lineWidth = 44;
+  ctx.beginPath();
+  ctx.arc(CONFIG.ARENA_CENTER, CONFIG.ARENA_CENTER, CONFIG.ARENA_RADIUS + 18, 0, TAU);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = 'rgba(255,45,85,0.9)';
+  ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.arc(CONFIG.ARENA_CENTER, CONFIG.ARENA_CENTER, CONFIG.ARENA_RADIUS, 0, TAU);
   ctx.stroke();
