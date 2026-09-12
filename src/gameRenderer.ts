@@ -1,7 +1,8 @@
 import { BONUS_BY_KIND, GAME_CONFIG as CONFIG } from './constants';
 import type { Food, GameEngine, Worm } from './gameEngine';
 import { distToEdge, GRID_CELL_SIZE, GRID_COLS, GRID_ROWS } from './gameEngine';
-import { getArenaPatterns, getBonusSprite, getGlow, getTreatSprite, getWormTube } from './gameArt';
+import { getArenaPatterns, getBonusSprite, getGlow, getTreatSprite, getWormTube, getStripeTube, getFlagTube } from './gameArt';
+import type { FlagSkin } from './constants';
 import { t } from './i18n';
 
 type Context = CanvasRenderingContext2D;
@@ -264,12 +265,23 @@ function drawWormBody(ctx: Context, worm: Worm, engine: GameEngine, reducedMotio
     }
     const size = radius * taper * (1 + swallow) * SEGMENT_SIZE;
     const pale = Math.floor(i / (step * 3)) % 2 === 0;
-    ctx.drawImage(getWormTube(worm.color, worm.pattern, pale), point.x - size / 2, point.y - size / 2, size, size);
+    // Çizgi ve bayraklar gövdeyi takip eder: halka halka dizilir, dönmeden bağımsız.
+    const disc = worm.pattern === 'stripes'
+      ? getStripeTube(worm.color, i)
+      : worm.pattern.startsWith('flag-')
+        ? getFlagTube(worm.pattern as FlagSkin, i)
+        : getWormTube(worm.color, worm.pattern, pale);
+    ctx.drawImage(disc, point.x - size / 2, point.y - size / 2, size, size);
   }
 
   const pulse = reducedMotion ? 1 : 1 + worm.growthPulse * 0.055;
   const headSize = radius * SEGMENT_SIZE * 1.055 * pulse;
-  ctx.drawImage(getWormTube(worm.color, worm.pattern), head.x - headSize / 2, head.y - headSize / 2, headSize, headSize);
+  const headDisc = worm.pattern === 'stripes'
+    ? getStripeTube(worm.color, 0)
+    : worm.pattern.startsWith('flag-')
+      ? getFlagTube(worm.pattern as FlagSkin, 6)
+      : getWormTube(worm.color, worm.pattern);
+  ctx.drawImage(headDisc, head.x - headSize / 2, head.y - headSize / 2, headSize, headSize);
   drawFace(ctx, worm, radius * pulse, engine.ticks, reducedMotion);
 
   if (player && worm.chompTicks > 0 && !engine.isDemo) {
@@ -549,11 +561,19 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
     if (!inView(bonus.x, bonus.y, bounds)) continue;
     const info = BONUS_BY_KIND[bonus.kind];
     const pulse = reducedMotion ? 1 : 1 + Math.sin(engine.ticks * 0.08 + bonus.phase) * 0.1;
-    const size = (info.multiplier >= 10 ? 56 : 46) * pulse;
+    const size = (info.multiplier >= 10 ? 76 : info.multiplier > 1 ? 68 : 62) * pulse;
     ctx.globalAlpha = 0.72;
-    ctx.drawImage(getGlow(info.color), bonus.x - size * 0.95, bonus.y - size * 0.95, size * 1.9, size * 1.9);
+    ctx.drawImage(getGlow(info.color), bonus.x - size * 1.1, bonus.y - size * 1.1, size * 2.2, size * 2.2);
     ctx.globalAlpha = 0.3;
     ctx.drawImage(getGlow('#ffffff'), bonus.x - size * 0.45, bonus.y - size * 0.45, size * 0.9, size * 0.9);
+    // Nabız halkası: küp uzaktan fark edilir.
+    const ringPulse = reducedMotion ? 0.55 : 0.45 + 0.25 * Math.sin(engine.ticks * 0.12 + bonus.phase);
+    ctx.globalAlpha = ringPulse;
+    ctx.strokeStyle = info.color;
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.arc(bonus.x, bonus.y, size * 0.95, 0, TAU);
+    ctx.stroke();
   }
 
   // Switch back to 'source-over' ONCE for rest of frame
@@ -589,7 +609,7 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
     if (!inView(bonus.x, bonus.y, bounds)) continue;
     const info = BONUS_BY_KIND[bonus.kind];
     const pulse = reducedMotion ? 1 : 1 + Math.sin(engine.ticks * 0.08 + bonus.phase) * 0.08;
-    const size = (info.multiplier >= 10 ? 52 : 42) * pulse;
+    const size = (info.multiplier >= 10 ? 68 : info.multiplier > 1 ? 62 : 56) * pulse;
     ctx.save();
     ctx.translate(bonus.x, bonus.y + (reducedMotion ? 0 : Math.sin(engine.ticks * 0.05 + bonus.phase) * 2));
     ctx.rotate(reducedMotion ? 0 : Math.sin(engine.ticks * 0.03 + bonus.phase) * 0.12);
@@ -663,13 +683,18 @@ function drawMinimap(ctx: Context, engine: GameEngine, width: number, height: nu
     ctx.arc(p.x, p.y, pulse * 0.55, 0, TAU);
     ctx.fill();
   }
-  // Görünen alan çerçevesi
+  // Görünen alan çerçevesi + artı çizgisi.
   const hw = width / (2 * engine.camera.zoom) * scale;
   const hh = height / (2 * engine.camera.zoom) * scale;
   const c = dot(engine.camera.x, engine.camera.y);
   ctx.strokeStyle = 'rgba(255,255,255,0.28)';
   ctx.lineWidth = 1;
   ctx.strokeRect(c.x - hw, c.y - hh, hw * 2, hh * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.beginPath();
+  ctx.moveTo(c.x - hw, c.y); ctx.lineTo(c.x + hw, c.y);
+  ctx.moveTo(c.x, c.y - hh); ctx.lineTo(c.x, c.y + hh);
+  ctx.stroke();
   ctx.restore();
   ctx.globalAlpha = 1;
 }

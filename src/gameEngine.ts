@@ -1,5 +1,5 @@
 import { BONUSES, BONUS_BY_KIND, GAME_CONFIG as CONFIG, TREATS } from './constants';
-import { bonusLabel } from './i18n';
+import { bonusLabel, t } from './i18n';
 import type { BonusKind, TreatKind, WormPattern } from './constants';
 import type { WorldEvent } from './network/protocol';
 
@@ -234,6 +234,7 @@ export class Worm {
 
   applyBonus(kind: BonusKind) {
     const bonus = BONUS_BY_KIND[kind];
+    if (kind === 'coin') return; // altın süreli efekt vermez, cüzdana işlenir
     if (kind === 'speed') this.speedTicks = Math.max(this.speedTicks, bonus.ticks);
     if (kind === 'chomp') this.chompTicks = Math.max(this.chompTicks, bonus.ticks);
     if (bonus.multiplier > 1) {
@@ -298,6 +299,7 @@ export class GameEngine {
   lootTrails: LootTrail[] = [];
   bonuses: BonusOrb[] = [];
   pickupEvent: BonusKind | null = null;
+  killFlash = 0;
   camera: Point & { zoom: number };
   viewport: Viewport;
   isDemo: boolean;
@@ -772,7 +774,7 @@ export class GameEngine {
 
     // Rotate food priority; resolve all collisions before marking any victim dead.
     const offset = this.ticks % Math.max(1, worms.length);
-    const victims = new Set<Worm>();
+    const victims = new Map<Worm, Worm>();
     const eatenFoodIds = new Set<number>();
 
     for (let n = 0; n < worms.length; n++) {
@@ -835,7 +837,7 @@ export class GameEngine {
 
         for (let i = 0; i < other.segments.length; i += 2) {
           if (distanceSquared(head, other.segments[i]) < collisionRadius ** 2) {
-            victims.add(worm);
+            victims.set(worm, other);
             break;
           }
         }
@@ -847,9 +849,21 @@ export class GameEngine {
       this.foods = this.foods.filter(food => !eatenFoodIds.has(food.id));
     }
 
-    for (const worm of victims) {
+    for (const [worm, killer] of victims) {
       worm.isDead = true;
       this.burstWorm(worm);
+      // Katil ödülü: skor + bildirim (rakipteki jackpot hissi).
+      if (!killer.isDead) {
+        killer.score = Math.min(999999999, killer.score + CONFIG.KILL_SCORE);
+        const head = worm.segments[0];
+        this.recordEvent({ type: 'kill', playerId: killer.id, x: head.x, y: head.y, color: '#ff5d5d', value: CONFIG.KILL_SCORE });
+        if (killer === this.player) {
+          this.floatingScores.push({ x: head.x, y: head.y - 30, value: CONFIG.KILL_SCORE, color: '#ff5d5d', life: 1, label: t.killNotice });
+          if (this.floatingScores.length > 16) this.floatingScores.shift();
+          this.shake = Math.max(this.shake, 6);
+          this.killFlash++;
+        }
+      }
     }
 
     this.bots = this.bots.filter(bot => !bot.isDead);
@@ -880,9 +894,12 @@ export class GameEngine {
     this.createExplosion(head.x, head.y, worm.color, worm === this.player ? 65 : 12, 2);
     this.lootTrails.push({ points: worm.segments.filter((_, i) => i % 3 === 0).map(point => ({ ...point })), life: 1, width: worm.radius * 2 });
     if (this.lootTrails.length > 4) this.lootTrails.shift();
-    for (let i = 0; i < worm.segments.length; i += 4) {
-      this.addFood(worm.segments[i].x + (Math.random() - 0.5) * 10, worm.segments[i].y + (Math.random() - 0.5) * 10, 3, true);
+    // Jackpot: sık loot + aralarda hazine + garanti altın.
+    for (let i = 0; i < worm.segments.length; i += 2) {
+      const treasure = i % 12 === 0;
+      this.addFood(worm.segments[i].x + (Math.random() - 0.5) * 10, worm.segments[i].y + (Math.random() - 0.5) * 10, treasure ? 3 : 1, treasure);
     }
+    this.addBonus(head.x, head.y, 'coin');
     if (worm === this.player) this.shake = 15;
   }
 

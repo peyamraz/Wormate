@@ -5,6 +5,7 @@ import { t } from './i18n';
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
 export type HatId = 'none' | 'crown' | 'cowboy' | 'party' | 'beanie' | 'helmet' | 'wizard';
 export type GlassesId = 'none' | 'sun' | 'cool' | 'heart' | 'mono' | 'star';
+export type SkinCategory = 'basit' | 'cizgili' | 'desenli' | 'bayraklar';
 
 export interface ShopSkin {
   id: string;
@@ -12,6 +13,7 @@ export interface ShopSkin {
   rarity: Rarity;
   color: string;
   pattern: WormPattern;
+  category: SkinCategory;
 }
 
 export interface ShopHat { id: HatId; price: number; rarity: Rarity; }
@@ -81,7 +83,7 @@ function buildSkins(): ShopSkin[] {
   CONFIG.COLORS.forEach((color, i) => {
     skins.push({
       id: `solid-${i}`, price: i === 0 ? 0 : 120,
-      rarity: 'common', color, pattern: 'solid',
+      rarity: 'common', color, pattern: 'solid', category: 'basit',
     });
   });
   // 2) Desenler — her renkte candy/freckles/stripes/dots
@@ -92,7 +94,7 @@ function buildSkins(): ShopSkin[] {
       skins.push({
         id: `${pattern}-${i}`,
         price: patternPrice[pattern], rarity: rarityFor(patternPrice[pattern]),
-        color, pattern,
+        color, pattern, category: pattern === 'stripes' ? 'cizgili' : 'desenli',
       });
     }
   });
@@ -107,7 +109,7 @@ function buildSkins(): ShopSkin[] {
     skins.push({
       id: flag,
       price: flagNames[flag], rarity: rarityFor(flagNames[flag]),
-      color: stripes[0], pattern: flag,
+      color: stripes[0], pattern: flag, category: 'bayraklar',
     });
   }
   return skins;
@@ -139,6 +141,9 @@ const COINS_KEY = 'wormate_coins';
 const OWNED_KEY = 'wormate_owned';
 const LOADOUT_KEY = 'wormate_loadout';
 
+// Ekonomi: skor/50 cüzdana eklenir + arenadaki ALTIN küpü başına COIN_VALUE.
+export const COIN_VALUE = 10;
+
 export function readCoins(): number {
   try {
     const v = Number(localStorage.getItem(COINS_KEY) ?? 0);
@@ -147,10 +152,18 @@ export function readCoins(): number {
 }
 
 export function earnCoins(score: number): number {
-  const gain = Math.max(0, Math.min(999999, Math.floor(score / 10)));
+  const gain = Math.max(0, Math.min(999999, Math.floor(score / 50)));
   if (!gain) return readCoins();
   const total = Math.min(999999999, readCoins() + gain);
   try { localStorage.setItem(COINS_KEY, String(total)); } catch { /* oynanabilir kal */ }
+  return total;
+}
+
+export function creditCoins(amount: number): number {
+  const gain = Number.isSafeInteger(amount) && amount > 0 ? Math.min(999, amount) : 0;
+  if (!gain) return readCoins();
+  const total = Math.min(999999999, readCoins() + gain);
+  try { localStorage.setItem(COINS_KEY, String(total)); } catch { /* yoksay */ }
   return total;
 }
 

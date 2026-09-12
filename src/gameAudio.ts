@@ -64,4 +64,8 @@ export const gameAudio = {
     this._lastZip = now;
     play(700, 1500, 0.08, 'sine');
   },
+  takedown() {
+    play(300, 900, 0.14, 'square');
+    play(450, 1350, 0.2, 'triangle');
+  },
 };

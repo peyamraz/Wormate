@@ -41,6 +41,7 @@ export interface Texts {
   you: string; sizeLeader: string; scoreTag: string; sizeTag: string;
   shop: string; account: string; skinTab: string; hatTab: string; glassesTab: string;
   equipped: string; equip: string; goldNote: string;
+  catAll: string; catBasit: string; catCizgili: string; catDesenli: string; catBayraklar: string;
   guest: string; guestWithName: string; guestPlain: string; sessionNote: string; active: string;
   googleSoon: string; googleDesc: string; googleNote: string;
   noticeName: string; noticeRoom: string; waitingRespawn: string; respawnRetry: string; copyManual: string;
@@ -48,8 +49,8 @@ export interface Texts {
   sessionMismatch: string; srvBadData: string; connCancelled: string;
   arenaAddr: string; arenaTls: string;
   boostBtn: string; arenaAria: string;
-  frenzyCombo: string; frenzyMult: string; multEnded: string;
-  shield: string; bonusSpeed: string;
+  frenzyCombo: string; frenzyMult: string; multEnded: string; killNotice: string;
+  shield: string; bonusSpeed: string; bonusCoin: string;
   patSolid: string; patCandy: string; patFreckles: string; patStripes: string; patDots: string;
   flagWord: string; cTR: string; cAZ: string; cDE: string; cFR: string; cUS: string; cBR: string; cGB: string; cIT: string;
   hatNone: string; hatParty: string; hatBeanie: string; hatCowboy: string; hatHelmet: string; hatWizard: string; hatCrown: string;
@@ -71,7 +72,8 @@ const en: Texts = {
   invite: 'Invite', copied: 'Copied', controlsHint: 'WASD / Mouse steer · Left/Right-click or Space to boost',
   you: 'YOU', sizeLeader: 'Size leader:', scoreTag: 'Score', sizeTag: 'Size',
   shop: 'Shop', account: 'Log In', skinTab: 'Skin', hatTab: 'Hat', glassesTab: 'Glasses',
-  equipped: 'Equipped', equip: 'Equip', goldNote: 'You earn gold equal to score/10 after each game.',
+  equipped: 'Equipped', equip: 'Equip', goldNote: 'Score/50 plus arena gold. Gold is rare — earn it.',
+  catAll: 'All', catBasit: 'Solid', catCizgili: 'Striped', catDesenli: 'Patterned', catBayraklar: 'Flags',
   guest: 'Guest', guestWithName: 'Play instantly as "{n}"', guestPlain: 'Type a name, play instantly',
   sessionNote: 'scores stay in this session', active: 'Active',
   googleSoon: 'Soon', googleDesc: 'Cloud scores and badges', googleNote: 'When Google login arrives, your scores and shop will live in the cloud.',
@@ -89,8 +91,8 @@ const en: Texts = {
   arenaAddr: 'Use a ws:// or wss:// server address ending in /arena.',
   arenaTls: 'HTTPS pages require a secure wss:// arena server.',
   boostBtn: 'BOOST', arenaAria: 'Wormate arena. Steer with the mouse, arrow keys, WASD, or drag on touch. Hold Space to boost.',
-  frenzyCombo: 'SUPER COMBO {n}!', frenzyMult: 'SUPER MULTIPLIER x{n}!', multEnded: 'MULTIPLIER OVER',
-  shield: 'SHIELD', bonusSpeed: 'SPEED',
+  frenzyCombo: 'SUPER COMBO {n}!', frenzyMult: 'SUPER MULTIPLIER x{n}!', multEnded: 'MULTIPLIER OVER', killNotice: 'KILL!',
+  shield: 'SHIELD', bonusSpeed: 'SPEED', bonusCoin: 'GOLD',
   patSolid: 'Solid', patCandy: 'Candy', patFreckles: 'Freckles', patStripes: 'Stripes', patDots: 'Dots',
   flagWord: 'Flag', cTR: 'Turkey', cAZ: 'Azerbaijan', cDE: 'Germany', cFR: 'France', cUS: 'USA', cBR: 'Brazil', cGB: 'UK', cIT: 'Italy',
   hatNone: 'Hatless', hatParty: 'Party Hat', hatBeanie: 'Beanie', hatCowboy: 'Cowboy Hat', hatHelmet: 'Helmet', hatWizard: 'Wizard Hat', hatCrown: 'Crown',
@@ -112,7 +114,8 @@ const tr: Texts = {
   invite: 'Davet', copied: 'Kopyalandı', controlsHint: 'WASD / Fare ile yönlendir · Sol/Sağ tık veya Space ile boost',
   you: 'SEN', sizeLeader: 'Boy lideri:', scoreTag: 'Skor', sizeTag: 'Boy',
   shop: 'Mağaza', account: 'Oturum Aç', skinTab: 'Deri', hatTab: 'Şapka', glassesTab: 'Gözlük',
-  equipped: 'Kuşanıldı', equip: 'Kuşan', goldNote: 'Her oyun sonu skorun /10 kadar altın kazanırsın.',
+  equipped: 'Kuşanıldı', equip: 'Kuşan', goldNote: 'Skor/50 + arena altınları. Altın nadirdir, biriktir.',
+  catAll: 'Tümü', catBasit: 'Basit', catCizgili: 'Çizgili', catDesenli: 'Desenli', catBayraklar: 'Bayraklar',
   guest: 'Misafir', guestWithName: '"{n}" olarak hemen oyna', guestPlain: 'İsim yaz, hemen oyna',
   sessionNote: 'skorlar bu oturumda saklanır', active: 'Aktif',
   googleSoon: 'Yakında', googleDesc: 'Bulut skorlar ve rozetler', googleNote: 'Google girişi geldiğinde skorların ve mağazan bulutta saklanacak.',
@@ -130,8 +133,8 @@ const tr: Texts = {
   arenaAddr: 'ws:// veya wss:// ile biten /arena server adresi kullan.',
   arenaTls: 'HTTPS sayfalar güvenli wss:// arena serverı ister.',
   boostBtn: 'BOOST', arenaAria: 'Wormate arenası. Fare, ok tuşları, WASD veya dokunmatik sürükleme ile yönlendir. Hızlanmak için Space basılı tut.',
-  frenzyCombo: 'SÜPER KOMBO {n}!', frenzyMult: 'SÜPER ÇARPAN x{n}!', multEnded: 'ÇARPAN BİTTİ',
-  shield: 'KALKAN', bonusSpeed: 'HIZ',
+  frenzyCombo: 'SÜPER KOMBO {n}!', frenzyMult: 'SÜPER ÇARPAN x{n}!', multEnded: 'ÇARPAN BİTTİ', killNotice: 'AVLADIN!',
+  shield: 'KALKAN', bonusSpeed: 'HIZ', bonusCoin: 'ALTIN',
   patSolid: 'Sade', patCandy: 'Şeker', patFreckles: 'Benekli', patStripes: 'Çizgili', patDots: 'Puantiye',
   flagWord: 'Bayrak', cTR: 'Türkiye', cAZ: 'Azerbaycan', cDE: 'Almanya', cFR: 'Fransa', cUS: 'ABD', cBR: 'Brezilya', cGB: 'İngiltere', cIT: 'İtalya',
   hatNone: 'Şapkasız', hatParty: 'Parti Şapkası', hatBeanie: 'Bere', hatCowboy: 'Kovboy Şapkası', hatHelmet: 'Kask', hatWizard: 'Sihirbaz Şapkası', hatCrown: 'Kral Tacı',
@@ -153,7 +156,8 @@ const es: Texts = {
   invite: 'Invitar', copied: 'Copiado', controlsHint: 'WASD / ratón para dirigir · clic izq/der o Espacio para turbo',
   you: 'TÚ', sizeLeader: 'Líder de tamaño:', scoreTag: 'Puntos', sizeTag: 'Tamaño',
   shop: 'Tienda', account: 'Iniciar sesión', skinTab: 'Piel', hatTab: 'Sombrero', glassesTab: 'Gafas',
-  equipped: 'Equipado', equip: 'Equipar', goldNote: 'Ganas oro igual a puntos/10 después de cada juego.',
+  equipped: 'Equipado', equip: 'Equipar', goldNote: 'Puntos/50 más el oro de la arena. El oro es raro.',
+  catAll: 'Todo', catBasit: 'Sólido', catCizgili: 'Rayado', catDesenli: 'Estampado', catBayraklar: 'Banderas',
   guest: 'Invitado', guestWithName: 'Juega al instante como "{n}"', guestPlain: 'Escribe un nombre, juega al instante',
   sessionNote: 'los puntos se quedan en esta sesión', active: 'Activo',
   googleSoon: 'Pronto', googleDesc: 'Puntos e insignias en la nube', googleNote: 'Cuando llegue Google, tus puntos y tienda vivirán en la nube.',
@@ -171,8 +175,8 @@ const es: Texts = {
   arenaAddr: 'Usa una dirección ws:// o wss:// que termine en /arena.',
   arenaTls: 'Las páginas HTTPS requieren un servidor wss:// seguro.',
   boostBtn: 'TURBO', arenaAria: 'Arena Wormate. Dirige con el ratón, flechas, WASD o arrastra en táctil. Mantén Espacio para turbo.',
-  frenzyCombo: '¡SUPERCOMBO {n}!', frenzyMult: '¡SUPER MULTIPLICADOR x{n}!', multEnded: 'MULTIPLICADOR TERMINADO',
-  shield: 'ESCUDO', bonusSpeed: 'VELOCIDAD',
+  frenzyCombo: '¡SUPERCOMBO {n}!', frenzyMult: '¡SUPER MULTIPLICADOR x{n}!', multEnded: 'MULTIPLICADOR TERMINADO', killNotice: '¡CAZADO!',
+  shield: 'ESCUDO', bonusSpeed: 'VELOCIDAD', bonusCoin: 'ORO',
   patSolid: 'Sólido', patCandy: 'Caramelo', patFreckles: 'Pecas', patStripes: 'Rayas', patDots: 'Puntos',
   flagWord: 'Bandera', cTR: 'Turquía', cAZ: 'Azerbaiyán', cDE: 'Alemania', cFR: 'Francia', cUS: 'EE. UU.', cBR: 'Brasil', cGB: 'Reino Unido', cIT: 'Italia',
   hatNone: 'Sin sombrero', hatParty: 'Gorro de fiesta', hatBeanie: 'Gorro', hatCowboy: 'Sombrero de vaquero', hatHelmet: 'Casco', hatWizard: 'Sombrero de mago', hatCrown: 'Corona',
@@ -194,7 +198,8 @@ const fr: Texts = {
   invite: 'Inviter', copied: 'Copié', controlsHint: 'ZQSD / souris pour diriger · clic gauche/droit ou Espace pour turbo',
   you: 'TOI', sizeLeader: 'Menant par la taille :', scoreTag: 'Score', sizeTag: 'Taille',
   shop: 'Boutique', account: 'Connexion', skinTab: 'Peau', hatTab: 'Chapeau', glassesTab: 'Lunettes',
-  equipped: 'Équipé', equip: 'Équiper', goldNote: "Tu gagnes de l'or égal au score/10 après chaque partie.",
+  equipped: 'Équipé', equip: 'Équiper', goldNote: "Score/50 plus l'or de l'arène. L'or est rare.",
+  catAll: 'Tout', catBasit: 'Uni', catCizgili: 'Rayé', catDesenli: 'À motifs', catBayraklar: 'Drapeaux',
   guest: 'Invité', guestWithName: 'Joue aussitôt en tant que « {n} »', guestPlain: 'Écris un nom, joue aussitôt',
   sessionNote: 'les scores restent dans cette session', active: 'Actif',
   googleSoon: 'Bientôt', googleDesc: 'Scores et badges dans le cloud', googleNote: "Avec Google, tes scores et ta boutique vivront dans le cloud.",
@@ -212,8 +217,8 @@ const fr: Texts = {
   arenaAddr: 'Utilise une adresse ws:// ou wss:// se terminant par /arena.',
   arenaTls: 'Les pages HTTPS exigent un serveur wss:// sécurisé.',
   boostBtn: 'TURBO', arenaAria: "Arène Wormate. Dirige à la souris, flèches, ZQSD ou glisser tactile. Maintiens Espace pour le turbo.",
-  frenzyCombo: 'SUPER COMBO {n} !', frenzyMult: 'SUPER MULTIPLICATEUR x{n} !', multEnded: 'MULTIPLICATEUR TERMINÉ',
-  shield: 'BOUCLIER', bonusSpeed: 'VITESSE',
+  frenzyCombo: 'SUPER COMBO {n} !', frenzyMult: 'SUPER MULTIPLICATEUR x{n} !', multEnded: 'MULTIPLICATEUR TERMINÉ', killNotice: 'CHASSÉ !',
+  shield: 'BOUCLIER', bonusSpeed: 'VITESSE', bonusCoin: 'OR',
   patSolid: 'Uni', patCandy: 'Bonbon', patFreckles: 'Taches', patStripes: 'Rayures', patDots: 'Pois',
   flagWord: 'Drapeau', cTR: 'Turquie', cAZ: 'Azerbaïdjan', cDE: 'Allemagne', cFR: 'France', cUS: 'USA', cBR: 'Brésil', cGB: 'Royaume-Uni', cIT: 'Italie',
   hatNone: 'Sans chapeau', hatParty: 'Chapeau de fête', hatBeanie: 'Bonnet', hatCowboy: 'Chapeau de cowboy', hatHelmet: 'Casque', hatWizard: 'Chapeau de magicien', hatCrown: 'Couronne',
@@ -235,7 +240,8 @@ const de: Texts = {
   invite: 'Einladen', copied: 'Kopiert', controlsHint: 'WASD / Maus zum Steuern · Links-/Rechtsklick oder Leertaste für Boost',
   you: 'DU', sizeLeader: 'Größenanführer:', scoreTag: 'Punkte', sizeTag: 'Größe',
   shop: 'Shop', account: 'Anmelden', skinTab: 'Haut', hatTab: 'Hut', glassesTab: 'Brille',
-  equipped: 'Ausgerüstet', equip: 'Ausrüsten', goldNote: 'Du erhältst Gold in Höhe von Punkte/10 nach jedem Spiel.',
+  equipped: 'Ausgerüstet', equip: 'Ausrüsten', goldNote: 'Punkte/50 plus Arena-Gold. Gold ist selten.',
+  catAll: 'Alle', catBasit: 'Einfarbig', catCizgili: 'Gestreift', catDesenli: 'Gemustert', catBayraklar: 'Flaggen',
   guest: 'Gast', guestWithName: 'Spiele sofort als „{n}“', guestPlain: 'Namen tippen, sofort spielen',
   sessionNote: 'Punkte bleiben in dieser Sitzung', active: 'Aktiv',
   googleSoon: 'Bald', googleDesc: 'Cloud-Punkte und Abzeichen', googleNote: 'Mit Google leben deine Punkte und dein Shop in der Cloud.',
@@ -253,8 +259,8 @@ const de: Texts = {
   arenaAddr: 'Nutze eine ws://- oder wss://-Adresse, die auf /arena endet.',
   arenaTls: 'HTTPS-Seiten brauchen einen sicheren wss://-Server.',
   boostBtn: 'BOOST', arenaAria: 'Wormate-Arena. Steuern mit Maus, Pfeilen, WASD oder Touch-Drag. Leertaste halten für Boost.',
-  frenzyCombo: 'SUPER-KOMBO {n}!', frenzyMult: 'SUPER-MULTI x{n}!', multEnded: 'MULTI VORBEI',
-  shield: 'SCHILD', bonusSpeed: 'SPEED',
+  frenzyCombo: 'SUPER-KOMBO {n}!', frenzyMult: 'SUPER-MULTI x{n}!', multEnded: 'MULTI VORBEI', killNotice: 'ERLEGT!',
+  shield: 'SCHILD', bonusSpeed: 'SPEED', bonusCoin: 'GOLD',
   patSolid: 'Einfarbig', patCandy: 'Candy', patFreckles: 'Sommersprossen', patStripes: 'Streifen', patDots: 'Punkte',
   flagWord: 'Flagge', cTR: 'Türkei', cAZ: 'Aserbaidschan', cDE: 'Deutschland', cFR: 'Frankreich', cUS: 'USA', cBR: 'Brasilien', cGB: 'Großbritannien', cIT: 'Italien',
   hatNone: 'Ohne Hut', hatParty: 'Partyhut', hatBeanie: 'Mütze', hatCowboy: 'Cowboyhut', hatHelmet: 'Helm', hatWizard: 'Zauberhut', hatCrown: 'Krone',
@@ -276,7 +282,8 @@ const pt: Texts = {
   invite: 'Convidar', copied: 'Copiado', controlsHint: 'WASD / mouse para dirigir · botão esq/dir ou Espaço para turbo',
   you: 'VOCÊ', sizeLeader: 'Líder de tamanho:', scoreTag: 'Pontos', sizeTag: 'Tamanho',
   shop: 'Loja', account: 'Entrar', skinTab: 'Pele', hatTab: 'Chapéu', glassesTab: 'Óculos',
-  equipped: 'Equipado', equip: 'Equipar', goldNote: 'Você ganha ouro igual a pontos/10 após cada jogo.',
+  equipped: 'Equipado', equip: 'Equipar', goldNote: 'Pontos/50 mais o ouro da arena. Ouro é raro.',
+  catAll: 'Tudo', catBasit: 'Sólido', catCizgili: 'Listrado', catDesenli: 'Estampado', catBayraklar: 'Bandeiras',
   guest: 'Convidado', guestWithName: 'Jogue na hora como "{n}"', guestPlain: 'Digite um nome, jogue na hora',
   sessionNote: 'pontos ficam nesta sessão', active: 'Ativo',
   googleSoon: 'Em breve', googleDesc: 'Pontos e emblemas na nuvem', googleNote: 'Com o Google, seus pontos e loja viverão na nuvem.',
@@ -294,8 +301,8 @@ const pt: Texts = {
   arenaAddr: 'Use um endereço ws:// ou wss:// terminado em /arena.',
   arenaTls: 'Páginas HTTPS exigem um servidor wss:// seguro.',
   boostBtn: 'TURBO', arenaAria: 'Arena Wormate. Dirija com mouse, setas, WASD ou arraste no toque. Segure Espaço para turbo.',
-  frenzyCombo: 'SUPERCOMBO {n}!', frenzyMult: 'SUPER MULTIPLICADOR x{n}!', multEnded: 'MULTIPLICADOR ACABOU',
-  shield: 'ESCUDO', bonusSpeed: 'VELOCIDADE',
+  frenzyCombo: 'SUPERCOMBO {n}!', frenzyMult: 'SUPER MULTIPLICADOR x{n}!', multEnded: 'MULTIPLICADOR ACABOU', killNotice: 'CAÇADO!',
+  shield: 'ESCUDO', bonusSpeed: 'VELOCIDADE', bonusCoin: 'OURO',
   patSolid: 'Sólido', patCandy: 'Doce', patFreckles: 'Sardas', patStripes: 'Listras', patDots: 'Bolinhas',
   flagWord: 'Bandeira', cTR: 'Turquia', cAZ: 'Azerbaijão', cDE: 'Alemanha', cFR: 'França', cUS: 'EUA', cBR: 'Brasil', cGB: 'Reino Unido', cIT: 'Itália',
   hatNone: 'Sem chapéu', hatParty: 'Chapéu de festa', hatBeanie: 'Gorro', hatCowboy: 'Chapéu de caubói', hatHelmet: 'Capacete', hatWizard: 'Chapéu de mago', hatCrown: 'Coroa',
@@ -311,5 +318,6 @@ export const t: Texts = STRINGS[lang];
 export function bonusLabel(kind: BonusKind): string {
   if (kind === 'speed') return t.bonusSpeed;
   if (kind === 'chomp') return 'CHOMP';
+  if (kind === 'coin') return t.bonusCoin;
   return kind;
 }

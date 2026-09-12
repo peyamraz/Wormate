@@ -71,6 +71,17 @@ test('worm coordinates follow the enlarged arena bounds', () => {
   assert.equal(parseServerMessage(JSON.stringify(far)), null, 'cember disindaki nokta reddedilmeli');
 });
 
+test('kill notices survive network validation', () => {
+  const world = new GameEngine(undefined, false, 'online');
+  const worm = world.addHuman(randomUUID(), 'Guest');
+  const message = {
+    type: 'state', v: 1, tick: 1, run: 1, you: worm.id,
+    worms: [serializeWorm(worm)], foods: [], bonuses: [], status: world.getStatus(worm),
+    events: [{ type: 'kill', playerId: worm.id, x: 2000, y: 2000, color: worm.color, value: 150 }],
+  };
+  assert.ok(parseServerMessage(JSON.stringify(message)), 'kill olayi kabul edilmeli');
+});
+
 test('origin allowlist fails closed and production requires HTTPS', () => {
   assert.deepEqual([...allowedOrigins('https://game.example.com', true)], ['https://game.example.com']);
   for (const origin of ['', '*', 'https://game.example.com/path', 'http://game.example.com']) assert.throws(() => allowedOrigins(origin, true));

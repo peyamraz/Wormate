@@ -1,5 +1,5 @@
 import { BONUSES, GAME_CONFIG as CONFIG, TREATS } from './constants';
-import type { BonusKind, TreatKind, WormPattern } from './constants';
+import type { BonusKind, TreatKind, WormPattern, FlagSkin } from './constants';
 import { SHOP_SKINS } from './shop';
 import { bonusLabel } from './i18n';
 
@@ -595,21 +595,120 @@ export function getWormTube(color: string, pattern: WormPattern = 'solid', pale 
   if (cached) return cached;
   cached = sprite(ctx => {
     const base = pattern === 'candy' && pale ? blend(color, '#fff4d3', 0.7) : color;
-    ellipse(ctx, 0, 0, 24, 24, base);
-    // Hafif üst ışık — bombesiz, deseni ezmez.
-    const sheen = ctx.createLinearGradient(0, -24, 0, 24);
-    sheen.addColorStop(0, 'rgba(255,255,255,0.14)');
-    sheen.addColorStop(0.35, 'rgba(255,255,255,0)');
-    sheen.addColorStop(1, 'rgba(0,0,0,0.16)');
-    ellipse(ctx, 0, 0, 24, 24, sheen);
+    tubeDiscBase(ctx, base);
     paintBodyPattern(ctx, pattern, base);
-    ctx.strokeStyle = 'rgba(0,0,0,0.28)';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.arc(0, 0, 23.2, 0, TAU);
-    ctx.stroke();
+    tubeDiscRim(ctx);
   });
   tubes.set(key, cached);
+  return cached;
+}
+
+function tubeDiscBase(ctx: Context, base: string) {
+  ellipse(ctx, 0, 0, 24, 24, base);
+  // Hafif üst ışık — bombesiz, deseni ezmez.
+  const sheen = ctx.createLinearGradient(0, -24, 0, 24);
+  sheen.addColorStop(0, 'rgba(255,255,255,0.14)');
+  sheen.addColorStop(0.35, 'rgba(255,255,255,0)');
+  sheen.addColorStop(1, 'rgba(0,0,0,0.16)');
+  ellipse(ctx, 0, 0, 24, 24, sheen);
+}
+
+function tubeDiscRim(ctx: Context) {
+  ctx.strokeStyle = 'rgba(0,0,0,0.28)';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.arc(0, 0, 23.2, 0, TAU);
+  ctx.stroke();
+}
+
+// Düz renk disk: çizgi halkaları ve bayrak bantları için (dönüşten bağımsız, hep doğru).
+const plainDiscs = new Map<string, HTMLCanvasElement>();
+export function getTubeDisc(color: string): HTMLCanvasElement {
+  let cached = plainDiscs.get(color);
+  if (cached) return cached;
+  cached = sprite(ctx => {
+    tubeDiscBase(ctx, color);
+    tubeDiscRim(ctx);
+  });
+  plainDiscs.set(color, cached);
+  return cached;
+}
+
+export function getStripeTube(color: string, i: number): HTMLCanvasElement {
+  return getTubeDisc(i % 2 === 0 ? color : blend(color, '#ffffff', 0.55));
+}
+
+// Bayraklar gövde BOYUNCA okunur: bantlar dilim dilim dizilir, amblem 12 dilimde bir.
+const FLAG_CYCLE: Record<FlagSkin, string[]> = {
+  'flag-tr': ['#e30a17'],
+  'flag-az': ['#00b5e2', '#ef3340', '#00a651'],
+  'flag-de': ['#111111', '#dd0000', '#ffce00'],
+  'flag-fr': ['#0055a4', '#ffffff', '#ef4135'],
+  'flag-us': ['#b31942', '#ffffff'],
+  'flag-br': ['#009b3a'],
+  'flag-gb': ['#012169', '#ffffff', '#c8102e'],
+  'flag-it': ['#009246', '#ffffff', '#ce2b37'],
+};
+const FLAG_MEDAL: Partial<Record<FlagSkin, 'crescent' | 'stars' | 'sun' | 'cross'>> = {
+  'flag-tr': 'crescent',
+  'flag-us': 'stars',
+  'flag-br': 'sun',
+  'flag-gb': 'cross',
+};
+
+function paintMedal(ctx: Context, flag: FlagSkin) {
+  const medal = FLAG_MEDAL[flag];
+  if (medal === 'crescent') {
+    ellipse(ctx, 0, 0, 24, 24, '#e30a17');
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(-4, 0, 10, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#e30a17';
+    ctx.beginPath(); ctx.arc(-1.5, 0, 8, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    tubeStar(ctx, 8, 0, 5, 2);
+    ctx.fill();
+  } else if (medal === 'stars') {
+    ellipse(ctx, 0, 0, 24, 24, '#0a3161');
+    ctx.fillStyle = '#ffffff';
+    for (let row = -1; row <= 1; row++) {
+      for (let col = -1; col <= 1; col++) {
+        ctx.beginPath();
+        ctx.arc(col * 9, row * 9, 2.4, 0, TAU);
+        ctx.fill();
+      }
+    }
+  } else if (medal === 'sun') {
+    ellipse(ctx, 0, 0, 24, 24, '#ffdf00');
+    ctx.fillStyle = '#002776';
+    ctx.beginPath(); ctx.arc(0, 0, 9, 0, TAU); ctx.fill();
+  } else if (medal === 'cross') {
+    ellipse(ctx, 0, 0, 24, 24, '#ffffff');
+    ctx.fillStyle = '#c8102e';
+    ctx.fillRect(-24, -5, 48, 10);
+    ctx.fillRect(-5, -24, 10, 48);
+  }
+  const sheen = ctx.createLinearGradient(0, -24, 0, 24);
+  sheen.addColorStop(0, 'rgba(255,255,255,0.14)');
+  sheen.addColorStop(1, 'rgba(0,0,0,0.16)');
+  ellipse(ctx, 0, 0, 24, 24, sheen);
+  tubeDiscRim(ctx);
+}
+
+const flagTubes = new Map<string, HTMLCanvasElement>();
+export function getFlagTube(flag: FlagSkin, i: number): HTMLCanvasElement {
+  const key = `flagtube:${flag}:${((i % 12) + 12) % 12}`;
+  let cached = flagTubes.get(key);
+  if (cached) return cached;
+  cached = sprite(ctx => {
+    if (FLAG_MEDAL[flag] && i % 12 === 6) {
+      paintMedal(ctx, flag);
+      return;
+    }
+    const cycle = FLAG_CYCLE[flag];
+    tubeDiscBase(ctx, cycle[i % cycle.length]);
+    tubeDiscRim(ctx);
+  });
+  flagTubes.set(key, cached);
   return cached;
 }
 
@@ -829,6 +928,28 @@ export function getBonusSprite(kind: BonusKind) {
   const bonus = BONUSES.find(item => item.kind === kind)!;
   cached = sprite(ctx => {
     ellipse(ctx, 1, 24, 18, 4.5, '#00000040');
+    if (kind === 'coin') {
+      // Altın coin: kalın kenar + parlak iç + yıldız.
+      ellipse(ctx, 0, 0, 23, 23, gradient(ctx, '#8a6a00', '#b8860b', -24, 24));
+      ellipse(ctx, 0, 0, 18.5, 18.5, gradient(ctx, '#ffe98a', '#f5b800', -18, 18));
+      ctx.strokeStyle = '#fff8dc';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(-2, -2, 15, 3.6, 5.2);
+      ctx.stroke();
+      ctx.fillStyle = '#a86e00';
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const rad = i % 2 === 0 ? 9 : 3.8;
+        const a = -Math.PI / 2 + i * Math.PI / 5;
+        const px = Math.cos(a) * rad, py = Math.sin(a) * rad;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      return;
+    }
     const gem = ctx.createRadialGradient(-8, -10, 2, 0, 0, 26);
     gem.addColorStop(0, blend(bonus.color, '#ffffff', 0.55));
     gem.addColorStop(0.45, bonus.color);

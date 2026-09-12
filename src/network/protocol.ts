@@ -27,7 +27,7 @@ export type ClientMessage =
   | { type: 'ping'; at: number };
 
 export interface WorldEvent extends Point {
-  type: 'eat' | 'bonus' | 'death';
+  type: 'eat' | 'bonus' | 'death' | 'kill';
   playerId: string;
   color: string;
   value: number;

@@ -93,11 +93,36 @@
 - **Kenar alarmı (TAMAM):** 420px kala çemberin ekrandaki kısmı hafif kırmızı parlar
   (geniş silik bant + ince çizgi, yaklaştıkça opaklaşır). Kafa işareti ve bip yok.
 
+- **İri bonus küpleri (TAMAM):** gövde 42→56, çarpanlar 62-68 + geniş hale + nabız halkası.
+  Mıknatıs dahil tüm küpler uzaktan fark edilir. `tsc` temiz, build OK.
+
+- **Altın ekonomisi (TAMAM):** skor→altın /10→/50 (5 kat zorlaştı) + arenada nadir ALTIN küpü
+  (+10 altın, süreli efekt yok, 6 dilde etiketli). Cüzdan iki kaynaktan beslenir.
+  Örnek: 2000 skor + 4 altın ≈ 80 altın/oyun; taç (1000) ~12 oyun. Test: 38/38 (`tsc` temiz, build OK).
+
 - **Düz boru gövde (TAMAM):** bombeli dilimler gitti; tek renk tüp zemini + yassı desen diski.
   Desen ve bayrak artık kesintisiz okunur. Önizleme de aynı sprite. Test: 37/37 (`tsc` temiz, build OK).
 
+- **Vücut ritmi (TAMAM):** çizgi/bayrak dilim başına değil gövde boyunca dizilir —
+  çizgili halka halka, bayraklar bant + 12 dilimde bir amblem (hilal/yıldız/güneş/haç).
+  Kafa amblemi taşır, önizleme ritmi gösterir. Test: 39/39 (`tsc` temiz, build OK).
+
+- **Rakip deri düzeni (TAMAM):** bantlar her dilimde alterne (rakip halkalar gibi sık ritim),
+  deri sayfasında Basit/Çizgili/Desenli/Bayraklar filtre çipleri (6 dilde). Test: 39/39 (`tsc` temiz, build OK).
+
 - **Bağlantı kopma teşhisi (TAMAM):** kopma mesajı artık soket kodunu gösterir (`[#1006]` gibi);
   heartbeat 10→15sn (mobilde haksız atılma azalır). Test: 37/37 (`tsc` temiz, build OK).
+
+## Rakip analizi + yapılacaklar (tüm ekran görüntülerinden, 2026-09-12)
+
+Kaynak: wormate.io orijinali (Deriler/Giyim/Madeni paralar, ölüm patlaması, minimap+Top10,
+profil/seviye, yem çeşitliliği, korsan şapka+göz bandı takan solucanlar).
+- Faz 1 (TAMAM — 2026-09-12): ölüm jackpot'u — 2 segmentte 1 loot + hazine, katile +150
+  skor + AVLADIN bildirimi + sesi, %100 altın düşer. Minimap artı çizgisi. Test: 41/41 (`tsc` temiz, build OK).
+- Faz 2: Giyim sekmesi — göz stilleri + ağız stilleri (sadece drawFace, altınla, protokol yok).
+- Faz 3: Seviye/XP — toplam skordan seviye, menüde rozet + bar.
+- Faz 4: Yem çeşitliliği — karpuz/zencefilli/böğürtlen gibi yeni TREATS.
+- HARİÇ: gerçek parayla coin (Madeni paralar IAP) — web hobby'de yok. İsim Wormate kalıyor.
 
 ## Kararlar / notlar
 

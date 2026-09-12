@@ -1,8 +1,7 @@
 import { GameEngine, getCameraZoom, Worm } from '../gameEngine';
 import type { PlayerStatus } from '../gameEngine';
-import { bonusLabel } from '../i18n';
+import { bonusLabel, t } from '../i18n';
 import { readLoadout, skinById } from '../shop';
-import { t } from '../i18n';
 import { NETWORK } from './protocol';
 import type { ArenaSnapshot, ClientMessage, WireWorm } from './protocol';
 import { parseServerMessage } from './validation';
@@ -232,11 +231,17 @@ export class OnlineClient {
         this.view.createExplosion(event.x, event.y, event.color, own ? 60 : 18, 2);
         if (own) this.view.shake = 15;
       } else if (own) {
-        this.view.createExplosion(event.x, event.y, event.color, 9, 1, true);
-        this.view.floatingScores.push({ x: event.x, y: event.y - 24, value: event.value, color: event.color, life: 1, label: event.bonus ? bonusLabel(event.bonus) : undefined });
+        const isKill = event.type === 'kill';
+        this.view.createExplosion(event.x, event.y, event.color, isKill ? 30 : 9, isKill ? 2 : 1, true);
+        this.view.floatingScores.push({ x: event.x, y: event.y - 24, value: event.value, color: event.color, life: 1, label: isKill ? t.killNotice : event.bonus ? bonusLabel(event.bonus) : undefined });
         if (event.food) this.view.snackBites.push({ ...event.food, target: this.view.player, life: 1 });
         if (event.bonus) this.view.pickupEvent = event.bonus;
-        this.view.player.swallowWaves.push(0);
+        if (isKill) {
+          this.view.killFlash++;
+          this.view.shake = Math.max(this.view.shake, 8);
+        } else {
+          this.view.player.swallowWaves.push(0);
+        }
       }
     }
     this.view.floatingScores = this.view.floatingScores.slice(-16);

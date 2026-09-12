@@ -23,6 +23,7 @@ export const GAME_CONFIG = {
   BONUS_LIFETIME_TICKS: 5400,
   GROWTH_PER_FOOD: 2,
   BOOST_CONSUMPTION_TICKS: 16,
+  KILL_SCORE: 150,
   BOT_COUNT: 22,
   SPAWN_PROTECTION_TICKS: 300,
   CAMERA_START_ZOOM: 2,
@@ -51,7 +52,7 @@ export const TREATS = [
 export type TreatKind = typeof TREATS[number]['kind'];
 export type FlagSkin = 'flag-tr' | 'flag-az' | 'flag-de' | 'flag-fr' | 'flag-us' | 'flag-br' | 'flag-gb' | 'flag-it';
 export type WormPattern = 'solid' | 'candy' | 'freckles' | 'stripes' | 'dots' | FlagSkin;
-export type BonusKind = 'speed' | 'chomp' | 'x2' | 'x5' | 'x10' | 'x100';
+export type BonusKind = 'speed' | 'chomp' | 'x2' | 'x5' | 'x10' | 'x100' | 'coin';
 
 export const BONUSES: {
   kind: BonusKind;
@@ -67,6 +68,7 @@ export const BONUSES: {
   { kind: 'x5', label: '5x', color: '#facc15', ticks: 540, weight: 0.12, multiplier: 5 },
   { kind: 'x10', label: '10x', color: '#f472b6', ticks: 360, weight: 0.05, multiplier: 10 },
   { kind: 'x100', label: '100x', color: '#ffd166', ticks: 180, weight: 0.01, multiplier: 100 },
+  { kind: 'coin', label: 'ALTIN', color: '#ffd700', ticks: 0, weight: 0.08, multiplier: 1 },
 ];
 
 export const BONUS_BY_KIND = Object.fromEntries(BONUSES.map(bonus => [bonus.kind, bonus])) as Record<BonusKind, typeof BONUSES[number]>;

@@ -95,6 +95,33 @@ test('tum deri sprite lari hatasiz uretilir ve desen boyasi cizilir', async () =
   }
 });
 
+test('cizgiler halka halka, bayraklar bant + amblem ritmiyle dizilir', async () => {
+  const art = await import('../src/gameArt');
+  const { SHOP_SKINS } = await import('../src/shop');
+  const green = '#4dff6a';
+  assert.notEqual(art.getStripeTube(green, 0), art.getStripeTube(green, 1), 'cizgi halkalari alterne olmali');
+  assert.equal(art.getStripeTube(green, 0), art.getStripeTube(green, 2), 'halka ritmi tekrar etmeli');
+  const flags = SHOP_SKINS.filter(s => s.pattern.startsWith('flag-'));
+  assert.ok(flags.length >= 8, '8 bayrak beklenir');
+  for (const skin of flags) {
+    const flag = skin.pattern as import('../src/constants').FlagSkin;
+    for (let k = 0; k < 14; k++) art.getFlagTube(flag, k);
+    const plain = art.getFlagTube(flag, 0);
+    const medal = art.getFlagTube(flag, 6);
+    if (['flag-tr', 'flag-us', 'flag-br', 'flag-gb'].includes(flag)) {
+      assert.notEqual(medal, plain, `${flag} amblem dilimi farkli olmali`);
+    }
+    // Cok renkli bayraklar her dilimde alterne olur (rakip halkalar gibi).
+    const multi = ['flag-az', 'flag-de', 'flag-fr', 'flag-gb', 'flag-it', 'flag-us'].includes(flag);
+    if (multi) {
+      assert.notEqual(art.getFlagTube(flag, 0), art.getFlagTube(flag, 1), `${flag} her dilimde degismeli`);
+    }
+  }
+  // Kategori dagilimi: rakip magazadaki gibi 4 grup.
+  const cats = new Set(SHOP_SKINS.map(s => s.category));
+  for (const c of ['basit', 'cizgili', 'desenli', 'bayraklar']) assert.ok(cats.has(c as never), `${c} kategorisi dolu olmali`);
+});
+
 test('tum sapkalar agzi kapatmaz ve simetriktir', async () => {
   const { drawHat } = await import('../src/gameRenderer');
   const { SHOP_HATS } = await import('../src/shop');
@@ -178,7 +205,13 @@ test('tum bonus kupleri ve sekerler hatasiz uretilir', async () => {
     const before = created.length;
     getBonusSprite(bonus.kind);
     assert.ok(created.length > before, `${bonus.kind} kup uretmeli`);
-    const texts = created[created.length - 1].ops.filter(o => o.op === 'fillText');
+    const ops = created[created.length - 1].ops;
+    if (bonus.kind === 'coin') {
+      // Coin yazisizdir: yildiz amblemi tasir.
+      assert.ok(ops.some(o => o.op === 'moveTo' || o.op === 'lineTo'), 'coin yildiz icermeli');
+      continue;
+    }
+    const texts = ops.filter(o => o.op === 'fillText');
     assert.ok(texts.some(o => String(o.args[0]).length > 0), `${bonus.kind} etiket yazmali`);
   }
   for (const treat of TREATS) {

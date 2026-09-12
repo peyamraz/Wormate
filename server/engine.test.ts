@@ -90,6 +90,34 @@ test('sustained boost consumes body segments as fuel', () => {
   assert.ok(worm.segments.length < before, 'holding boost must burn segments');
 });
 
+test('coin bonus grants no timed effect but scores', () => {
+  const world = new GameEngine(undefined, false, 'online');
+  const a = world.addHuman(randomUUID(), 'Alice');
+  a.applyBonus('coin');
+  assert.equal(a.multiplier, 1);
+  assert.equal(a.speedTicks, 0);
+  assert.equal(a.chompTicks, 0);
+  assert.equal(a.score, 0);
+});
+
+test('killer earns score, loot and a kill notice', () => {
+  const world = new GameEngine(undefined, false, 'online');
+  const a = world.addHuman(randomUUID(), 'Alice');
+  const b = world.addHuman(randomUUID(), 'Bob');
+  world.bots = []; world.foods = []; world.bonuses = [];
+  a.spawnProtection = b.spawnProtection = 0;
+  a.segments = [{ x: 2600, y: 2600 }, { x: 2595, y: 2600 }, { x: 2590, y: 2600 }, { x: 2585, y: 2600 }];
+  b.segments = [{ x: 2570, y: 2600 }, { x: 2570, y: 3500 }, { x: 2565, y: 3500 }];
+  a.angle = Math.PI;
+  world.stepOnline(new Map([[a.id, { angle: Math.PI, boost: false }], [b.id, { angle: 0, boost: false }]]));
+  assert.equal(b.isDead, true, 'kurban olmeli');
+  assert.equal(a.isDead, false, 'katil yasamali');
+  assert.ok(a.score >= GAME_CONFIG.KILL_SCORE, 'katil odullenmeli');
+  assert.ok(world.worldEvents.some(e => e.type === 'kill' && e.playerId === a.id), 'kill bildirimi olmali');
+  assert.ok(world.bonuses.some(bonus => bonus.kind === 'coin'), 'olum altin dusurmeli');
+  assert.ok(world.foods.length > 0, 'olum loot birakmali');
+});
+
 test('food and multipliers are awarded to the actual eater in the shared world', () => {
   const world = new GameEngine(undefined, false, 'online');
   const a = world.addHuman(randomUUID(), 'Alice');

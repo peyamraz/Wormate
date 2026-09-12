@@ -16,7 +16,7 @@ import {
   buyGlasses, buyHat, buySkin, earnCoins, equip, readCoins, readLoadout, readOwned,
   skinName, hatName, glassesName,
 } from './shop';
-import type { GlassesId, HatId, Loadout, Owned } from './shop';
+import type { GlassesId, HatId, Loadout, Owned, SkinCategory } from './shop';
 import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut, ChevronDown, ChevronUp, Bot, Coins, ShoppingBag, User, LogIn, Palette, Glasses, X } from 'lucide-react';
 
 const EMPTY_STATUS: PlayerStatus = {
@@ -78,6 +78,8 @@ export default function App() {
   const [loadout, setLoadout] = useState<Loadout>(readLoadout);
   const [shopTab, setShopTab] = useState<'skin' | 'hat' | 'glasses'>('skin');
   const [shopOpen, setShopOpen] = useState(false);
+  const [shopCat, setShopCat] = useState<'all' | SkinCategory>('all');
+  const visibleSkins = shopCat === 'all' ? SHOP_SKINS : SHOP_SKINS.filter(s => s.category === shopCat);
   const [menuTab, setMenuTab] = useState<'shop' | 'account'>('shop');
   const clientRef = useRef<OnlineClient | null>(null);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -420,8 +422,28 @@ export default function App() {
                     ))}
                   </div>
                   <div className="overflow-y-auto p-3">
+                    {shopTab === 'skin' && (
+                      <div className="mb-2 flex gap-1 overflow-x-auto pb-0.5">
+                        {([
+                          { id: 'all', title: t.catAll },
+                          { id: 'basit', title: t.catBasit },
+                          { id: 'cizgili', title: t.catCizgili },
+                          { id: 'desenli', title: t.catDesenli },
+                          { id: 'bayraklar', title: t.catBayraklar },
+                        ] as const).map(c => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => setShopCat(c.id)}
+                            className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black transition-all ${shopCat === c.id ? 'border-orange-500/60 bg-orange-500/20 text-orange-300' : 'border-slate-700 text-slate-400'}`}
+                          >
+                            {c.title}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4">
-                      {shopTab === 'skin' && SHOP_SKINS.map(item => {
+                      {shopTab === 'skin' && visibleSkins.map(item => {
                         const has = owned.skins.includes(item.id);
                         const worn = loadout.skin === item.id;
                         return (

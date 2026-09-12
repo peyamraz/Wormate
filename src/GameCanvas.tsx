@@ -6,7 +6,7 @@ import { drawGame } from './gameRenderer';
 import { prepareGameArt } from './gameArt';
 import { gameAudio } from './gameAudio';
 import { t } from './i18n';
-import { readLoadout, skinById } from './shop';
+import { readLoadout, skinById, creditCoins, COIN_VALUE } from './shop';
 import type { OnlineClient } from './network/OnlineClient';
 import type { GuestSession } from './session';
 
@@ -83,6 +83,7 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
     let lastPublished = 0;
     let lastCombo = 0;
     let lastMult = 1;
+    let lastKillFlash = 0;
     let previousRun = online?.run ?? 0;
     let previousState = propsRef.current.state;
 
@@ -191,6 +192,7 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
             lastScore = 0;
             lastCombo = 0;
             lastMult = 1;
+            lastKillFlash = engine.killFlash;
             lastReportedScore = 0;
             lastStatusKey = '';
             clearControls(input);
@@ -214,7 +216,12 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
         if (current.state === 'playing' || (online && current.state === 'paused')) {
           if (engine.pickupEvent) {
             if (!current.muted) gameAudio.bonus(engine.pickupEvent);
+            if (engine.pickupEvent === 'coin') creditCoins(COIN_VALUE);
             engine.pickupEvent = null;
+          }
+          if (engine.killFlash !== lastKillFlash) {
+            lastKillFlash = engine.killFlash;
+            if (!current.muted) gameAudio.takedown();
           }
           if (engine.player.score !== lastScore) {
             const increased = engine.player.score > lastScore;
