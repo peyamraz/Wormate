@@ -14,7 +14,7 @@ import {
   buyGlasses, buyHat, buySkin, earnCoins, equip, readCoins, readLoadout, readOwned,
 } from './shop';
 import type { GlassesId, HatId, Loadout, Owned } from './shop';
-import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut, ChevronDown, ChevronUp, Bot, Coins, ShoppingBag } from 'lucide-react';
+import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut, ChevronDown, ChevronUp, Bot, Coins, ShoppingBag, User, LogIn } from 'lucide-react';
 
 const EMPTY_STATUS: PlayerStatus = {
   score: 0,
@@ -68,6 +68,7 @@ export default function App() {
   const [owned, setOwned] = useState<Owned>(readOwned);
   const [loadout, setLoadout] = useState<Loadout>(readLoadout);
   const [shopTab, setShopTab] = useState<'skin' | 'hat' | 'glasses'>('skin');
+  const [menuTab, setMenuTab] = useState<'shop' | 'account'>('shop');
   const clientRef = useRef<OnlineClient | null>(null);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isOnline = guest?.mode === 'online';
@@ -279,16 +280,30 @@ export default function App() {
               </div>
             </div>
 
-            {/* Mağaza: skor altınıyla deri / şapka / gözlük */}
-            <div className="w-full mb-6 rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-slate-300">
-                  <ShoppingBag size={14} className="text-amber-400" /> Mağaza
-                </span>
-                <span className="flex items-center gap-1 rounded-full bg-yellow-400/15 border border-yellow-400/30 px-2.5 py-1 text-xs font-black text-yellow-300">
+            {/* Mağaza / Oturum paneli */}
+            <div className="w-full mb-6 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/70">
+              <div className="flex items-center gap-1.5 border-b border-slate-800/80 bg-slate-900/60 p-2">
+                <button
+                  type="button"
+                  onClick={() => setMenuTab('shop')}
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-black uppercase tracking-wider transition-all ${menuTab === 'shop' ? 'border-orange-500/60 bg-orange-500/20 text-orange-300 shadow-lg shadow-orange-500/10' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+                >
+                  <ShoppingBag size={14} /> Mağaza
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMenuTab('account')}
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-black uppercase tracking-wider transition-all ${menuTab === 'account' ? 'border-cyan-500/60 bg-cyan-500/20 text-cyan-300 shadow-lg shadow-cyan-500/10' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+                >
+                  <LogIn size={14} /> Oturum Aç
+                </button>
+                <span className="flex shrink-0 items-center gap-1 rounded-full bg-yellow-400/15 border border-yellow-400/30 px-2.5 py-1 text-xs font-black text-yellow-300">
                   <Coins size={12} /> {coins.toLocaleString()}
                 </span>
               </div>
+              <div className="p-4">
+              {menuTab === 'shop' ? (
+              <>
               <div className="flex gap-1.5 mb-3">
                 {(['skin', 'hat', 'glasses'] as const).map(tab => (
                   <button
@@ -373,6 +388,52 @@ export default function App() {
                 })}
               </div>
               <p className="mt-2 text-[10px] text-slate-500 font-medium">Her oyun sonu skorun /10 kadar altın kazanırsın.</p>
+              </>
+              ) : (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-3 rounded-xl border border-cyan-400/50 bg-cyan-500/10 p-3 text-left transition-all hover:bg-cyan-500/15"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-300">
+                    <User size={20} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-black text-white">Misafir</span>
+                    <span className="block truncate text-[11px] font-medium text-slate-400">
+                      {nickname ? `"${nickname}" olarak hemen oyna` : 'İsim yaz, hemen oyna'} · skorlar bu oturumda saklanır
+                    </span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-cyan-500/20 border border-cyan-400/40 px-2.5 py-1 text-[10px] font-black text-cyan-300">
+                    <Check size={11} /> Aktif
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  disabled
+                  title="Çok yakında"
+                  className="flex w-full cursor-not-allowed items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/70 p-3 text-left opacity-70"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white">
+                    <svg viewBox="0 0 24 24" width={20} height={20} aria-hidden="true">
+                      <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z" />
+                      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z" />
+                      <path fill="#FBBC05" d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z" />
+                      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75z" />
+                    </svg>
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-black text-slate-300">Google</span>
+                    <span className="block truncate text-[11px] font-medium text-slate-500">Bulut skorlar ve rozetler</span>
+                  </span>
+                  <span className="shrink-0 rounded-full bg-amber-400/15 border border-amber-400/40 px-2.5 py-1 text-[10px] font-black text-amber-300">
+                    Yakında
+                  </span>
+                </button>
+                <p className="pt-1 text-center text-[10px] font-medium text-slate-500">Google girişi geldiğinde skorların ve mağazan bulutta saklanacak.</p>
+              </div>
+              )}
+              </div>
             </div>
 
             {notice && (
