@@ -480,7 +480,7 @@ export default function App() {
                 </div>
               )}
               {status.multiplier > 1 && (
-                <div className="rounded-full border border-yellow-300/40 bg-yellow-400/90 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-slate-950 backdrop-blur-xs">
+                <div className={`rounded-full border border-yellow-300/40 bg-yellow-400/90 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-slate-950 backdrop-blur-xs ${status.multiplierSeconds <= 3 ? 'animate-pulse' : ''}`}>
                   {status.multiplier}x {status.multiplierSeconds}s
                 </div>
               )}
@@ -648,7 +648,7 @@ export default function App() {
 
           {gameState === 'playing' && (
             <div className="pointer-events-none absolute bottom-5 left-5 text-[10px] text-slate-500">
-              <span className="desktop-controls">WASD / Mouse to steer &middot; Space to boost</span>
+              <span className="desktop-controls">WASD / Mouse to steer &middot; Left/Right-click or Space to boost</span>
             </div>
           )}
         </>

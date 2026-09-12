@@ -80,6 +80,8 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
     let lastScoreUpdateTime = 0;
     let lastStatusKey = '';
     let lastPublished = 0;
+    let lastCombo = 0;
+    let lastMult = 1;
     let previousRun = online?.run ?? 0;
     let previousState = propsRef.current.state;
 
@@ -106,9 +108,11 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
     };
 
     const pointerDown = (event: PointerEvent) => {
-      if (propsRef.current.state !== 'playing' || event.button !== 0) return;
+      if (propsRef.current.state !== 'playing') return;
       gameAudio.unlock();
       if (event.pointerType === 'mouse') {
+        // Sol + sağ tık basılı tutma = boost (sağ tık menüsü canvas'ta zaten engelli).
+        if (event.button !== 0 && event.button !== 2) return;
         aimAt(event.clientX, event.clientY);
         input.mouseBoost = true;
       } else if (input.pointerId === null) {
@@ -134,7 +138,8 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
       }
     };
     const pointerUp = (event: PointerEvent) => {
-      if (event.pointerType === 'mouse') input.mouseBoost = false;
+      // Diğer tuş hâlâ basılıysa boost sürsün (sol basılıyken sağı bırakma vb.).
+      if (event.pointerType === 'mouse') input.mouseBoost = (event.buttons & 3) !== 0;
       if (event.pointerId === input.pointerId) {
         input.pointerId = null;
         input.stick = null;
@@ -183,6 +188,8 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
             previousRun = online.run;
             sentGameOver = false;
             lastScore = 0;
+            lastCombo = 0;
+            lastMult = 1;
             lastReportedScore = 0;
             lastStatusKey = '';
             clearControls(input);
@@ -211,13 +218,48 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
           if (engine.player.score !== lastScore) {
             const increased = engine.player.score > lastScore;
             lastScore = engine.player.score;
-            if (!current.muted && increased) gameAudio.eat(lastScore);
+            if (!current.muted && increased) {
+              if (engine.player.chompTicks > 0) gameAudio.gulp();
+              else if (engine.player.speedTicks > 0) gameAudio.zip();
+              else gameAudio.eat(lastScore);
+            }
             if (time - lastScoreUpdateTime > 50) {
               lastScoreUpdateTime = time;
               lastReportedScore = lastScore;
               current.onScoreUpdate(lastScore);
             }
           }
+          // Süper toplama: kombo dönüm noktaları + yüksek çarpana geçiş
+          const comboNow = engine.player.combo;
+          if (comboNow !== lastCombo) {
+            if (comboNow > lastCombo && (comboNow === 8 || comboNow === 12 || comboNow === 16 || comboNow === 20)) {
+              const head = engine.player.segments[0];
+              engine.snackRings.push({ x: head.x, y: head.y, radius: engine.player.radius * 2, color: '#ffd166', life: 1 });
+              if (engine.snackRings.length > 20) engine.snackRings.shift();
+              engine.floatingScores.push({ x: head.x, y: head.y - 44, value: comboNow * 5, color: '#ffd166', life: 1, label: `SÜPER KOMBO ${comboNow}!` });
+              if (engine.floatingScores.length > 16) engine.floatingScores.shift();
+              engine.createExplosion(head.x, head.y, '#ffd166', 26, 1.8, true);
+              engine.shake = Math.max(engine.shake, 6 + comboNow * 0.25);
+              if (!current.muted) gameAudio.frenzy(comboNow);
+            }
+            lastCombo = comboNow;
+          }
+          const multNow = engine.player.multiplier;
+          if (multNow >= 5 && multNow > lastMult) {
+            const head = engine.player.segments[0];
+            engine.createExplosion(head.x, head.y, '#fff3b0', 30, 2, true);
+            engine.floatingScores.push({ x: head.x, y: head.y - 56, value: multNow * 10, color: '#fff3b0', life: 1, label: `SÜPER ÇARPAN x${multNow}!` });
+            if (engine.floatingScores.length > 16) engine.floatingScores.shift();
+            engine.shake = Math.max(engine.shake, 8);
+            if (!current.muted) gameAudio.frenzy(16);
+          }
+          if (lastMult > 1 && multNow === 1) {
+            const head = engine.player.segments[0];
+            engine.floatingScores.push({ x: head.x, y: head.y - 40, value: 0, color: '#94a3b8', life: 1, label: 'ÇARPAN BİTTİ' });
+            if (engine.floatingScores.length > 16) engine.floatingScores.shift();
+            if (!current.muted) gameAudio.expired();
+          }
+          lastMult = multNow;
           if (time - lastPublished > 100) {
             lastPublished = time;
             const status = online ? online.status : engine.getStatus();
@@ -290,6 +332,7 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
             event.currentTarget.setPointerCapture(event.pointerId);
             inputRef.current.touchBoost = true;
             gameAudio.unlock();
+            try { navigator.vibrate?.(15); } catch { /* dokunsal geri bildirim opsiyonel */ }
           }}
           onPointerUp={() => { inputRef.current.touchBoost = false; }}
           onPointerCancel={() => { inputRef.current.touchBoost = false; }}

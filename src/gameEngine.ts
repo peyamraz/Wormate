@@ -844,9 +844,9 @@ export class GameEngine {
     if (this.ticks % CONFIG.BONUS_RESPAWN_TICKS === 0 && this.bonuses.length < CONFIG.BONUS_TARGET_COUNT) this.spawnBonus(true);
     if (this.ticks % CONFIG.BONUS_NEAR_PLAYER_TICKS === 0) this.spawnBonusNearPlayer();
 
-    if (this.player.isBoosting && this.ticks % 3 === 0) {
+    if ((this.player.isBoosting || this.player.speedTicks > 0) && this.ticks % 3 === 0) {
       const tail = this.player.segments[this.player.segments.length - 1];
-      this.createExplosion(tail.x, tail.y, this.player.color, 1);
+      this.createExplosion(tail.x, tail.y, this.player.speedTicks > 0 ? '#38bdf8' : this.player.color, 1);
     }
     const head = this.player.segments[0];
     this.deathReason = this.player.deathReason;

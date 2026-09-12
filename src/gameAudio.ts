@@ -38,7 +38,21 @@ export const gameAudio = {
     else if (kind === 'x100') play(420, 1260, 0.32, 'triangle');
     else play(380, 860, 0.2, 'triangle');
   },
+  frenzy(combo: number) {
+    const base = 420 + Math.min(400, combo * 28);
+    play(base, base * 1.6, 0.22, 'triangle');
+    play(base * 1.25, base * 2.2, 0.3, 'sine');
+  },
   gameOver() {
     play(180, 38, 0.38, 'triangle');
+  },
+  expired() {
+    play(520, 260, 0.16, 'sine');
+  },
+  gulp() {
+    play(150, 70, 0.1, 'square');
+  },
+  zip() {
+    play(700, 1500, 0.08, 'sine');
   },
 };

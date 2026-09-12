@@ -47,6 +47,40 @@ test('leaderboard carries body size and ranks the size race separately', () => {
   assert.equal(world.getStatus(a).sizeRank, 1);
 });
 
+test('rapid eating builds combo up to the frenzy cap', () => {
+  const world = new GameEngine(undefined, false, 'online');
+  const a = world.addHuman(randomUUID(), 'Alice');
+  world.bots = []; world.bonuses = [];
+  const feedAtHead = () => {
+    const h = a.segments[0];
+    world.foods = [{ id: 500001, x: h.x, y: h.y, kind: 'donut', variant: 0, color: GAME_CONFIG.FOOD_COLORS[0], radius: 10, value: 1, phase: 0, rotation: 0, isTreasure: false, bornAt: 0 }];
+    world.stepOnline(new Map([[a.id, { angle: 0, boost: false }]]));
+  };
+  feedAtHead();
+  feedAtHead();
+  assert.ok(a.combo >= 2, 'back-to-back bites must raise combo for the frenzy effect');
+  for (let i = 0; i < 40; i++) feedAtHead();
+  assert.equal(a.combo, 20, 'combo must cap at 20');
+});
+
+test('multiplier countdown is visible in status seconds', () => {
+  const world = new GameEngine(undefined, false, 'online');
+  const a = world.addHuman(randomUUID(), 'Alice');
+  world.bots = [];
+  a.applyBonus('x2');
+  assert.equal(world.getStatus(a).multiplierSeconds, 12);
+  for (let i = 0; i < 61; i++) a.update(a.angle, false);
+  assert.equal(world.getStatus(a).multiplierSeconds, 11);
+});
+
+test('sustained boost consumes body segments as fuel', () => {
+  const worm = new Worm(randomUUID(), 1600, 1600, GAME_CONFIG.COLORS[0]);
+  worm.grow(20, 0);
+  const before = worm.segments.length;
+  for (let i = 0; i < 40; i++) worm.update(0, true);
+  assert.ok(worm.segments.length < before, 'holding boost must burn segments');
+});
+
 test('food and multipliers are awarded to the actual eater in the shared world', () => {
   const world = new GameEngine(undefined, false, 'online');
   const a = world.addHuman(randomUUID(), 'Alice');

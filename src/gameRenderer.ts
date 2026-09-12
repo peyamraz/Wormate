@@ -246,6 +246,19 @@ function drawWormBody(ctx: Context, worm: Worm, engine: GameEngine, reducedMotio
     ctx.globalAlpha = 1;
   }
 
+  if (player && worm.speedTicks > 0 && !engine.isDemo) {
+    ctx.strokeStyle = '#38bdf8';
+    ctx.globalAlpha = 0.3;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 8]);
+    ctx.lineDashOffset = reducedMotion ? 0 : -engine.ticks * 0.6;
+    ctx.beginPath();
+    ctx.arc(head.x, head.y, radius + 12, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  }
+
   if (player && worm.spawnProtection > 0 && !engine.isDemo) {
     ctx.strokeStyle = '#bcf6fa';
     ctx.globalAlpha = 0.7;
@@ -339,11 +352,13 @@ function drawEffects(ctx: Context, engine: GameEngine, bounds: Bounds, reducedMo
   for (const text of engine.floatingScores) {
     ctx.globalAlpha = Math.min(1, text.life * 2);
     ctx.fillStyle = text.color;
-    ctx.font = `800 ${18 / zoom}px system-ui, sans-serif`;
-    ctx.fillText(`+${text.value}`, text.x, text.y);
+    if (text.value !== 0) {
+      ctx.font = `800 ${18 / zoom}px system-ui, sans-serif`;
+      ctx.fillText(`+${text.value}`, text.x, text.y);
+    }
     if (text.label) {
       ctx.font = `800 ${8 / zoom}px system-ui, sans-serif`;
-      ctx.fillText(text.label, text.x, text.y + 15 / zoom);
+      ctx.fillText(text.label, text.x, text.y + (text.value !== 0 ? 15 / zoom : 0));
     }
   }
   ctx.globalAlpha = 1;
