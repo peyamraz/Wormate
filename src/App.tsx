@@ -18,12 +18,13 @@ import {
   skinName, hatName, glassesName, eyeName, mouthName,
 } from './shop';
 import type { EyeId, GlassesId, HatId, Loadout, MouthId, Owned, SkinCategory } from './shop';
-import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut, ChevronDown, ChevronUp, Bot, Coins, ShoppingBag, User, LogIn, Palette, Glasses, X, Smile } from 'lucide-react';
+import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut, ChevronDown, ChevronUp, Bot, Coins, ShoppingBag, User, LogIn, Palette, Glasses, X, Smile, Expand } from 'lucide-react';
 
 const EMPTY_STATUS: PlayerStatus = {
   score: 0,
   size: 0,
   sizeRank: 0,
+  giantSeconds: 0,
   multiplier: 1,
   multiplierSeconds: 0,
   speedSeconds: 0,
@@ -716,6 +717,11 @@ export default function App() {
               {status.chompSeconds > 0 && (
                 <div className="flex items-center gap-1 rounded-full border border-orange-300/30 bg-orange-500/65 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-white backdrop-blur-xs">
                   <Magnet size={10} /> {status.chompSeconds}s
+                </div>
+              )}
+              {status.giantSeconds > 0 && (
+                <div className="flex items-center gap-1 rounded-full border border-violet-300/30 bg-violet-500/65 px-2.5 py-0.5 text-[10px] font-black tracking-wide text-white backdrop-blur-xs">
+                  <Expand size={10} /> {status.giantSeconds}s
                 </div>
               )}
               {status.multiplier > 1 && (

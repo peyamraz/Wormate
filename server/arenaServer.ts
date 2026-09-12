@@ -58,6 +58,7 @@ export function serializeWorm(worm: Worm): WireWorm {
     multiplierTicks: worm.multiplierTicks, combo: worm.combo, facePhase: worm.facePhase,
     growthPulse: worm.growthPulse, appetite: worm.appetite, lookOffset: worm.lookOffset,
     hat: worm.hat, glasses: worm.glasses, eyes: worm.eyes, mouth: worm.mouth,
+    giantTicks: worm.giantTicks,
     deathReason: worm.deathReason,
     points,
   };
@@ -239,7 +240,7 @@ export function createArenaServer(options: ArenaServerOptions) {
     const viewer = world.humans.get(session.id);
     if (!viewer) return;
     const center = viewer.segments[0];
-    const zoom = getCameraZoom(viewer.segments.length, session.viewport);
+    const zoom = getCameraZoom(viewer.segments.length, session.viewport) * (viewer.giantTicks > 0 ? 0.7 : 1);
     const halfWidth = session.viewport.width / (2 * zoom) + 180;
     const halfHeight = session.viewport.height / (2 * zoom) + 180;
     const visible = (point: Point) => Math.abs(point.x - center.x) <= halfWidth && Math.abs(point.y - center.y) <= halfHeight;

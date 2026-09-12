@@ -37,7 +37,7 @@ export function parseServerMessage(raw: string): ServerMessage | null {
     wormIds.add(worm.id);
     if (typeof worm.pattern !== 'string' || !(WORM_PATTERNS as string[]).includes(worm.pattern) || !text(worm.deathReason, 160)) return null;
     if (!['isDead', 'isHuman', 'isBoosting'].every(key => typeof worm[key] === 'boolean')) return null;
-    if (!['score', 'spawnProtection', 'speedTicks', 'chompTicks', 'multiplierTicks', 'combo', 'facePhase'].every(key => number(worm[key], 0, 999999999))) return null;
+    if (!['score', 'spawnProtection', 'speedTicks', 'chompTicks', 'giantTicks', 'multiplierTicks', 'combo', 'facePhase'].every(key => number(worm[key], 0, 999999999))) return null;
     if (!number(worm.radius, 1, 100) || !number(worm.angle, -1e8, 1e8) || typeof worm.multiplier !== 'number' || ![1, 2, 5, 10, 100].includes(worm.multiplier)) return null;
     if (!number(worm.growthPulse, 0, 1) || !number(worm.appetite, 0, 1) || !number(worm.lookOffset, -1, 1)) return null;
     if (typeof worm.hat !== 'string' || !SHOP_HATS.some(h => h.id === worm.hat)) return null;
@@ -54,7 +54,7 @@ export function parseServerMessage(raw: string): ServerMessage | null {
   if (!Array.isArray(message.foods) || message.foods.length > CONFIG.MAX_FOOD_COUNT || !message.foods.every(food)) return null;
   if (!Array.isArray(message.bonuses) || message.bonuses.length > CONFIG.BONUS_MAX_COUNT || !message.bonuses.every(b => isRecord(b) && point(b) && number(b.id) && bonusKind(b.kind) && number(b.phase, 0, Math.PI * 2) && number(b.bornAt))) return null;
   const status = message.status;
-  if (!isRecord(status) || !['score', 'size', 'multiplier', 'multiplierSeconds', 'speedSeconds', 'chompSeconds', 'combo'].every(key => number(status[key], 0, 999999999))) return null;
+  if (!isRecord(status) || !['score', 'size', 'multiplier', 'multiplierSeconds', 'speedSeconds', 'chompSeconds', 'giantSeconds', 'combo'].every(key => number(status[key], 0, 999999999))) return null;
   if (!['activeCount', 'humanCount', 'botCount', 'connectedCount', 'sizeRank'].every(key => number(status[key], 0, 32))) return null;
   if (!Array.isArray(status.leaderboard) || status.leaderboard.length > 6 || !status.leaderboard.every(row => isRecord(row) && identifier(row.id) && validName(row.name) && color(row.color) && number(row.rank, 1, 32) && number(row.score, 0, 999999999) && number(row.size, 1, CONFIG.WORM_MAX_LENGTH) && typeof row.isBot === 'boolean' && typeof row.isPlayer === 'boolean')) return null;
   if (!Array.isArray(message.events) || message.events.length > 32 || !message.events.every(event => isRecord(event) && ['eat', 'bonus', 'death', 'kill'].includes(String(event.type)) && identifier(event.playerId) && point(event) && color(event.color) && number(event.value, 0, 999999999) && (event.bonus === undefined || bonusKind(event.bonus)) && (event.food === undefined || food(event.food)))) return null;

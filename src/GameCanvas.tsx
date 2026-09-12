@@ -273,7 +273,7 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
             lastPublished = time;
             const status = online ? online.status : engine.getStatus();
             if (status) {
-              const statusKey = `${status.score}:${status.size}:${status.sizeRank}:${status.multiplier}:${status.multiplierSeconds}:${status.speedSeconds}:${status.chompSeconds}:${status.combo}:${status.activeCount}:${status.humanCount}:${status.botCount}:${status.connectedCount}:${status.leaderboard[0]?.score ?? 0}:${status.leaderboard.reduce((m, e) => Math.max(m, e.size), 0)}`;
+              const statusKey = `${status.score}:${status.size}:${status.sizeRank}:${status.multiplier}:${status.multiplierSeconds}:${status.speedSeconds}:${status.chompSeconds}:${status.giantSeconds}:${status.combo}:${status.activeCount}:${status.humanCount}:${status.botCount}:${status.connectedCount}:${status.leaderboard[0]?.score ?? 0}:${status.leaderboard.reduce((m, e) => Math.max(m, e.size), 0)}`;
               if (statusKey !== lastStatusKey) {
                 lastStatusKey = statusKey;
                 current.onStatusUpdate(status);

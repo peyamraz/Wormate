@@ -65,6 +65,7 @@ export interface PlayerStatus {
   multiplierSeconds: number;
   speedSeconds: number;
   chompSeconds: number;
+  giantSeconds: number;
   combo: number;
   activeCount: number;
   humanCount: number;
@@ -142,6 +143,7 @@ export class Worm {
   boostTicks = 0;
   speedTicks = 0;
   chompTicks = 0;
+  giantTicks = 0;
   multiplier = 1;
   multiplierTicks = 0;
   combo = 0;
@@ -199,6 +201,7 @@ export class Worm {
     this.spawnProtection = Math.max(0, this.spawnProtection - 1);
     this.speedTicks = Math.max(0, this.speedTicks - 1);
     this.chompTicks = Math.max(0, this.chompTicks - 1);
+    this.giantTicks = Math.max(0, this.giantTicks - 1);
     this.multiplierTicks = Math.max(0, this.multiplierTicks - 1);
     if (this.multiplierTicks === 0) this.multiplier = 1;
     this.comboTicks = Math.max(0, this.comboTicks - 1);
@@ -239,6 +242,7 @@ export class Worm {
   applyBonus(kind: BonusKind) {
     const bonus = BONUS_BY_KIND[kind];
     if (kind === 'coin') return; // altın süreli efekt vermez, cüzdana işlenir
+    if (kind === 'giant') { this.giantTicks = Math.max(this.giantTicks, bonus.ticks); return; }
     if (kind === 'speed') this.speedTicks = Math.max(this.speedTicks, bonus.ticks);
     if (kind === 'chomp') this.chompTicks = Math.max(this.chompTicks, bonus.ticks);
     if (bonus.multiplier > 1) {
@@ -304,6 +308,7 @@ export class GameEngine {
   bonuses: BonusOrb[] = [];
   pickupEvent: BonusKind | null = null;
   killFlash = 0;
+  deathFlash = 0;
   camera: Point & { zoom: number };
   viewport: Viewport;
   isDemo: boolean;
@@ -475,7 +480,7 @@ export class GameEngine {
     ));
   }
 
-  private addFood(x: number, y: number, value?: number, isTreasure = false) {
+  private addFood(x: number, y: number, value?: number, isTreasure = false, scale = 1) {
     if (this.foods.length >= CONFIG.MAX_FOOD_COUNT) return;
     const treat = TREATS[Math.floor(Math.random() * TREATS.length)];
     const variant = Math.floor(Math.random() * CONFIG.FOOD_COLORS.length);
@@ -487,7 +492,7 @@ export class GameEngine {
       kind: treat.kind,
       variant,
       color: treat.kind === 'cookie' ? '#f0b56f' : CONFIG.FOOD_COLORS[variant],
-      radius: CONFIG.FOOD_RADIUS * treat.size * (isTreasure ? 1.1 : 1),
+      radius: CONFIG.FOOD_RADIUS * treat.size * (isTreasure ? 1.1 : 1) * scale,
       value: value ?? treat.value,
       phase: Math.random() * Math.PI * 2,
       rotation: (Math.random() - 0.5) * 0.6,
@@ -589,6 +594,7 @@ export class GameEngine {
       multiplierSeconds: Math.ceil(viewer.multiplierTicks / 60),
       speedSeconds: Math.ceil(viewer.speedTicks / 60),
       chompSeconds: Math.ceil(viewer.chompTicks / 60),
+      giantSeconds: Math.ceil(viewer.giantTicks / 60),
       combo: viewer.combo,
       activeCount: ranked.length,
       humanCount: ranked.filter(entry => !entry.isBot).length,
@@ -797,7 +803,8 @@ export class GameEngine {
       if (worm.isDead) continue;
       const head = worm.segments[0];
       const chompBonus = worm.isHuman && worm.chompTicks > 0 ? 22 : 0;
-      const reach = worm.radius + (CONFIG.FOOD_RADIUS * 1.15) + (worm.isHuman ? 5 : 0) + chompBonus;
+      const giantBonus = worm.isHuman && worm.giantTicks > 0 ? 14 : 0;
+      const reach = worm.radius + (CONFIG.FOOD_RADIUS * 1.15) + (worm.isHuman ? 5 : 0) + chompBonus + giantBonus;
       const searchRadius = reach + 35;
       const minCx = clamp(Math.floor((head.x - searchRadius) / GRID_CELL_SIZE), 0, GRID_COLS - 1);
       const maxCx = clamp(Math.floor((head.x + searchRadius) / GRID_CELL_SIZE), 0, GRID_COLS - 1);
@@ -892,28 +899,41 @@ export class GameEngine {
     if (this.ticks % CONFIG.BONUS_RESPAWN_TICKS === 0 && this.bonuses.length < CONFIG.BONUS_TARGET_COUNT) this.spawnBonus(true);
     if (this.ticks % CONFIG.BONUS_NEAR_PLAYER_TICKS === 0) this.spawnBonusNearPlayer();
 
-    if ((this.player.isBoosting || this.player.speedTicks > 0) && this.ticks % 3 === 0) {
-      const tail = this.player.segments[this.player.segments.length - 1];
-      this.createExplosion(tail.x, tail.y, this.player.speedTicks > 0 ? '#38bdf8' : this.player.color, 1);
+    if (this.ticks % 3 === 0) {
+      for (const worm of this.allWorms()) {
+        if (worm.isDead || (!worm.isBoosting && worm.speedTicks <= 0)) continue;
+        // Kuyruk + gövde ortasından hız çizgileri.
+        const tail = worm.segments[worm.segments.length - 1];
+        const mid = worm.segments[Math.floor(worm.segments.length / 2)] ?? tail;
+        const color = worm.speedTicks > 0 ? '#38bdf8' : worm.color;
+        this.createExplosion(tail.x, tail.y, color, 1);
+        if (worm.segments.length > 20) this.createExplosion(mid.x, mid.y, '#ffffff', 1);
+      }
     }
     const head = this.player.segments[0];
     this.deathReason = this.player.deathReason;
     this.camera.x += (head.x - this.camera.x) * 0.2;
     this.camera.y += (head.y - this.camera.y) * 0.2;
-    const targetZoom = getCameraZoom(this.player.segments.length, this.viewport);
+    // DEV bonusu kamerayı açar; süre bitince yumuşakça geri döner.
+    const giantView = this.player.giantTicks > 0 ? 0.7 : 1;
+    const targetZoom = getCameraZoom(this.player.segments.length, this.viewport) * giantView;
     this.camera.zoom += (targetZoom - this.camera.zoom) * CONFIG.CAMERA_ZOOM_SMOOTHING;
   }
 
   private burstWorm(worm: Worm) {
     const head = worm.segments[0];
     this.recordEvent({ type: 'death', playerId: worm.id, x: head.x, y: head.y, color: worm.color, value: 0 });
-    this.createExplosion(head.x, head.y, worm.color, worm === this.player ? 65 : 12, 2);
+    this.createExplosion(head.x, head.y, worm.color, worm === this.player ? 65 : 24, 2);
+    this.deathFlash = Math.max(this.deathFlash, worm === this.player ? 1 : 0.4);
+    this.snackRings.push({ x: head.x, y: head.y, radius: worm.radius * 2, color: '#ffffff', life: 1 });
+    if (this.snackRings.length > 20) this.snackRings.shift();
     this.lootTrails.push({ points: worm.segments.filter((_, i) => i % 3 === 0).map(point => ({ ...point })), life: 1, width: worm.radius * 2 });
     if (this.lootTrails.length > 4) this.lootTrails.shift();
-    // Jackpot: sık loot + aralarda hazine + garanti altın.
+    // Jackpot: sık loot + aralarda hazine + garanti altın. İri kurbandan iri şeker (validasyon sınırı 20).
+    const treatScale = Math.min(1.4, 1 + worm.radius / 90);
     for (let i = 0; i < worm.segments.length; i += 2) {
       const treasure = i % 12 === 0;
-      this.addFood(worm.segments[i].x + (Math.random() - 0.5) * 10, worm.segments[i].y + (Math.random() - 0.5) * 10, treasure ? 3 : 1, treasure);
+      this.addFood(worm.segments[i].x + (Math.random() - 0.5) * 10, worm.segments[i].y + (Math.random() - 0.5) * 10, treasure ? 3 : 1, treasure, treatScale);
     }
     this.addBonus(head.x, head.y, 'coin');
     if (worm === this.player) this.shake = 15;
@@ -921,6 +941,7 @@ export class GameEngine {
 
   updateEffects() {
     this.shake *= 0.86;
+    this.deathFlash *= 0.93;
     for (let i = this.snackBites.length - 1; i >= 0; i--) {
       this.snackBites[i].life -= 1 / 13;
       if (this.snackBites[i].life <= 0) this.snackBites.splice(i, 1);

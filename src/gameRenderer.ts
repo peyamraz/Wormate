@@ -300,7 +300,9 @@ export function drawHat(ctx: Context, worm: Worm, radius: number) {
 
 function drawWormBody(ctx: Context, worm: Worm, engine: GameEngine, reducedMotion: boolean, bounds: Bounds) {
   if (worm.isDead || !worm.segments.some(point => inView(point.x, point.y, bounds))) return;
-  const radius = worm.radius * (engine.isDemo ? 1.14 : 1);
+  // DEV bonusu gövdeyi şişirir; bitince söner.
+  const giant = worm.giantTicks > 0 ? 1.6 : 1;
+  const radius = worm.radius * giant * (engine.isDemo ? 1.14 : 1);
   const head = worm.segments[0];
   const step = Math.max(2, Math.round(radius * 0.58 / CONFIG.WORM_SEGMENT_SPACING));
   const player = worm === engine.player;
@@ -310,10 +312,34 @@ function drawWormBody(ctx: Context, worm: Worm, engine: GameEngine, reducedMotio
   ctx.lineWidth = radius * 2;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  ctx.beginPath();
-  ctx.moveTo(worm.segments[0].x, worm.segments[0].y);
-  for (let i = 1; i < worm.segments.length; i++) ctx.lineTo(worm.segments[i].x, worm.segments[i].y);
+  const traceBody = () => {
+    ctx.beginPath();
+    ctx.moveTo(worm.segments[0].x, worm.segments[0].y);
+    for (let i = 1; i < worm.segments.length; i++) ctx.lineTo(worm.segments[i].x, worm.segments[i].y);
+  };
+  traceBody();
   ctx.stroke();
+
+  if (!reducedMotion) {
+    // Yemek parlaması: lokma anında gövdede altın ışık gezer.
+    if (worm.growthPulse > 0.05) {
+      ctx.globalAlpha = Math.min(0.5, worm.growthPulse * 0.5);
+      ctx.strokeStyle = '#ffe9a8';
+      ctx.lineWidth = radius * 2 + 8;
+      traceBody();
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    // Boost/hız altın çerçevesi: rakipteki hale hissi.
+    if (worm.isBoosting || worm.speedTicks > 0) {
+      ctx.globalAlpha = 0.45;
+      ctx.strokeStyle = worm.isBoosting ? '#ffd166' : '#38bdf8';
+      ctx.lineWidth = radius * 2 + 5;
+      traceBody();
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
 
   // Yassı desen diskleri: bombesiz, bayrak/deseni ezmez.
   for (let i = worm.segments.length - 1; i > 0; i -= step) {
@@ -691,6 +717,13 @@ export function drawGame(ctx: Context, engine: GameEngine, dpr: number, reducedM
 
   ctx.restore();
   ctx.drawImage(getVignette(), 0, 0, width, height);
+  // Ölüm flaşı: rakipteki beyaz patlama.
+  if (!reducedMotion && engine.deathFlash > 0.01) {
+    ctx.fillStyle = '#ffffff';
+    ctx.globalAlpha = Math.min(0.55, engine.deathFlash * 0.55);
+    ctx.fillRect(0, 0, width, height);
+    ctx.globalAlpha = 1;
+  }
   drawMinimap(ctx, engine, width, height, reducedMotion);
 }
 

@@ -118,7 +118,8 @@ export class OnlineClient {
   }
   private cameraZoom() {
     const displayScale = Math.max(1, this.view.viewport.width / 1920, this.view.viewport.height / 1080);
-    return getCameraZoom(this.view.player.segments.length, this.viewport()) * displayScale;
+    const giantView = this.view.player.giantTicks > 0 ? 0.7 : 1;
+    return getCameraZoom(this.view.player.segments.length, this.viewport()) * giantView * displayScale;
   }
   sendStyle() {
     if (!this.ready && !this.id) return;
@@ -202,6 +203,7 @@ export class OnlineClient {
       const previousLength = worm.segments.length;
       for (const key of ['angle', 'radius', 'score', 'spawnProtection', 'speedTicks', 'chompTicks', 'multiplier', 'multiplierTicks', 'combo', 'facePhase', 'growthPulse', 'appetite', 'lookOffset'] as const) worm[key] = target[key];
       worm.hat = target.hat; worm.glasses = target.glasses; worm.eyes = target.eyes; worm.mouth = target.mouth;
+      worm.giantTicks = target.giantTicks;
       worm.name = target.name; worm.color = target.color; worm.pattern = target.pattern;
       worm.isDead = target.isDead; worm.isHuman = target.isHuman; worm.isBoosting = target.isBoosting;
       worm.deathReason = target.deathReason;
@@ -228,7 +230,10 @@ export class OnlineClient {
     for (const event of snapshot.events) {
       const own = event.playerId === this.id;
       if (event.type === 'death') {
-        this.view.createExplosion(event.x, event.y, event.color, own ? 60 : 18, 2);
+        this.view.createExplosion(event.x, event.y, event.color, own ? 60 : 24, 2);
+        this.view.deathFlash = Math.max(this.view.deathFlash, own ? 1 : 0.4);
+        this.view.snackRings.push({ x: event.x, y: event.y, radius: 30, color: '#ffffff', life: 1 });
+        if (this.view.snackRings.length > 20) this.view.snackRings.shift();
         if (own) this.view.shake = 15;
       } else if (own) {
         const isKill = event.type === 'kill';

@@ -89,6 +89,16 @@ test('score fattens the worm even at full length', () => {
   assert.ok(worm.radius > GAME_CONFIG.WORM_START_RADIUS * 1.5, `1M skor fil gibi yapmali (r=${worm.radius.toFixed(1)})`);
 });
 
+test('boosting worms shed speed streaks from tail and body', () => {
+  const world = new GameEngine(undefined, false, 'online');
+  const a = world.addHuman(randomUUID(), 'Alice');
+  world.bots = []; world.foods = []; world.bonuses = [];
+  a.grow(20, 0);
+  const before = world.particles.length;
+  for (let i = 0; i < 4; i++) world.stepOnline(new Map([[a.id, { angle: 0, boost: true }]]));
+  assert.ok(world.particles.length > before, 'boost iz birakmali');
+});
+
 test('sustained boost consumes body segments as fuel', () => {
   const worm = new Worm(randomUUID(), 1600, 1600, GAME_CONFIG.COLORS[0]);
   worm.grow(20, 0);
@@ -123,6 +133,36 @@ test('bonus orbs keep their distance instead of piling up', () => {
   }
   assert.ok(min >= 340, `kupler ayrik durmali (min=${min.toFixed(0)})`);
   assert.ok(a.segments.length > 0);
+});
+
+test('giant bonus swells the worm and expires on its own', () => {
+  const world = new GameEngine(undefined, false, 'online');
+  const a = world.addHuman(randomUUID(), 'Alice');
+  world.bots = [];
+  a.applyBonus('giant');
+  assert.ok(a.giantTicks > 0, 'dev suresi baslamali');
+  assert.equal(world.getStatus(a).giantSeconds, 8);
+  for (let i = 0; i < 480; i++) a.update(a.angle, false);
+  assert.equal(a.giantTicks, 0, 'sure bitince sonmeli');
+  assert.equal(world.getStatus(a).giantSeconds, 0);
+});
+
+test('death sets a screen flash and a shockwave ring', () => {
+  const world = new GameEngine(undefined, false, 'online');
+  const a = world.addHuman(randomUUID(), 'Alice');
+  const b = world.addHuman(randomUUID(), 'Bob');
+  world.bots = []; world.foods = []; world.bonuses = [];
+  a.spawnProtection = b.spawnProtection = 0;
+  a.segments = [{ x: 2600, y: 2600 }, { x: 2595, y: 2600 }, { x: 2590, y: 2600 }, { x: 2585, y: 2600 }];
+  b.segments = [{ x: 2570, y: 2600 }, { x: 2570, y: 3500 }, { x: 2565, y: 3500 }];
+  a.angle = Math.PI;
+  const rings = world.snackRings.length;
+  world.stepOnline(new Map([[a.id, { angle: Math.PI, boost: false }], [b.id, { angle: 0, boost: false }]]));
+  assert.ok(b.isDead, 'kurban olmeli');
+  assert.ok(world.deathFlash > 0, 'flas patlamali');
+  assert.ok(world.snackRings.length > rings, 'sok halkasi olmali');
+  world.updateEffects();
+  assert.ok(world.deathFlash < 1, 'flas sonmeli');
 });
 
 test('killer earns score, loot and a kill notice', () => {

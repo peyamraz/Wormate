@@ -54,7 +54,7 @@ export interface Texts {
   boostBtn: string; arenaAria: string;
   frenzyCombo: string; frenzyMult: string; multEnded: string; killNotice: string;
   level: string; levelUp: string;
-  shield: string; bonusSpeed: string; bonusCoin: string;
+  shield: string; bonusSpeed: string; bonusCoin: string; bonusGiant: string;
   patSolid: string; patCandy: string; patFreckles: string; patStripes: string; patDots: string;
   flagWord: string; cTR: string; cAZ: string; cDE: string; cFR: string; cUS: string; cBR: string; cGB: string; cIT: string;
   hatNone: string; hatParty: string; hatBeanie: string; hatCowboy: string; hatHelmet: string; hatWizard: string; hatCrown: string;
@@ -99,7 +99,7 @@ const en: Texts = {
   arenaTls: 'HTTPS pages require a secure wss:// arena server.',
   boostBtn: 'BOOST', arenaAria: 'Wormate arena. Steer with the mouse, arrow keys, WASD, or drag on touch. Hold Space to boost.',
   frenzyCombo: 'SUPER COMBO {n}!', frenzyMult: 'SUPER MULTIPLIER x{n}!', multEnded: 'MULTIPLIER OVER', killNotice: 'KILL!', level: 'Level', levelUp: 'LEVEL UP!',
-  shield: 'SHIELD', bonusSpeed: 'SPEED', bonusCoin: 'GOLD',
+  shield: 'SHIELD', bonusSpeed: 'SPEED', bonusCoin: 'GOLD', bonusGiant: 'GIANT',
   patSolid: 'Solid', patCandy: 'Candy', patFreckles: 'Freckles', patStripes: 'Stripes', patDots: 'Dots',
   flagWord: 'Flag', cTR: 'Turkey', cAZ: 'Azerbaijan', cDE: 'Germany', cFR: 'France', cUS: 'USA', cBR: 'Brazil', cGB: 'UK', cIT: 'Italy',
   hatNone: 'Hatless', hatParty: 'Party Hat', hatBeanie: 'Beanie', hatCowboy: 'Cowboy Hat', hatHelmet: 'Helmet', hatWizard: 'Wizard Hat', hatCrown: 'Crown',
@@ -144,7 +144,7 @@ const tr: Texts = {
   arenaTls: 'HTTPS sayfalar güvenli wss:// arena serverı ister.',
   boostBtn: 'BOOST', arenaAria: 'Wormate arenası. Fare, ok tuşları, WASD veya dokunmatik sürükleme ile yönlendir. Hızlanmak için Space basılı tut.',
   frenzyCombo: 'SÜPER KOMBO {n}!', frenzyMult: 'SÜPER ÇARPAN x{n}!', multEnded: 'ÇARPAN BİTTİ', killNotice: 'AVLADIN!', level: 'Seviye', levelUp: 'SEVİYE ATLADIN!',
-  shield: 'KALKAN', bonusSpeed: 'HIZ', bonusCoin: 'ALTIN',
+  shield: 'KALKAN', bonusSpeed: 'HIZ', bonusCoin: 'ALTIN', bonusGiant: 'DEV',
   patSolid: 'Sade', patCandy: 'Şeker', patFreckles: 'Benekli', patStripes: 'Çizgili', patDots: 'Puantiye',
   flagWord: 'Bayrak', cTR: 'Türkiye', cAZ: 'Azerbaycan', cDE: 'Almanya', cFR: 'Fransa', cUS: 'ABD', cBR: 'Brezilya', cGB: 'İngiltere', cIT: 'İtalya',
   hatNone: 'Şapkasız', hatParty: 'Parti Şapkası', hatBeanie: 'Bere', hatCowboy: 'Kovboy Şapkası', hatHelmet: 'Kask', hatWizard: 'Sihirbaz Şapkası', hatCrown: 'Kral Tacı',
@@ -189,7 +189,7 @@ const es: Texts = {
   arenaTls: 'Las páginas HTTPS requieren un servidor wss:// seguro.',
   boostBtn: 'TURBO', arenaAria: 'Arena Wormate. Dirige con el ratón, flechas, WASD o arrastra en táctil. Mantén Espacio para turbo.',
   frenzyCombo: '¡SUPERCOMBO {n}!', frenzyMult: '¡SUPER MULTIPLICADOR x{n}!', multEnded: 'MULTIPLICADOR TERMINADO', killNotice: '¡CAZADO!', level: 'Nivel', levelUp: '¡SUBISTE DE NIVEL!',
-  shield: 'ESCUDO', bonusSpeed: 'VELOCIDAD', bonusCoin: 'ORO',
+  shield: 'ESCUDO', bonusSpeed: 'VELOCIDAD', bonusCoin: 'ORO', bonusGiant: 'GIGANTE',
   patSolid: 'Sólido', patCandy: 'Caramelo', patFreckles: 'Pecas', patStripes: 'Rayas', patDots: 'Puntos',
   flagWord: 'Bandera', cTR: 'Turquía', cAZ: 'Azerbaiyán', cDE: 'Alemania', cFR: 'Francia', cUS: 'EE. UU.', cBR: 'Brasil', cGB: 'Reino Unido', cIT: 'Italia',
   hatNone: 'Sin sombrero', hatParty: 'Gorro de fiesta', hatBeanie: 'Gorro', hatCowboy: 'Sombrero de vaquero', hatHelmet: 'Casco', hatWizard: 'Sombrero de mago', hatCrown: 'Corona',
@@ -234,7 +234,7 @@ const fr: Texts = {
   arenaTls: 'Les pages HTTPS exigent un serveur wss:// sécurisé.',
   boostBtn: 'TURBO', arenaAria: "Arène Wormate. Dirige à la souris, flèches, ZQSD ou glisser tactile. Maintiens Espace pour le turbo.",
   frenzyCombo: 'SUPER COMBO {n} !', frenzyMult: 'SUPER MULTIPLICATEUR x{n} !', multEnded: 'MULTIPLICATEUR TERMINÉ', killNotice: 'CHASSÉ !', level: 'Niveau', levelUp: 'NIVEAU SUPÉRIEUR !',
-  shield: 'BOUCLIER', bonusSpeed: 'VITESSE', bonusCoin: 'OR',
+  shield: 'BOUCLIER', bonusSpeed: 'VITESSE', bonusCoin: 'OR', bonusGiant: 'GÉANT',
   patSolid: 'Uni', patCandy: 'Bonbon', patFreckles: 'Taches', patStripes: 'Rayures', patDots: 'Pois',
   flagWord: 'Drapeau', cTR: 'Turquie', cAZ: 'Azerbaïdjan', cDE: 'Allemagne', cFR: 'France', cUS: 'USA', cBR: 'Brésil', cGB: 'Royaume-Uni', cIT: 'Italie',
   hatNone: 'Sans chapeau', hatParty: 'Chapeau de fête', hatBeanie: 'Bonnet', hatCowboy: 'Chapeau de cowboy', hatHelmet: 'Casque', hatWizard: 'Chapeau de magicien', hatCrown: 'Couronne',
@@ -279,7 +279,7 @@ const de: Texts = {
   arenaTls: 'HTTPS-Seiten brauchen einen sicheren wss://-Server.',
   boostBtn: 'BOOST', arenaAria: 'Wormate-Arena. Steuern mit Maus, Pfeilen, WASD oder Touch-Drag. Leertaste halten für Boost.',
   frenzyCombo: 'SUPER-KOMBO {n}!', frenzyMult: 'SUPER-MULTI x{n}!', multEnded: 'MULTI VORBEI', killNotice: 'ERLEGT!', level: 'Level', levelUp: 'LEVELAUFSTIEG!',
-  shield: 'SCHILD', bonusSpeed: 'SPEED', bonusCoin: 'GOLD',
+  shield: 'SCHILD', bonusSpeed: 'SPEED', bonusCoin: 'GOLD', bonusGiant: 'RIESE',
   patSolid: 'Einfarbig', patCandy: 'Candy', patFreckles: 'Sommersprossen', patStripes: 'Streifen', patDots: 'Punkte',
   flagWord: 'Flagge', cTR: 'Türkei', cAZ: 'Aserbaidschan', cDE: 'Deutschland', cFR: 'Frankreich', cUS: 'USA', cBR: 'Brasilien', cGB: 'Großbritannien', cIT: 'Italien',
   hatNone: 'Ohne Hut', hatParty: 'Partyhut', hatBeanie: 'Mütze', hatCowboy: 'Cowboyhut', hatHelmet: 'Helm', hatWizard: 'Zauberhut', hatCrown: 'Krone',
@@ -324,7 +324,7 @@ const pt: Texts = {
   arenaTls: 'Páginas HTTPS exigem um servidor wss:// seguro.',
   boostBtn: 'TURBO', arenaAria: 'Arena Wormate. Dirija com mouse, setas, WASD ou arraste no toque. Segure Espaço para turbo.',
   frenzyCombo: 'SUPERCOMBO {n}!', frenzyMult: 'SUPER MULTIPLICADOR x{n}!', multEnded: 'MULTIPLICADOR ACABOU', killNotice: 'CAÇADO!', level: 'Nível', levelUp: 'SUBIU DE NÍVEL!',
-  shield: 'ESCUDO', bonusSpeed: 'VELOCIDADE', bonusCoin: 'OURO',
+  shield: 'ESCUDO', bonusSpeed: 'VELOCIDADE', bonusCoin: 'OURO', bonusGiant: 'GIGANTE',
   patSolid: 'Sólido', patCandy: 'Doce', patFreckles: 'Sardas', patStripes: 'Listras', patDots: 'Bolinhas',
   flagWord: 'Bandeira', cTR: 'Turquia', cAZ: 'Azerbaijão', cDE: 'Alemanha', cFR: 'França', cUS: 'EUA', cBR: 'Brasil', cGB: 'Reino Unido', cIT: 'Itália',
   hatNone: 'Sem chapéu', hatParty: 'Chapéu de festa', hatBeanie: 'Gorro', hatCowboy: 'Chapéu de caubói', hatHelmet: 'Capacete', hatWizard: 'Chapéu de mago', hatCrown: 'Coroa',
@@ -341,5 +341,6 @@ export function bonusLabel(kind: BonusKind): string {
   if (kind === 'speed') return t.bonusSpeed;
   if (kind === 'chomp') return 'CHOMP';
   if (kind === 'coin') return t.bonusCoin;
+  if (kind === 'giant') return t.bonusGiant;
   return kind;
 }
