@@ -88,7 +88,7 @@ exits cleanly, so Railway restarts and deploys do not crash the service.
 - Opening the menu, losing focus, dying, or respawning does not change the ID.
 - Explicit leave deletes the session immediately; `pagehide` sends best-effort leave.
 - Socket close/error deletes the session. A crashed or unreachable client is
-  removed after a missing heartbeat, normally within 20-30 seconds.
+  removed after a missing heartbeat, normally within about 30 seconds.
 - An operating system kill cannot guarantee immediate delivery of a browser
   leave event; the server heartbeat is the cleanup authority.
 - Refreshing or rejoining creates a new identity. There is no reconnect token,

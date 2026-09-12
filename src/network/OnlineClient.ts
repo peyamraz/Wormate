@@ -65,7 +65,7 @@ export class OnlineClient {
         this.send({ type: 'join', v: 1, name, room, ...this.viewport() });
       };
       ws.onerror = () => this.fail(t.srvUnreachable);
-      ws.onclose = () => this.fail(t.connEnded);
+      ws.onclose = (event: CloseEvent) => this.fail(`${t.connEnded} [#${event.code}]`);
       ws.onmessage = event => {
         if (typeof event.data !== 'string') { this.fail(t.srvBadData); return; }
         const message = parseServerMessage(event.data);
