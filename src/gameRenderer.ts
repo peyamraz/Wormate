@@ -32,11 +32,13 @@ function sparkle(ctx: Context, x: number, y: number, size: number) {
   ctx.fill();
 }
 
-function drawFace(ctx: Context, worm: Worm, radius: number, ticks: number, reducedMotion: boolean) {
+export function drawFace(ctx: Context, worm: Worm, radius: number, ticks: number, reducedMotion: boolean) {
   const phase = (ticks + worm.facePhase) % 270;
   const blink = !reducedMotion && phase > 258 ? Math.max(0.09, 1 - Math.sin((phase - 258) / 12 * Math.PI)) : 1;
   const bite = reducedMotion ? 0 : Math.max(worm.growthPulse, worm.appetite * 0.65);
   const head = worm.segments[0];
+  const eyes = worm.eyes || 'normal';
+  const mouth = worm.mouth || 'smile';
   ctx.save();
   ctx.translate(head.x, head.y);
   ctx.rotate(worm.angle);
@@ -45,17 +47,57 @@ function drawFace(ctx: Context, worm: Worm, radius: number, ticks: number, reduc
     ellipse(ctx, radius * 0.32, side * radius * 0.8, radius * 0.18, radius * 0.08, '#ffaebd60');
     ctx.save();
     ctx.translate(-radius * 0.04, side * radius * 0.47);
-    if (blink !== 1) ctx.scale(1, blink);
-    ellipse(ctx, 0, 0.5, radius * 0.415, radius * 0.425, '#082d43');
-    ellipse(ctx, 0, -0.2, radius * 0.365, radius * 0.38, '#d8eff1');
-    ellipse(ctx, -radius * 0.028, -radius * 0.06, radius * 0.34, radius * 0.31, '#fffef3');
-    const px = radius * (0.11 + (worm.isBoosting ? 0.03 : 0));
-    const py = worm.lookOffset * radius * 0.12;
-    ellipse(ctx, px, py, radius * 0.18, radius * 0.21, '#112532');
-    ellipse(ctx, px - radius * 0.055, py - radius * 0.07, radius * 0.067, radius * 0.075, '#ffffff');
-    ellipse(ctx, px + radius * 0.065, py + radius * 0.08, radius * 0.024, radius * 0.03, '#ffffffa0');
+    if (blink !== 1 && eyes !== 'sleepy') ctx.scale(1, blink);
+    if (eyes === 'sleepy') {
+      // Uykulu: yarı kapak + kirpik çizgisi.
+      ellipse(ctx, 0, 0.5, radius * 0.415, radius * 0.425, '#082d43');
+      ellipse(ctx, 0, 0.1, radius * 0.365, radius * 0.2, '#d8eff1');
+      ctx.strokeStyle = '#082d43';
+      ctx.lineWidth = Math.max(1.4, radius * 0.08);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-radius * 0.36, -radius * 0.28);
+      ctx.quadraticCurveTo(0, -radius * 0.42, radius * 0.36, -radius * 0.28);
+      ctx.stroke();
+      ellipse(ctx, 0, 0.16, radius * 0.12, radius * 0.1, '#112532');
+    } else {
+      ellipse(ctx, 0, 0.5, radius * 0.415, radius * 0.425, '#082d43');
+      ellipse(ctx, 0, -0.2, radius * 0.365, radius * 0.38, '#d8eff1');
+      ellipse(ctx, -radius * 0.028, -radius * 0.06, radius * 0.34, radius * 0.31, '#fffef3');
+      const px = radius * (0.11 + (worm.isBoosting ? 0.03 : 0));
+      const py = worm.lookOffset * radius * 0.12;
+      if (eyes === 'star') {
+        // Yıldız bebek: altın yıldız + minik gözbebeği.
+        ctx.fillStyle = '#f5b800';
+        ctx.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const rad = i % 2 === 0 ? radius * 0.24 : radius * 0.1;
+          const a = -Math.PI / 2 + i * Math.PI / 5;
+          const sx = px + Math.cos(a) * rad, sy = py + Math.sin(a) * rad;
+          if (i === 0) ctx.moveTo(sx, sy);
+          else ctx.lineTo(sx, sy);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ellipse(ctx, px, py, radius * 0.07, radius * 0.08, '#112532');
+      } else {
+        ellipse(ctx, px, py, radius * 0.18, radius * 0.21, '#112532');
+      }
+      ellipse(ctx, px - radius * 0.055, py - radius * 0.07, radius * 0.067, radius * 0.075, '#ffffff');
+      ellipse(ctx, px + radius * 0.065, py + radius * 0.08, radius * 0.024, radius * 0.03, '#ffffffa0');
+    }
     ctx.restore();
 
+    if (eyes === 'angry') {
+      // Kızgın kaş: merkeze doğru eğik çizgi.
+      ctx.strokeStyle = '#0a354e';
+      ctx.lineWidth = radius * 0.09;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-radius * 0.42, side * radius * 0.05);
+      ctx.lineTo(radius * 0.12, side * radius * 0.62);
+      ctx.stroke();
+    }
     if (worm.isBoosting) {
       ctx.strokeStyle = '#0a354e';
       ctx.lineWidth = radius * 0.075;
@@ -68,11 +110,34 @@ function drawFace(ctx: Context, worm: Worm, radius: number, ticks: number, reduc
   }
 
   const mouthX = radius * 0.64;
-  const mouthWidth = radius * (0.11 + bite * 0.1);
-  ellipse(ctx, mouthX, 0, mouthWidth + 0.6, radius * 0.255 + 0.6, '#0a3443');
-  ellipse(ctx, mouthX, 0, mouthWidth, radius * 0.255, '#592440');
-  ellipse(ctx, mouthX + mouthWidth * 0.38, radius * 0.035, mouthWidth * 0.5, radius * 0.17, '#ff8f9f');
-  if (bite > 0.25) ellipse(ctx, mouthX - mouthWidth * 0.44, -radius * 0.08, mouthWidth * 0.2, radius * 0.08, '#fff5dc');
+  if (mouth === 'teeth') {
+    // Dişli sırıtış: koyu ağız + beyaz diş bandı.
+    const w = radius * (0.16 + bite * 0.08);
+    ellipse(ctx, mouthX, 0, w + 0.6, radius * 0.3 + 0.6, '#0a3443');
+    ellipse(ctx, mouthX, 0, w, radius * 0.3, '#592440');
+    ctx.fillStyle = '#fff8ec';
+    ctx.fillRect(mouthX - w * 0.7, -radius * 0.2, w * 1.4, radius * 0.22);
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.lineWidth = 1;
+    for (const fx of [-0.35, 0, 0.35]) {
+      ctx.beginPath();
+      ctx.moveTo(mouthX + fx * w, -radius * 0.2);
+      ctx.lineTo(mouthX + fx * w, radius * 0.02);
+      ctx.stroke();
+    }
+  } else if (mouth === 'open' || worm.isBoosting) {
+    // Açık ağız — hız hissi.
+    const w = radius * 0.3;
+    ellipse(ctx, mouthX, 0, w + 0.6, radius * 0.3 + 0.6, '#0a3443');
+    ellipse(ctx, mouthX, 0, w, radius * 0.3, '#592440');
+    ellipse(ctx, mouthX + w * 0.3, radius * 0.05, w * 0.55, radius * 0.18, '#ff8f9f');
+  } else {
+    const mouthWidth = radius * (0.11 + bite * 0.1);
+    ellipse(ctx, mouthX, 0, mouthWidth + 0.6, radius * 0.255 + 0.6, '#0a3443');
+    ellipse(ctx, mouthX, 0, mouthWidth, radius * 0.255, '#592440');
+    ellipse(ctx, mouthX + mouthWidth * 0.38, radius * 0.035, mouthWidth * 0.5, radius * 0.17, '#ff8f9f');
+    if (bite > 0.25) ellipse(ctx, mouthX - mouthWidth * 0.44, -radius * 0.08, mouthWidth * 0.2, radius * 0.08, '#fff5dc');
+  }
   drawGlasses(ctx, worm, radius);
   drawHat(ctx, worm, radius);
   ctx.restore();

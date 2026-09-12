@@ -124,6 +124,8 @@ export class Worm {
   pattern: WormPattern;
   hat = 'none';
   glasses = 'none';
+  eyes = 'normal';
+  mouth = 'smile';
   facePhase: number;
   isBoosting = false;
   score = 0;
@@ -365,7 +367,7 @@ export class GameEngine {
 
   allWorms() { return [...(this.onlineArena ? this.humans.values() : [this.player]), ...this.bots]; }
 
-  addHuman(id: string, name: string, style?: { color: string; pattern: WormPattern; hat: string; glasses: string }): Worm {
+  addHuman(id: string, name: string, style?: { color: string; pattern: WormPattern; hat: string; glasses: string; eyes: string; mouth: string }): Worm {
     if (this.humans.has(id)) throw new Error('Duplicate session');
     const living = this.allWorms().filter(worm => !worm.isDead);
     let point = { x: CONFIG.ARENA_CENTER, y: CONFIG.ARENA_CENTER };
@@ -387,6 +389,8 @@ export class GameEngine {
     worm.isHuman = true;
     worm.hat = style?.hat ?? 'none';
     worm.glasses = style?.glasses ?? 'none';
+    worm.eyes = style?.eyes ?? 'normal';
+    worm.mouth = style?.mouth ?? 'smile';
     worm.spawnProtection = CONFIG.SPAWN_PROTECTION_TICKS;
     this.humans.set(id, worm);
     for (let i = 1; i <= 12; i++) this.addFood(point.x + i * 25, point.y + Math.sin(i * 0.5) * 10);
@@ -404,7 +408,7 @@ export class GameEngine {
     if (!previous?.isDead) return false;
     this.humans.delete(id);
     try {
-      const fresh = this.addHuman(id, previous.name, { color: previous.color, pattern: previous.pattern, hat: previous.hat, glasses: previous.glasses });
+      const fresh = this.addHuman(id, previous.name, { color: previous.color, pattern: previous.pattern, hat: previous.hat, glasses: previous.glasses, eyes: previous.eyes, mouth: previous.mouth });
       fresh.color = previous.color;
       fresh.pattern = previous.pattern;
       this.worldEvents = this.worldEvents.filter(event => event.playerId !== id);

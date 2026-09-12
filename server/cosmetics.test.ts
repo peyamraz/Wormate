@@ -198,6 +198,25 @@ test('tum gozlukler gozbebegiyle ayni noktadadir', async () => {
   }
 });
 
+test('tum goz ve agiz stilleri hatasiz cizilir', async () => {
+  const { drawFace } = await import('../src/gameRenderer');
+  const eyes = ['normal', 'sleepy', 'angry', 'star'];
+  const mouths = ['smile', 'teeth', 'open'];
+  for (const eye of eyes) {
+    for (const mouth of mouths) {
+      const ops: Op[] = [];
+      const worm = {
+        segments: [{ x: 100, y: 100 }],
+        angle: 0.5, lookOffset: 0, isBoosting: false,
+        growthPulse: 0, appetite: 0, facePhase: 0,
+        eyes: eye, mouth, glasses: 'none', hat: 'none',
+      };
+      drawFace(makeCtx(ops) as CanvasRenderingContext2D, worm as any, 14, 0, false);
+      assert.ok(ops.length > 10, `yuz ${eye}/${mouth} cizilmeli`);
+    }
+  }
+});
+
 test('tum bonus kupleri ve sekerler hatasiz uretilir', async () => {
   const { getBonusSprite, getTreatSprite } = await import('../src/gameArt');
   const { BONUSES, TREATS } = await import('../src/constants');

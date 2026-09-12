@@ -124,7 +124,7 @@ export class OnlineClient {
     if (!this.ready && !this.id) return;
     const loadout = readLoadout();
     const skin = skinById(loadout.skin);
-    this.send({ type: 'style', color: skin.color, pattern: skin.pattern, hat: loadout.hat, glasses: loadout.glasses });
+    this.send({ type: 'style', color: skin.color, pattern: skin.pattern, hat: loadout.hat, glasses: loadout.glasses, eyes: loadout.eyes, mouth: loadout.mouth });
   }
   sendInput(angle: number, boost: boolean, force = false) {
     const now = performance.now();
@@ -201,7 +201,7 @@ export class OnlineClient {
       if (created || !worm) worm = new Worm(target.id, target.points[0], target.points[1], target.color, target.angle, target.points.length / 2, target.name, target.pattern);
       const previousLength = worm.segments.length;
       for (const key of ['angle', 'radius', 'score', 'spawnProtection', 'speedTicks', 'chompTicks', 'multiplier', 'multiplierTicks', 'combo', 'facePhase', 'growthPulse', 'appetite', 'lookOffset'] as const) worm[key] = target[key];
-      worm.hat = target.hat; worm.glasses = target.glasses;
+      worm.hat = target.hat; worm.glasses = target.glasses; worm.eyes = target.eyes; worm.mouth = target.mouth;
       worm.name = target.name; worm.color = target.color; worm.pattern = target.pattern;
       worm.isDead = target.isDead; worm.isHuman = target.isHuman; worm.isBoosting = target.isBoosting;
       worm.deathReason = target.deathReason;

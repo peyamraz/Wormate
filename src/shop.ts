@@ -5,6 +5,8 @@ import { t } from './i18n';
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
 export type HatId = 'none' | 'crown' | 'cowboy' | 'party' | 'beanie' | 'helmet' | 'wizard';
 export type GlassesId = 'none' | 'sun' | 'cool' | 'heart' | 'mono' | 'star';
+export type EyeId = 'normal' | 'sleepy' | 'angry' | 'star';
+export type MouthId = 'smile' | 'teeth' | 'open';
 export type SkinCategory = 'basit' | 'cizgili' | 'desenli' | 'bayraklar';
 
 export interface ShopSkin {
@@ -18,8 +20,10 @@ export interface ShopSkin {
 
 export interface ShopHat { id: HatId; price: number; rarity: Rarity; }
 export interface ShopGlasses { id: GlassesId; price: number; rarity: Rarity; }
+export interface ShopEyes { id: EyeId; price: number; rarity: Rarity; }
+export interface ShopMouth { id: MouthId; price: number; rarity: Rarity; }
 
-export interface Loadout { skin: string; hat: HatId; glasses: GlassesId; }
+export interface Loadout { skin: string; hat: HatId; glasses: GlassesId; eyes: EyeId; mouth: MouthId; }
 
 // Bayrak şerit renkleri (üstten alta). Worm.color taban olarak ilk renk kullanılır.
 export const FLAG_STRIPES: Record<FlagSkin, string[]> = {
@@ -69,6 +73,12 @@ const GLASSES_NAMES: Record<GlassesId, string> = {
 
 export function hatName(id: HatId): string { return HAT_NAMES[id]; }
 export function glassesName(id: GlassesId): string { return GLASSES_NAMES[id]; }
+
+const EYE_NAMES: Record<EyeId, string> = { normal: t.eyeNormal, sleepy: t.eyeSleepy, angry: t.eyeAngry, star: t.eyeStar };
+const MOUTH_NAMES: Record<MouthId, string> = { smile: t.mouthSmile, teeth: t.mouthTeeth, open: t.mouthOpen };
+
+export function eyeName(id: EyeId): string { return EYE_NAMES[id]; }
+export function mouthName(id: MouthId): string { return MOUTH_NAMES[id]; }
 
 function rarityFor(price: number): Rarity {
   if (price >= 800) return 'legendary';
@@ -136,6 +146,19 @@ export const SHOP_GLASSES: ShopGlasses[] = [
   { id: 'heart', price: 800, rarity: 'legendary' },
 ];
 
+export const SHOP_EYES: ShopEyes[] = [
+  { id: 'normal', price: 0, rarity: 'common' },
+  { id: 'sleepy', price: 250, rarity: 'rare' },
+  { id: 'angry', price: 400, rarity: 'epic' },
+  { id: 'star', price: 700, rarity: 'legendary' },
+];
+
+export const SHOP_MOUTHS: ShopMouth[] = [
+  { id: 'smile', price: 0, rarity: 'common' },
+  { id: 'teeth', price: 250, rarity: 'rare' },
+  { id: 'open', price: 500, rarity: 'epic' },
+];
+
 // ---------- cüzdan + envanter (localStorage) ----------
 const COINS_KEY = 'wormate_coins';
 const OWNED_KEY = 'wormate_owned';
@@ -175,19 +198,21 @@ function readJson<T>(key: string, fallback: T): T {
   } catch { return fallback; }
 }
 
-export interface Owned { skins: string[]; hats: HatId[]; glasses: GlassesId[]; }
+export interface Owned { skins: string[]; hats: HatId[]; glasses: GlassesId[]; eyes: EyeId[]; mouths: MouthId[]; }
 
 export function readOwned(): Owned {
-  const v = readJson<Owned>(OWNED_KEY, { skins: ['solid-0'], hats: ['none'], glasses: ['none'] });
+  const v = readJson<Owned>(OWNED_KEY, { skins: ['solid-0'], hats: ['none'], glasses: ['none'], eyes: ['normal'], mouths: ['smile'] });
   return {
     skins: Array.isArray(v.skins) ? v.skins.filter(s => typeof s === 'string').slice(0, 200) : ['solid-0'],
     hats: Array.isArray(v.hats) ? v.hats.filter(h => typeof h === 'string').slice(0, 20) as HatId[] : ['none'],
     glasses: Array.isArray(v.glasses) ? v.glasses.filter(g => typeof g === 'string').slice(0, 20) as GlassesId[] : ['none'],
+    eyes: Array.isArray(v.eyes) ? v.eyes.filter(e => typeof e === 'string').slice(0, 20) as EyeId[] : ['normal'],
+    mouths: Array.isArray(v.mouths) ? v.mouths.filter(m => typeof m === 'string').slice(0, 20) as MouthId[] : ['smile'],
   };
 }
 
 export function readLoadout(): Loadout {
-  return readJson<Loadout>(LOADOUT_KEY, { skin: 'solid-0', hat: 'none', glasses: 'none' });
+  return readJson<Loadout>(LOADOUT_KEY, { skin: 'solid-0', hat: 'none', glasses: 'none', eyes: 'normal', mouth: 'smile' });
 }
 
 function writeJson(key: string, value: unknown) {
@@ -227,12 +252,36 @@ export function buyGlasses(id: GlassesId): { coins: number; owned: Owned; ok: bo
   return { ...next, ok: true };
 }
 
+export function buyEyes(id: EyeId): { coins: number; owned: Owned; ok: boolean } {
+  const item = SHOP_EYES.find(e => e.id === id);
+  const coins = readCoins();
+  const owned = readOwned();
+  if (!item || owned.eyes.includes(id) || coins < item.price) return { coins, owned, ok: false };
+  const next = { coins: coins - item.price, owned: { ...owned, eyes: [...owned.eyes, id] } };
+  try { localStorage.setItem(COINS_KEY, String(next.coins)); } catch { /* yoksay */ }
+  writeJson(OWNED_KEY, next.owned);
+  return { ...next, ok: true };
+}
+
+export function buyMouth(id: MouthId): { coins: number; owned: Owned; ok: boolean } {
+  const item = SHOP_MOUTHS.find(m => m.id === id);
+  const coins = readCoins();
+  const owned = readOwned();
+  if (!item || owned.mouths.includes(id) || coins < item.price) return { coins, owned, ok: false };
+  const next = { coins: coins - item.price, owned: { ...owned, mouths: [...owned.mouths, id] } };
+  try { localStorage.setItem(COINS_KEY, String(next.coins)); } catch { /* yoksay */ }
+  writeJson(OWNED_KEY, next.owned);
+  return { ...next, ok: true };
+}
+
 export function equip(part: keyof Loadout, id: string): Loadout {
   const owned = readOwned();
   const cur = readLoadout();
   if (part === 'skin' && !owned.skins.includes(id)) return cur;
   if (part === 'hat' && !(owned.hats as string[]).includes(id)) return cur;
   if (part === 'glasses' && !(owned.glasses as string[]).includes(id)) return cur;
+  if (part === 'eyes' && !(owned.eyes as string[]).includes(id)) return cur;
+  if (part === 'mouth' && !(owned.mouths as string[]).includes(id)) return cur;
   const next = { ...cur, [part]: id };
   writeJson(LOADOUT_KEY, next);
   return next;

@@ -1,6 +1,6 @@
 import type { BonusKind } from '../constants';
 import { GAME_CONFIG as CONFIG, WORM_PATTERNS } from '../constants';
-import { SHOP_GLASSES, SHOP_HATS } from '../shop';
+import { SHOP_EYES, SHOP_GLASSES, SHOP_HATS, SHOP_MOUTHS } from '../shop';
 import type { BonusOrb, Food, PlayerStatus, Point, Worm } from '../gameEngine';
 
 export const NETWORK = {
@@ -21,7 +21,7 @@ export type ClientMessage =
   | { type: 'join'; v: 1; name: string; room: string; width: number; height: number }
   | { type: 'input'; seq: number; angle: number; boost: boolean }
   | { type: 'viewport'; width: number; height: number }
-  | { type: 'style'; color: string; pattern: string; hat: string; glasses: string }
+  | { type: 'style'; color: string; pattern: string; hat: string; glasses: string; eyes: string; mouth: string }
   | { type: 'restart' }
   | { type: 'leave' }
   | { type: 'ping'; at: number };
@@ -39,7 +39,7 @@ export type WireWorm = Pick<Worm,
   'id' | 'name' | 'color' | 'pattern' | 'angle' | 'radius' | 'score' | 'isDead' |
   'isHuman' | 'spawnProtection' | 'isBoosting' | 'speedTicks' | 'chompTicks' |
   'multiplier' | 'multiplierTicks' | 'combo' | 'facePhase' | 'growthPulse' | 'appetite' | 'lookOffset' |
-  'hat' | 'glasses'
+  'hat' | 'glasses' | 'eyes' | 'mouth'
 > & { points: number[]; deathReason: string };
 
 export interface ArenaSnapshot {
@@ -97,11 +97,13 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       if (exactKeys(value, ['type', 'width', 'height']) && viewport()) return value as ClientMessage;
       break;
     case 'style':
-      if (exactKeys(value, ['type', 'color', 'pattern', 'hat', 'glasses'])
+      if (exactKeys(value, ['type', 'color', 'pattern', 'hat', 'glasses', 'eyes', 'mouth'])
         && typeof value.color === 'string' && (CONFIG.COLORS as string[]).includes(value.color)
         && typeof value.pattern === 'string' && (WORM_PATTERNS as string[]).includes(value.pattern)
         && typeof value.hat === 'string' && SHOP_HATS.some(h => h.id === value.hat)
-        && typeof value.glasses === 'string' && SHOP_GLASSES.some(g => g.id === value.glasses)) return value as ClientMessage;
+        && typeof value.glasses === 'string' && SHOP_GLASSES.some(g => g.id === value.glasses)
+        && typeof value.eyes === 'string' && SHOP_EYES.some(e => e.id === value.eyes)
+        && typeof value.mouth === 'string' && SHOP_MOUTHS.some(m => m.id === value.mouth)) return value as ClientMessage;
       break;
     case 'restart':
     case 'leave':

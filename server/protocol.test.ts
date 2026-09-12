@@ -32,17 +32,18 @@ test('guest names, room codes, protocol version and viewport are constrained', (
 });
 
 test('style cosmetics are validated: known skin, hat and glasses only', () => {
-  const style = { type: 'style', color: GAME_CONFIG.COLORS[0], pattern: 'flag-tr', hat: 'crown', glasses: 'sun' };
+  const style = { type: 'style', color: GAME_CONFIG.COLORS[0], pattern: 'flag-tr', hat: 'crown', glasses: 'sun', eyes: 'angry', mouth: 'teeth' };
   assert.deepEqual(parseClientMessage(JSON.stringify(style)), style);
   for (const bad of [
     { ...style, color: '#ff0000' }, { ...style, pattern: 'flag-xx' }, { ...style, hat: 'tophat' },
-    { ...style, glasses: 'laser' }, { ...style, score: 100 }, { ...style, id: randomUUID() },
+    { ...style, glasses: 'laser' }, { ...style, eyes: 'cyclops' }, { ...style, mouth: 'beak' },
+    { ...style, score: 100 }, { ...style, id: randomUUID() },
   ]) assert.equal(parseClientMessage(JSON.stringify(bad)), null);
 });
 
 test('worm snapshots carry hat and glasses and survive validation', () => {
   const world = new GameEngine(undefined, false, 'online');
-  const worm = world.addHuman(randomUUID(), 'Guest', { color: GAME_CONFIG.COLORS[1], pattern: 'stripes', hat: 'crown', glasses: 'sun' });
+  const worm = world.addHuman(randomUUID(), 'Guest', { color: GAME_CONFIG.COLORS[1], pattern: 'stripes', hat: 'crown', glasses: 'sun', eyes: 'angry', mouth: 'teeth' });
   const message = {
     type: 'state', v: 1, tick: 1, run: 1, you: worm.id,
     worms: [serializeWorm(worm)], foods: [], bonuses: [], status: world.getStatus(worm), events: [],
@@ -52,6 +53,8 @@ test('worm snapshots carry hat and glasses and survive validation', () => {
   if (parsed.type === 'state') {
     assert.equal(parsed.worms[0].hat, 'crown');
     assert.equal(parsed.worms[0].glasses, 'sun');
+    assert.equal(parsed.worms[0].eyes, 'angry');
+    assert.equal(parsed.worms[0].mouth, 'teeth');
   }
 });
 

@@ -119,6 +119,8 @@ Kaynak: wormate.io orijinali (Deriler/Giyim/Madeni paralar, ölüm patlaması, m
 profil/seviye, yem çeşitliliği, korsan şapka+göz bandı takan solucanlar).
 - Faz 1 (TAMAM — 2026-09-12): ölüm jackpot'u — 2 segmentte 1 loot + hazine, katile +150
   skor + AVLADIN bildirimi + sesi, %100 altın düşer. Minimap artı çizgisi. Test: 41/41 (`tsc` temiz, build OK).
+- Faz 2 (TAMAM — 2026-09-12): Giyim — 4 göz + 3 ağız stili, altınla, online senkronlu
+  (style mesajı + snapshot + validasyon). Test: 42/42 (`tsc` temiz, build OK).
 - Faz 2: Giyim sekmesi — göz stilleri + ağız stilleri (sadece drawFace, altınla, protokol yok).
 - Faz 3: Seviye/XP — toplam skordan seviye, menüde rozet + bar.
 - Faz 4: Yem çeşitliliği — karpuz/zencefilli/böğürtlen gibi yeni TREATS.

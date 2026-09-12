@@ -1,5 +1,5 @@
 import { BONUSES, GAME_CONFIG as CONFIG, TREATS, WORM_PATTERNS } from '../constants';
-import { SHOP_GLASSES, SHOP_HATS } from '../shop';
+import { SHOP_EYES, SHOP_GLASSES, SHOP_HATS, SHOP_MOUTHS } from '../shop';
 import { isRecord, NETWORK, validName, validRoom } from './protocol';
 import type { ServerMessage } from './protocol';
 
@@ -42,6 +42,8 @@ export function parseServerMessage(raw: string): ServerMessage | null {
     if (!number(worm.growthPulse, 0, 1) || !number(worm.appetite, 0, 1) || !number(worm.lookOffset, -1, 1)) return null;
     if (typeof worm.hat !== 'string' || !SHOP_HATS.some(h => h.id === worm.hat)) return null;
     if (typeof worm.glasses !== 'string' || !SHOP_GLASSES.some(g => g.id === worm.glasses)) return null;
+    if (typeof worm.eyes !== 'string' || !SHOP_EYES.some(e => e.id === worm.eyes)) return null;
+    if (typeof worm.mouth !== 'string' || !SHOP_MOUTHS.some(m => m.id === worm.mouth)) return null;
     if (!Array.isArray(worm.points) || worm.points.length < 2 || worm.points.length > CONFIG.WORM_MAX_LENGTH * 2 || worm.points.length % 2) return null;
     for (let i = 0; i < worm.points.length; i += 2) {
       if (!number(worm.points[i]) || !number(worm.points[i + 1])) return null;

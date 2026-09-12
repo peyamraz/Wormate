@@ -69,6 +69,8 @@ export function GameCanvas({ state, muted, onGameOver, onScoreUpdate, onStatusUp
       engine.player.pattern = skin.pattern;
       engine.player.hat = loadout.hat;
       engine.player.glasses = loadout.glasses;
+      engine.player.eyes = loadout.eyes;
+      engine.player.mouth = loadout.mouth;
     }
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     let dpr = 1;

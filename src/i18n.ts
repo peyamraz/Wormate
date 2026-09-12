@@ -42,6 +42,9 @@ export interface Texts {
   shop: string; account: string; skinTab: string; hatTab: string; glassesTab: string;
   equipped: string; equip: string; goldNote: string;
   catAll: string; catBasit: string; catCizgili: string; catDesenli: string; catBayraklar: string;
+  giyimTab: string;
+  eyeNormal: string; eyeSleepy: string; eyeAngry: string; eyeStar: string;
+  mouthSmile: string; mouthTeeth: string; mouthOpen: string;
   guest: string; guestWithName: string; guestPlain: string; sessionNote: string; active: string;
   googleSoon: string; googleDesc: string; googleNote: string;
   noticeName: string; noticeRoom: string; waitingRespawn: string; respawnRetry: string; copyManual: string;
@@ -74,6 +77,9 @@ const en: Texts = {
   shop: 'Shop', account: 'Log In', skinTab: 'Skin', hatTab: 'Hat', glassesTab: 'Glasses',
   equipped: 'Equipped', equip: 'Equip', goldNote: 'Score/50 plus arena gold. Gold is rare — earn it.',
   catAll: 'All', catBasit: 'Solid', catCizgili: 'Striped', catDesenli: 'Patterned', catBayraklar: 'Flags',
+  giyimTab: 'Outfit',
+  eyeNormal: 'Normal', eyeSleepy: 'Sleepy', eyeAngry: 'Angry', eyeStar: 'Starry',
+  mouthSmile: 'Smile', mouthTeeth: 'Teeth', mouthOpen: 'Open mouth',
   guest: 'Guest', guestWithName: 'Play instantly as "{n}"', guestPlain: 'Type a name, play instantly',
   sessionNote: 'scores stay in this session', active: 'Active',
   googleSoon: 'Soon', googleDesc: 'Cloud scores and badges', googleNote: 'When Google login arrives, your scores and shop will live in the cloud.',
@@ -116,6 +122,9 @@ const tr: Texts = {
   shop: 'Mağaza', account: 'Oturum Aç', skinTab: 'Deri', hatTab: 'Şapka', glassesTab: 'Gözlük',
   equipped: 'Kuşanıldı', equip: 'Kuşan', goldNote: 'Skor/50 + arena altınları. Altın nadirdir, biriktir.',
   catAll: 'Tümü', catBasit: 'Basit', catCizgili: 'Çizgili', catDesenli: 'Desenli', catBayraklar: 'Bayraklar',
+  giyimTab: 'Giyim',
+  eyeNormal: 'Normal', eyeSleepy: 'Uykulu', eyeAngry: 'Kızgın', eyeStar: 'Yıldızlı',
+  mouthSmile: 'Gülümseme', mouthTeeth: 'Dişli', mouthOpen: 'Açık ağız',
   guest: 'Misafir', guestWithName: '"{n}" olarak hemen oyna', guestPlain: 'İsim yaz, hemen oyna',
   sessionNote: 'skorlar bu oturumda saklanır', active: 'Aktif',
   googleSoon: 'Yakında', googleDesc: 'Bulut skorlar ve rozetler', googleNote: 'Google girişi geldiğinde skorların ve mağazan bulutta saklanacak.',
@@ -158,6 +167,9 @@ const es: Texts = {
   shop: 'Tienda', account: 'Iniciar sesión', skinTab: 'Piel', hatTab: 'Sombrero', glassesTab: 'Gafas',
   equipped: 'Equipado', equip: 'Equipar', goldNote: 'Puntos/50 más el oro de la arena. El oro es raro.',
   catAll: 'Todo', catBasit: 'Sólido', catCizgili: 'Rayado', catDesenli: 'Estampado', catBayraklar: 'Banderas',
+  giyimTab: 'Vestuario',
+  eyeNormal: 'Normal', eyeSleepy: 'Somnoliento', eyeAngry: 'Enojado', eyeStar: 'Estrellado',
+  mouthSmile: 'Sonrisa', mouthTeeth: 'Dientes', mouthOpen: 'Boca abierta',
   guest: 'Invitado', guestWithName: 'Juega al instante como "{n}"', guestPlain: 'Escribe un nombre, juega al instante',
   sessionNote: 'los puntos se quedan en esta sesión', active: 'Activo',
   googleSoon: 'Pronto', googleDesc: 'Puntos e insignias en la nube', googleNote: 'Cuando llegue Google, tus puntos y tienda vivirán en la nube.',
@@ -200,6 +212,9 @@ const fr: Texts = {
   shop: 'Boutique', account: 'Connexion', skinTab: 'Peau', hatTab: 'Chapeau', glassesTab: 'Lunettes',
   equipped: 'Équipé', equip: 'Équiper', goldNote: "Score/50 plus l'or de l'arène. L'or est rare.",
   catAll: 'Tout', catBasit: 'Uni', catCizgili: 'Rayé', catDesenli: 'À motifs', catBayraklar: 'Drapeaux',
+  giyimTab: 'Tenue',
+  eyeNormal: 'Normal', eyeSleepy: 'Endormi', eyeAngry: 'Fâché', eyeStar: 'Étoilé',
+  mouthSmile: 'Sourire', mouthTeeth: 'Dents', mouthOpen: 'Bouche ouverte',
   guest: 'Invité', guestWithName: 'Joue aussitôt en tant que « {n} »', guestPlain: 'Écris un nom, joue aussitôt',
   sessionNote: 'les scores restent dans cette session', active: 'Actif',
   googleSoon: 'Bientôt', googleDesc: 'Scores et badges dans le cloud', googleNote: "Avec Google, tes scores et ta boutique vivront dans le cloud.",
@@ -242,6 +257,9 @@ const de: Texts = {
   shop: 'Shop', account: 'Anmelden', skinTab: 'Haut', hatTab: 'Hut', glassesTab: 'Brille',
   equipped: 'Ausgerüstet', equip: 'Ausrüsten', goldNote: 'Punkte/50 plus Arena-Gold. Gold ist selten.',
   catAll: 'Alle', catBasit: 'Einfarbig', catCizgili: 'Gestreift', catDesenli: 'Gemustert', catBayraklar: 'Flaggen',
+  giyimTab: 'Outfit',
+  eyeNormal: 'Normal', eyeSleepy: 'Schläfrig', eyeAngry: 'Wütend', eyeStar: 'Sternen-',
+  mouthSmile: 'Lächeln', mouthTeeth: 'Zähne', mouthOpen: 'Offener Mund',
   guest: 'Gast', guestWithName: 'Spiele sofort als „{n}“', guestPlain: 'Namen tippen, sofort spielen',
   sessionNote: 'Punkte bleiben in dieser Sitzung', active: 'Aktiv',
   googleSoon: 'Bald', googleDesc: 'Cloud-Punkte und Abzeichen', googleNote: 'Mit Google leben deine Punkte und dein Shop in der Cloud.',
@@ -284,6 +302,9 @@ const pt: Texts = {
   shop: 'Loja', account: 'Entrar', skinTab: 'Pele', hatTab: 'Chapéu', glassesTab: 'Óculos',
   equipped: 'Equipado', equip: 'Equipar', goldNote: 'Pontos/50 mais o ouro da arena. Ouro é raro.',
   catAll: 'Tudo', catBasit: 'Sólido', catCizgili: 'Listrado', catDesenli: 'Estampado', catBayraklar: 'Bandeiras',
+  giyimTab: 'Visual',
+  eyeNormal: 'Normal', eyeSleepy: 'Sonolento', eyeAngry: 'Zangado', eyeStar: 'Estrelado',
+  mouthSmile: 'Sorriso', mouthTeeth: 'Dentes', mouthOpen: 'Boca aberta',
   guest: 'Convidado', guestWithName: 'Jogue na hora como "{n}"', guestPlain: 'Digite um nome, jogue na hora',
   sessionNote: 'pontos ficam nesta sessão', active: 'Ativo',
   googleSoon: 'Em breve', googleDesc: 'Pontos e emblemas na nuvem', googleNote: 'Com o Google, seus pontos e loja viverão na nuvem.',

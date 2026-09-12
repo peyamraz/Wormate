@@ -12,12 +12,12 @@ import type { GuestSession } from './session';
 import { SkinPreview } from './SkinPreview';
 import { t } from './i18n';
 import {
-  SHOP_GLASSES, SHOP_HATS, SHOP_SKINS,
-  buyGlasses, buyHat, buySkin, earnCoins, equip, readCoins, readLoadout, readOwned,
-  skinName, hatName, glassesName,
+  SHOP_EYES, SHOP_GLASSES, SHOP_HATS, SHOP_MOUTHS, SHOP_SKINS,
+  buyEyes, buyGlasses, buyHat, buyMouth, buySkin, earnCoins, equip, readCoins, readLoadout, readOwned,
+  skinName, hatName, glassesName, eyeName, mouthName,
 } from './shop';
-import type { GlassesId, HatId, Loadout, Owned, SkinCategory } from './shop';
-import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut, ChevronDown, ChevronUp, Bot, Coins, ShoppingBag, User, LogIn, Palette, Glasses, X } from 'lucide-react';
+import type { EyeId, GlassesId, HatId, Loadout, MouthId, Owned, SkinCategory } from './shop';
+import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut, ChevronDown, ChevronUp, Bot, Coins, ShoppingBag, User, LogIn, Palette, Glasses, X, Smile } from 'lucide-react';
 
 const EMPTY_STATUS: PlayerStatus = {
   score: 0,
@@ -76,7 +76,7 @@ export default function App() {
   const [coins, setCoins] = useState(readCoins);
   const [owned, setOwned] = useState<Owned>(readOwned);
   const [loadout, setLoadout] = useState<Loadout>(readLoadout);
-  const [shopTab, setShopTab] = useState<'skin' | 'hat' | 'glasses'>('skin');
+  const [shopTab, setShopTab] = useState<'skin' | 'hat' | 'glasses' | 'giyim'>('skin');
   const [shopOpen, setShopOpen] = useState(false);
   const [shopCat, setShopCat] = useState<'all' | SkinCategory>('all');
   const visibleSkins = shopCat === 'all' ? SHOP_SKINS : SHOP_SKINS.filter(s => s.category === shopCat);
@@ -410,6 +410,7 @@ export default function App() {
                       { id: 'skin', title: t.skinTab, count: `${owned.skins.length}/${SHOP_SKINS.length}`, on: 'border-cyan-500/60 bg-cyan-500/20 text-cyan-300' },
                       { id: 'hat', title: t.hatTab, count: `${owned.hats.length}/${SHOP_HATS.length}`, on: 'border-amber-500/60 bg-amber-500/20 text-amber-300' },
                       { id: 'glasses', title: t.glassesTab, count: `${owned.glasses.length}/${SHOP_GLASSES.length}`, on: 'border-violet-500/60 bg-violet-500/20 text-violet-300' },
+                      { id: 'giyim', title: t.giyimTab, count: `${owned.eyes.length + owned.mouths.length}/${SHOP_EYES.length + SHOP_MOUTHS.length}`, on: 'border-pink-500/60 bg-pink-500/20 text-pink-300' },
                     ] as const).map(p => (
                       <button
                         key={p.id}
@@ -440,7 +441,7 @@ export default function App() {
                             {c.title}
                           </button>
                         ))}
-                      </div>
+                    </div>
                     )}
                     <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4">
                       {shopTab === 'skin' && visibleSkins.map(item => {
@@ -510,6 +511,60 @@ export default function App() {
                           </button>
                         );
                       })}
+                      {shopTab === 'giyim' && (
+                        <>
+                          <div className="col-span-3 mb-1 mt-1 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400 sm:col-span-4">
+                            <Smile size={12} className="text-pink-300" /> {t.giyimTab} · 👁️
+                          </div>
+                          {SHOP_EYES.map(item => {
+                            const has = (owned.eyes as string[]).includes(item.id);
+                            const worn = loadout.eyes === item.id;
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => {
+                                  if (has) { setLoadout(equip('eyes', item.id)); return; }
+                                  const r = buyEyes(item.id as EyeId);
+                                  setCoins(r.coins); setOwned(r.owned);
+                                  if (r.ok) setLoadout(equip('eyes', item.id));
+                                }}
+                                className={`rounded-xl border p-2 text-left transition-all ${worn ? 'border-pink-400 bg-pink-500/15' : 'border-slate-800 bg-slate-950 hover:border-slate-600'}`}
+                              >
+                                <span className="block truncate text-center text-[10px] font-bold text-slate-200">{eyeName(item.id)}</span>
+                                <span className={`block text-center text-[10px] font-black ${worn ? 'text-pink-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
+                                  {worn ? t.equipped : has ? t.equip : `🪙 ${item.price}`}
+                                </span>
+                              </button>
+                            );
+                          })}
+                          <div className="col-span-3 mb-1 mt-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400 sm:col-span-4">
+                            <Smile size={12} className="text-pink-300" /> {t.giyimTab} · 👄
+                          </div>
+                          {SHOP_MOUTHS.map(item => {
+                            const has = (owned.mouths as string[]).includes(item.id);
+                            const worn = loadout.mouth === item.id;
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => {
+                                  if (has) { setLoadout(equip('mouth', item.id)); return; }
+                                  const r = buyMouth(item.id as MouthId);
+                                  setCoins(r.coins); setOwned(r.owned);
+                                  if (r.ok) setLoadout(equip('mouth', item.id));
+                                }}
+                                className={`rounded-xl border p-2 text-left transition-all ${worn ? 'border-pink-400 bg-pink-500/15' : 'border-slate-800 bg-slate-950 hover:border-slate-600'}`}
+                              >
+                                <span className="block truncate text-center text-[10px] font-bold text-slate-200">{mouthName(item.id)}</span>
+                                <span className={`block text-center text-[10px] font-black ${worn ? 'text-pink-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
+                                  {worn ? t.equipped : has ? t.equip : `🪙 ${item.price}`}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </>
+                      )}
                     </div>
                     <p className="mt-2 text-center text-[10px] text-slate-500 font-medium">{t.goldNote}</p>
                   </div>
