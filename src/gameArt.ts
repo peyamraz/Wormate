@@ -1,6 +1,6 @@
 import { BONUSES, GAME_CONFIG as CONFIG, TREATS } from './constants';
 import type { BonusKind, TreatKind, WormPattern } from './constants';
-import { FLAG_STRIPES, SHOP_SKINS } from './shop';
+import { SHOP_SKINS } from './shop';
 import { bonusLabel } from './i18n';
 
 type Context = CanvasRenderingContext2D;
@@ -437,17 +437,119 @@ export function getWormSegment(color: string, pattern: WormPattern = 'solid', pa
       }
     }
     if (pattern.startsWith('flag-')) {
-      const stripes = FLAG_STRIPES[pattern as keyof typeof FLAG_STRIPES] ?? [base, base, base];
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(0, 0, 23, 0, TAU);
-      ctx.clip();
-      for (let i = 0; i < 3; i++) {
-        ctx.fillStyle = stripes[i % stripes.length];
-        ctx.fillRect(-24, -24 + i * 16, 48, 16);
-      }
-      ctx.restore();
+      paintFlag(ctx, pattern);
     }
+function clipDisc(ctx: Context) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(0, 0, 23, 0, TAU);
+  ctx.clip();
+}
+
+function hBands(ctx: Context, colors: string[]) {
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fillRect(-24, -24 + i * 16, 48, 16);
+  }
+}
+
+function vBands(ctx: Context, colors: string[]) {
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fillRect(-24 + i * 16, -24, 16, 48);
+  }
+}
+
+function starPath(ctx: Context, x: number, y: number, R: number, r: number) {
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const rad = i % 2 === 0 ? R : r;
+    const a = -Math.PI / 2 + i * Math.PI / 5;
+    const px = x + Math.cos(a) * rad, py = y + Math.sin(a) * rad;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+}
+
+function paintFlag(ctx: Context, pattern: string) {
+  clipDisc(ctx);
+  if (pattern === 'flag-tr') {
+    ctx.fillStyle = '#e30a17';
+    ctx.fillRect(-24, -24, 48, 48);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(-4, 0, 10, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#e30a17';
+    ctx.beginPath(); ctx.arc(-1.5, 0, 8, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    starPath(ctx, 8, 0, 5, 2);
+    ctx.fill();
+  } else if (pattern === 'flag-az') {
+    hBands(ctx, ['#00b5e2', '#ef3340', '#00a651']);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(-1, 0, 6.5, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#ef3340';
+    ctx.beginPath(); ctx.arc(0.5, 0, 5.2, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    starPath(ctx, 6.5, 0, 3.4, 1.4);
+    ctx.fill();
+  } else if (pattern === 'flag-de') {
+    hBands(ctx, ['#111111', '#dd0000', '#ffce00']);
+  } else if (pattern === 'flag-fr') {
+    vBands(ctx, ['#0055a4', '#ffffff', '#ef4135']);
+  } else if (pattern === 'flag-us') {
+    for (let i = 0; i < 7; i++) {
+      ctx.fillStyle = i % 2 === 0 ? '#b31942' : '#ffffff';
+      ctx.fillRect(-24, -24 + i * (48 / 7), 48, 48 / 7 + 1);
+    }
+    ctx.fillStyle = '#0a3161';
+    ctx.fillRect(-24, -24, 22, 26);
+    ctx.fillStyle = '#ffffff';
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 3; col++) {
+        ctx.beginPath();
+        ctx.arc(-19 + col * 7, -18 + row * 8, 1.6, 0, TAU);
+        ctx.fill();
+      }
+    }
+  } else if (pattern === 'flag-br') {
+    ctx.fillStyle = '#009b3a';
+    ctx.fillRect(-24, -24, 48, 48);
+    ctx.fillStyle = '#ffdf00';
+    ctx.beginPath();
+    ctx.moveTo(0, -19); ctx.lineTo(19, 0); ctx.lineTo(0, 19); ctx.lineTo(-19, 0);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#002776';
+    ctx.beginPath(); ctx.arc(0, 0, 7.5, 0, TAU); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(0, 0, 7.5, 0.4, 2.4); ctx.stroke();
+  } else if (pattern === 'flag-gb') {
+    ctx.fillStyle = '#012169';
+    ctx.fillRect(-24, -24, 48, 48);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 7;
+    ctx.beginPath();
+    ctx.moveTo(-24, -24); ctx.lineTo(24, 24);
+    ctx.moveTo(24, -24); ctx.lineTo(-24, 24);
+    ctx.stroke();
+    ctx.strokeStyle = '#c8102e';
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.moveTo(-24, -24); ctx.lineTo(24, 24);
+    ctx.moveTo(24, -24); ctx.lineTo(-24, 24);
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-24, -7, 48, 14);
+    ctx.fillRect(-7, -24, 14, 48);
+    ctx.fillStyle = '#c8102e';
+    ctx.fillRect(-24, -4, 48, 8);
+    ctx.fillRect(-4, -24, 8, 48);
+  } else if (pattern === 'flag-it') {
+    vBands(ctx, ['#009246', '#ffffff', '#ce2b37']);
+  }
+  ctx.restore();
+}
     ctx.strokeStyle = '#ffffff30';
     ctx.lineWidth = 3.2;
     ctx.beginPath();

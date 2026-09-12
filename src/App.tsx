@@ -9,6 +9,7 @@ import type { ConnectionInfo } from './network/OnlineClient';
 import { validName, validRoom } from './network/protocol';
 import { clearSession, createPracticeSession, getSession, setOnlineSession } from './session';
 import type { GuestSession } from './session';
+import { SkinPreview } from './SkinPreview';
 import { t } from './i18n';
 import {
   SHOP_GLASSES, SHOP_HATS, SHOP_SKINS,
@@ -16,7 +17,7 @@ import {
   skinName, hatName, glassesName,
 } from './shop';
 import type { GlassesId, HatId, Loadout, Owned } from './shop';
-import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut, ChevronDown, ChevronUp, ChevronLeft, Bot, Coins, ShoppingBag, User, LogIn, Palette, Glasses } from 'lucide-react';
+import { Trophy, Play, Pause, RotateCcw, Volume2, VolumeX, Zap, Magnet, Crown, Globe, ShieldCheck, Copy, Check, LoaderCircle, LogOut, ChevronDown, ChevronUp, Bot, Coins, ShoppingBag, User, LogIn, Palette, Glasses, X } from 'lucide-react';
 
 const EMPTY_STATUS: PlayerStatus = {
   score: 0,
@@ -76,7 +77,7 @@ export default function App() {
   const [owned, setOwned] = useState<Owned>(readOwned);
   const [loadout, setLoadout] = useState<Loadout>(readLoadout);
   const [shopTab, setShopTab] = useState<'skin' | 'hat' | 'glasses'>('skin');
-  const [shopPage, setShopPage] = useState<'skin' | 'hat' | 'glasses' | null>(null);
+  const [shopOpen, setShopOpen] = useState(false);
   const [menuTab, setMenuTab] = useState<'shop' | 'account'>('shop');
   const clientRef = useRef<OnlineClient | null>(null);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -294,7 +295,7 @@ export default function App() {
               <div className="flex items-center gap-1.5 border-b border-slate-800/80 bg-slate-900/60 p-2">
                 <button
                   type="button"
-                  onClick={() => { setMenuTab('shop'); setShopPage(null); }}
+                  onClick={() => setMenuTab('shop')}
                   className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl border py-2 text-xs font-black uppercase tracking-wider transition-all ${menuTab === 'shop' ? 'border-orange-500/60 bg-orange-500/20 text-orange-300 shadow-lg shadow-orange-500/10' : 'border-transparent text-slate-400 hover:text-slate-200'}`}
                 >
                   <ShoppingBag size={14} /> {t.shop}
@@ -312,12 +313,10 @@ export default function App() {
               </div>
               <div className="p-4">
               {menuTab === 'shop' ? (
-              <>
-              {shopPage === null ? (
               <div className="grid grid-cols-3 gap-1.5">
                 <button
                   type="button"
-                  onClick={() => { setShopTab('skin'); setShopPage('skin'); }}
+                  onClick={() => { setShopTab('skin'); setShopOpen(true); }}
                   className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900 p-3 transition-all hover:border-cyan-500/50 active:scale-95"
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-500/15 text-cyan-300"><Palette size={18} /></span>
@@ -326,7 +325,7 @@ export default function App() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setShopTab('hat'); setShopPage('hat'); }}
+                  onClick={() => { setShopTab('hat'); setShopOpen(true); }}
                   className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900 p-3 transition-all hover:border-amber-500/50 active:scale-95"
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/15 text-amber-300"><Crown size={18} /></span>
@@ -335,7 +334,7 @@ export default function App() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setShopTab('glasses'); setShopPage('glasses'); }}
+                  onClick={() => { setShopTab('glasses'); setShopOpen(true); }}
                   className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900 p-3 transition-all hover:border-violet-500/50 active:scale-95"
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-500/15 text-violet-300"><Glasses size={18} /></span>
@@ -343,100 +342,6 @@ export default function App() {
                   <span className="text-[10px] font-bold text-slate-500 tabular-nums">{owned.glasses.length}/{SHOP_GLASSES.length}</span>
                 </button>
               </div>
-              ) : (
-              <>
-              <div className="mb-3 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShopPage(null)}
-                  aria-label={t.back}
-                  title={t.back}
-                  className="rounded-lg border border-slate-800 bg-slate-900 p-1.5 text-slate-300 transition-colors hover:text-white"
-                >
-                  <ChevronLeft size={14} />
-                </button>
-                <span className="text-xs font-black uppercase tracking-wider text-slate-200">
-                  {shopPage === 'skin' ? t.skinTab : shopPage === 'hat' ? t.hatTab : t.glassesTab}
-                </span>
-                <span className="ml-auto text-[10px] font-bold text-slate-500 tabular-nums">
-                  {shopPage === 'skin' ? `${owned.skins.length}/${SHOP_SKINS.length}` : shopPage === 'hat' ? `${owned.hats.length}/${SHOP_HATS.length}` : `${owned.glasses.length}/${SHOP_GLASSES.length}`}
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5 max-h-60 overflow-y-auto pr-0.5">
-                {shopTab === 'skin' && SHOP_SKINS.map(item => {
-                  const has = owned.skins.includes(item.id);
-                  const worn = loadout.skin === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => {
-                        if (has) { setLoadout(equip('skin', item.id)); return; }
-                        const r = buySkin(item.id);
-                        setCoins(r.coins); setOwned(r.owned);
-                        if (r.ok) setLoadout(equip('skin', item.id));
-                      }}
-                      className={`rounded-xl border p-2 text-left transition-all ${worn ? 'border-cyan-400 bg-cyan-500/15' : 'border-slate-800 bg-slate-900 hover:border-slate-600'}`}
-                    >
-                      <span className="mx-auto mb-1 flex h-6 w-6 overflow-hidden rounded-full ring-1 ring-white/30" style={{ background: item.color }}>
-                        {item.pattern.startsWith('flag-') && <span className="m-auto text-[8px]">🏳</span>}
-                      </span>
-                      <span className="block truncate text-[10px] font-bold text-slate-200">{skinName(item)}</span>
-                      <span className={`block text-[10px] font-black ${worn ? 'text-cyan-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
-                        {worn ? t.equipped : has ? t.equip : `🪙 ${item.price}`}
-                      </span>
-                    </button>
-                  );
-                })}
-                {shopTab === 'hat' && SHOP_HATS.map(item => {
-                  const has = (owned.hats as string[]).includes(item.id);
-                  const worn = loadout.hat === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => {
-                        if (has) { setLoadout(equip('hat', item.id)); return; }
-                        const r = buyHat(item.id as HatId);
-                        setCoins(r.coins); setOwned(r.owned);
-                        if (r.ok) setLoadout(equip('hat', item.id));
-                      }}
-                      className={`rounded-xl border p-2 text-left transition-all ${worn ? 'border-cyan-400 bg-cyan-500/15' : 'border-slate-800 bg-slate-900 hover:border-slate-600'}`}
-                    >
-                      <span className="block truncate text-[10px] font-bold text-slate-200">{hatName(item.id)}</span>
-                      <span className={`block text-[10px] font-black ${worn ? 'text-cyan-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
-                        {worn ? t.equipped : has ? t.equip : `🪙 ${item.price}`}
-                      </span>
-                    </button>
-                  );
-                })}
-                {shopTab === 'glasses' && SHOP_GLASSES.map(item => {
-                  const has = (owned.glasses as string[]).includes(item.id);
-                  const worn = loadout.glasses === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => {
-                        if (has) { setLoadout(equip('glasses', item.id)); return; }
-                        const r = buyGlasses(item.id as GlassesId);
-                        setCoins(r.coins); setOwned(r.owned);
-                        if (r.ok) setLoadout(equip('glasses', item.id));
-                      }}
-                      className={`rounded-xl border p-2 text-left transition-all ${worn ? 'border-cyan-400 bg-cyan-500/15' : 'border-slate-800 bg-slate-900 hover:border-slate-600'}`}
-                    >
-                      <span className="block truncate text-[10px] font-bold text-slate-200">{glassesName(item.id)}</span>
-                      <span className={`block text-[10px] font-black ${worn ? 'text-cyan-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
-                        {worn ? t.equipped : has ? t.equip : `🪙 ${item.price}`}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="mt-2 text-[10px] text-slate-500 font-medium">{t.goldNote}</p>
-              </>
-              )}
-              </>
               ) : (
               <div className="space-y-2">
                 <button
@@ -483,6 +388,112 @@ export default function App() {
               )}
               </div>
             </div>
+
+            {/* Öne çıkan mağaza sayfası: kategoriler veri güdümlü, ekleme tek yerden */}
+            {shopOpen && (
+              <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm" onClick={() => setShopOpen(false)}>
+                <div className="flex max-h-[88dvh] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-slate-700 bg-slate-900 shadow-2xl" onClick={e => e.stopPropagation()}>
+                  <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-950/60 p-3">
+                    <ShoppingBag size={16} className="text-orange-400" />
+                    <span className="text-sm font-black uppercase tracking-wider text-white">{t.shop}</span>
+                    <span className="flex items-center gap-1 rounded-full bg-yellow-400/15 border border-yellow-400/30 px-2.5 py-1 text-xs font-black text-yellow-300">
+                      <Coins size={12} /> {coins.toLocaleString()}
+                    </span>
+                    <button type="button" onClick={() => setShopOpen(false)} aria-label={t.cancel} className="ml-auto rounded-lg border border-slate-700 p-1.5 text-slate-300 hover:text-white">
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <div className="flex gap-1.5 p-3 pb-0">
+                    {([
+                      { id: 'skin', title: t.skinTab, count: `${owned.skins.length}/${SHOP_SKINS.length}`, on: 'border-cyan-500/60 bg-cyan-500/20 text-cyan-300' },
+                      { id: 'hat', title: t.hatTab, count: `${owned.hats.length}/${SHOP_HATS.length}`, on: 'border-amber-500/60 bg-amber-500/20 text-amber-300' },
+                      { id: 'glasses', title: t.glassesTab, count: `${owned.glasses.length}/${SHOP_GLASSES.length}`, on: 'border-violet-500/60 bg-violet-500/20 text-violet-300' },
+                    ] as const).map(p => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setShopTab(p.id)}
+                        className={`flex-1 rounded-lg border py-1.5 text-xs font-black uppercase tracking-wider transition-all ${shopTab === p.id ? p.on : 'border-transparent text-slate-400 hover:text-slate-200'}`}
+                      >
+                        {p.title} · {p.count}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="overflow-y-auto p-3">
+                    <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4">
+                      {shopTab === 'skin' && SHOP_SKINS.map(item => {
+                        const has = owned.skins.includes(item.id);
+                        const worn = loadout.skin === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                              if (has) { setLoadout(equip('skin', item.id)); return; }
+                              const r = buySkin(item.id);
+                              setCoins(r.coins); setOwned(r.owned);
+                              if (r.ok) setLoadout(equip('skin', item.id));
+                            }}
+                            className={`rounded-xl border p-2 text-left transition-all ${worn ? 'border-cyan-400 bg-cyan-500/15' : 'border-slate-800 bg-slate-950 hover:border-slate-600'}`}
+                          >
+                            <SkinPreview color={item.color} pattern={item.pattern} />
+                            <span className="block truncate text-center text-[10px] font-bold text-slate-200">{skinName(item)}</span>
+                            <span className={`block text-center text-[10px] font-black ${worn ? 'text-cyan-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
+                              {worn ? t.equipped : has ? t.equip : `🪙 ${item.price}`}
+                            </span>
+                          </button>
+                        );
+                      })}
+                      {shopTab === 'hat' && SHOP_HATS.map(item => {
+                        const has = (owned.hats as string[]).includes(item.id);
+                        const worn = loadout.hat === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                              if (has) { setLoadout(equip('hat', item.id)); return; }
+                              const r = buyHat(item.id as HatId);
+                              setCoins(r.coins); setOwned(r.owned);
+                              if (r.ok) setLoadout(equip('hat', item.id));
+                            }}
+                            className={`rounded-xl border p-2 text-left transition-all ${worn ? 'border-cyan-400 bg-cyan-500/15' : 'border-slate-800 bg-slate-950 hover:border-slate-600'}`}
+                          >
+                            <span className="block truncate text-center text-[10px] font-bold text-slate-200">{hatName(item.id)}</span>
+                            <span className={`block text-center text-[10px] font-black ${worn ? 'text-cyan-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
+                              {worn ? t.equipped : has ? t.equip : `🪙 ${item.price}`}
+                            </span>
+                          </button>
+                        );
+                      })}
+                      {shopTab === 'glasses' && SHOP_GLASSES.map(item => {
+                        const has = (owned.glasses as string[]).includes(item.id);
+                        const worn = loadout.glasses === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                              if (has) { setLoadout(equip('glasses', item.id)); return; }
+                              const r = buyGlasses(item.id as GlassesId);
+                              setCoins(r.coins); setOwned(r.owned);
+                              if (r.ok) setLoadout(equip('glasses', item.id));
+                            }}
+                            className={`rounded-xl border p-2 text-left transition-all ${worn ? 'border-cyan-400 bg-cyan-500/15' : 'border-slate-800 bg-slate-950 hover:border-slate-600'}`}
+                          >
+                            <span className="block truncate text-center text-[10px] font-bold text-slate-200">{glassesName(item.id)}</span>
+                            <span className={`block text-center text-[10px] font-black ${worn ? 'text-cyan-300' : has ? 'text-slate-400' : coins >= item.price ? 'text-yellow-300' : 'text-slate-500'}`}>
+                              {worn ? t.equipped : has ? t.equip : `🪙 ${item.price}`}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-2 text-center text-[10px] text-slate-500 font-medium">{t.goldNote}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {notice && (
               <div role="alert" className="w-full mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-xs font-medium">

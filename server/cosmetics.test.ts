@@ -54,7 +54,7 @@ function pointsOf(ops: Op[]): { x: number; y: number }[] {
 
 test('tum deri sprite lari hatasiz uretilir ve desen boyasi cizilir', async () => {
   const { getWormSegment } = await import('../src/gameArt');
-  const { SHOP_SKINS, FLAG_STRIPES } = await import('../src/shop');
+  const { SHOP_SKINS } = await import('../src/shop');
   assert.ok(SHOP_SKINS.length >= 40, `zengin magaza beklenir, bulunan: ${SHOP_SKINS.length}`);
   for (const skin of SHOP_SKINS) {
     const before = created.length;
@@ -64,9 +64,25 @@ test('tum deri sprite lari hatasiz uretilir ve desen boyasi cizilir', async () =
     const ops = created[created.length - 1].ops;
     assert.ok(ops.length > 6, `${skin.id} bos gorunmemeli`);
     if (skin.pattern.startsWith('flag-')) {
-      const stripes = FLAG_STRIPES[skin.pattern as keyof typeof FLAG_STRIPES];
-      const painted = ops.some(o => o.op === 'fillRect' && stripes.includes(String(o.fill)));
-      assert.ok(painted, `${skin.id} bayrak seritleri boyanmali`);
+      const expected: Record<string, string[]> = {
+        'flag-tr': ['#e30a17', '#ffffff'],
+        'flag-az': ['#00b5e2', '#ef3340', '#00a651', '#ffffff'],
+        'flag-de': ['#111111', '#dd0000', '#ffce00'],
+        'flag-fr': ['#0055a4', '#ffffff', '#ef4135'],
+        'flag-us': ['#b31942', '#ffffff', '#0a3161'],
+        'flag-br': ['#009b3a', '#ffdf00', '#002776'],
+        'flag-gb': ['#012169', '#ffffff', '#c8102e'],
+        'flag-it': ['#009246', '#ffffff', '#ce2b37'],
+      };
+      const fills = ops.filter(o => o.op === 'fill' || o.op === 'fillRect').map(o => String(o.fill).toLowerCase());
+      for (const color of expected[skin.pattern] ?? []) {
+        assert.ok(fills.includes(color), `${skin.id} ${color} rengini icermeli`);
+      }
+      // Hilal/yildiz/hac amblemi olan bayraklar cizgi isleri de icermeli.
+      if (['flag-tr', 'flag-az', 'flag-us', 'flag-gb', 'flag-br'].includes(skin.pattern)) {
+        assert.ok(ops.some(o => o.op === 'moveTo' || o.op === 'lineTo' || o.op === 'stroke'),
+          `${skin.id} amblem cizgisi icermeli`);
+      }
     }
     if (skin.pattern === 'stripes') {
       const bands = ops.filter(o => o.op === 'fillRect').length;

@@ -78,6 +78,12 @@
   Spawn/yem/bonus/bot daire içine kelepçelenir, validasyon radyal. Ölüm mekaniği aynı.
 - Test: 37/37 (`tsc` temiz, build OK).
 
+- **Gerçek bayraklar + overlay mağaza (TAMAM):** 8 ülke gerçek deseniyle boyanır
+  (TR hilal+yıldız, AZ hilalli şerit, US yıldızlı kanton, BR eşkenar+paralel, GB haçlar, DE/FR/IT bantlar).
+  Önizleme artık renk noktası değil oyundaki sprite'ın ta kendisi (`SkinPreview`).
+  Mağaza öne çıkan tam ekran sayfa (kategoriler veri güdümlü, ekleme tek yerden).
+- Test: 37/37 (`tsc` temiz, build OK).
+
 - **Büyük arena 2 (TAMAM):** R 2000→2600 (dünya 5200, grid 33x33), yemek 2400/bonus 24/odada 10 bot.
   Uçtan uca yürüyüş ~30sn→~40sn. Test: 37/37 (`tsc` temiz, build OK).
 
