@@ -16,7 +16,7 @@ function makeCtx(ops: Op[]): any {
     lineDashOffset: 0,
   };
   const methods = ['save', 'restore', 'translate', 'rotate', 'scale', 'setTransform',
-    'beginPath', 'moveTo', 'lineTo', 'arc', 'ellipse', 'rect', 'fillRect',
+    'beginPath', 'moveTo', 'lineTo', 'arc', 'ellipse', 'rect', 'roundRect', 'fillRect',
     'quadraticCurveTo', 'bezierCurveTo', 'closePath', 'fill', 'stroke', 'clip',
     'fillText', 'strokeText', 'setLineDash', 'clearRect', 'drawImage'];
   for (const m of methods) ctx[m] = (...a: unknown[]) => { ops.push({ op: m, args: [...a], fill: ctx.fillStyle, stroke: ctx.strokeStyle }); };
@@ -228,6 +228,12 @@ test('tum bonus kupleri ve sekerler hatasiz uretilir', async () => {
     if (bonus.kind === 'coin') {
       // Coin yazisizdir: yildiz amblemi tasir.
       assert.ok(ops.some(o => o.op === 'moveTo' || o.op === 'lineTo'), 'coin yildiz icermeli');
+      continue;
+    }
+    if (bonus.kind === 'wide') {
+      // WIDE yazisizdir: genisleyen oklar tasir.
+      assert.ok(ops.some(o => o.op === 'roundRect'), 'wide karo icermeli');
+      assert.ok(ops.filter(o => o.op === 'moveTo').length >= 8, 'wide oklar icermeli');
       continue;
     }
     const texts = ops.filter(o => o.op === 'fillText');

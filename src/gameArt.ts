@@ -1019,6 +1019,30 @@ export function getBonusSprite(kind: BonusKind) {
   const bonus = BONUSES.find(item => item.kind === kind)!;
   cached = sprite(ctx => {
     ellipse(ctx, 1, 24, 18, 4.5, '#00000040');
+    if (kind === 'wide') {
+      // Açı genişleten oklar: yazısız, uzaktan okunur.
+      ctx.fillStyle = '#2a1e4e';
+      ctx.strokeStyle = '#8b5cf6';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(-20, -20, 40, 40, 10);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = '#e9e4ff';
+      ctx.lineWidth = 4.5;
+      ctx.lineCap = 'round';
+      for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
+        ctx.beginPath();
+        ctx.moveTo(sx * 3, sy * 3);
+        ctx.lineTo(sx * 12, sy * 12);
+        ctx.moveTo(sx * 12, sy * 12);
+        ctx.lineTo(sx * 5, sy * 12);
+        ctx.moveTo(sx * 12, sy * 12);
+        ctx.lineTo(sx * 12, sy * 5);
+        ctx.stroke();
+      }
+      return;
+    }
     if (kind === 'coin') {
       // Altın coin: kalın kenar + parlak iç + yıldız.
       ellipse(ctx, 0, 0, 23, 23, gradient(ctx, '#8a6a00', '#b8860b', -24, 24));
