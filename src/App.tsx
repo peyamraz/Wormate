@@ -10,10 +10,11 @@ import { validName, validRoom } from './network/protocol';
 import { clearSession, createPracticeSession, getSession, setOnlineSession } from './session';
 import type { GuestSession } from './session';
 import { SkinPreview } from './SkinPreview';
+import { addXp, levelProgress, readXp } from './level';
 import { t } from './i18n';
 import {
   SHOP_EYES, SHOP_GLASSES, SHOP_HATS, SHOP_MOUTHS, SHOP_SKINS,
-  buyEyes, buyGlasses, buyHat, buyMouth, buySkin, earnCoins, equip, readCoins, readLoadout, readOwned,
+  buyEyes, buyGlasses, buyHat, buyMouth, buySkin, creditCoins, earnCoins, equip, readCoins, readLoadout, readOwned,
   skinName, hatName, glassesName, eyeName, mouthName,
 } from './shop';
 import type { EyeId, GlassesId, HatId, Loadout, MouthId, Owned, SkinCategory } from './shop';
@@ -74,6 +75,8 @@ export default function App() {
   const [copied, setCopied] = useState('');
   const [collapsedLeaderboard, setCollapsedLeaderboard] = useState(false);
   const [coins, setCoins] = useState(readCoins);
+  const [xp, setXp] = useState(readXp);
+  const [levelUp, setLevelUp] = useState<{ level: number; bonus: number } | null>(null);
   const [owned, setOwned] = useState<Owned>(readOwned);
   const [loadout, setLoadout] = useState<Loadout>(readLoadout);
   const [shopTab, setShopTab] = useState<'skin' | 'hat' | 'glasses' | 'giyim'>('skin');
@@ -90,6 +93,15 @@ export default function App() {
     setDeathReason(reason);
     setHighScores(previous => [...previous, finalScore].sort((a, b) => b - a).slice(0, 5));
     setCoins(earnCoins(finalScore));
+    const gained = addXp(finalScore);
+    setXp(gained.total);
+    if (gained.leveledUp) {
+      const bonus = 25 * gained.level;
+      setCoins(creditCoins(bonus));
+      setLevelUp({ level: gained.level, bonus });
+    } else {
+      setLevelUp(null);
+    }
     setGameState('gameover');
   }, []);
 
@@ -222,6 +234,7 @@ export default function App() {
 
   const topLeader = status.leaderboard[0];
   const userRankEntry = status.leaderboard.find(e => e.isPlayer);
+  const prog = levelProgress(xp);
   const sizeBest = status.leaderboard.reduce((m, e) => Math.max(m, e.size), 0);
   const sizeLeader = status.leaderboard.find(e => e.size === sizeBest && sizeBest > 0);
 
@@ -249,7 +262,31 @@ export default function App() {
               </h1>
               <span className="text-4xl">🍩</span>
             </div>
-            <p className="text-slate-400 text-sm mb-6 font-medium">Sweet Arena &middot; Realtime Multiplayer</p>
+            <p className="text-slate-400 text-sm mb-4 font-medium">Sweet Arena &middot; Realtime Multiplayer</p>
+
+            {/* Profil: seviye rozeti + XP barı */}
+            <div className="w-full mb-4 flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-amber-500 text-lg font-black text-white">
+                {(nickname.trim()[0] || '?').toUpperCase()}
+              </span>
+              <span className="min-w-0 flex-1 text-left">
+                <span className="flex items-center gap-1.5">
+                  <span className="truncate text-sm font-black text-white">{nickname || t.guest}</span>
+                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-violet-500/20 border border-violet-400/40 px-2 py-0.5 text-[10px] font-black text-violet-300">
+                    <Crown size={10} fill="currentColor" /> {t.level} {prog.level}
+                  </span>
+                </span>
+                <span className="mt-1.5 block h-2 overflow-hidden rounded-full bg-slate-800">
+                  <span
+                    className="block h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-400 transition-all"
+                    style={{ width: `${Math.round((prog.cur / Math.max(1, prog.need)) * 100)}%` }}
+                  />
+                </span>
+                <span className="mt-0.5 block font-mono text-[10px] font-bold text-slate-500 tabular-nums">
+                  {prog.cur.toLocaleString()} / {prog.need.toLocaleString()} XP
+                </span>
+              </span>
+            </div>
 
             <div className="w-full space-y-4 mb-6">
               <div>
@@ -631,7 +668,12 @@ export default function App() {
               💀
             </div>
             <h2 className="text-2xl font-black text-white mb-1">{t.gameOver}</h2>
-            <p className="text-xs text-slate-400 mb-6 font-medium">{deathReason ? deathText(deathReason) : t.betterLuck}</p>
+            <p className="text-xs text-slate-400 mb-4 font-medium">{deathReason ? deathText(deathReason) : t.betterLuck}</p>
+            {levelUp && (
+              <div className="mb-4 flex w-fit animate-bounce items-center gap-1.5 rounded-full border border-violet-400/50 bg-violet-500/15 px-4 py-1.5 text-sm font-extrabold text-violet-300">
+                <Crown size={16} /> {t.levelUp} · +{levelUp.bonus} 🪙
+              </div>
+            )}
 
             <div className="w-full mb-6 p-4 bg-slate-950/80 rounded-2xl border border-slate-800">
               <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 mb-1">{t.finalScore}</div>

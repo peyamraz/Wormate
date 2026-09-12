@@ -53,6 +53,7 @@ export interface Texts {
   arenaAddr: string; arenaTls: string;
   boostBtn: string; arenaAria: string;
   frenzyCombo: string; frenzyMult: string; multEnded: string; killNotice: string;
+  level: string; levelUp: string;
   shield: string; bonusSpeed: string; bonusCoin: string;
   patSolid: string; patCandy: string; patFreckles: string; patStripes: string; patDots: string;
   flagWord: string; cTR: string; cAZ: string; cDE: string; cFR: string; cUS: string; cBR: string; cGB: string; cIT: string;
@@ -97,7 +98,7 @@ const en: Texts = {
   arenaAddr: 'Use a ws:// or wss:// server address ending in /arena.',
   arenaTls: 'HTTPS pages require a secure wss:// arena server.',
   boostBtn: 'BOOST', arenaAria: 'Wormate arena. Steer with the mouse, arrow keys, WASD, or drag on touch. Hold Space to boost.',
-  frenzyCombo: 'SUPER COMBO {n}!', frenzyMult: 'SUPER MULTIPLIER x{n}!', multEnded: 'MULTIPLIER OVER', killNotice: 'KILL!',
+  frenzyCombo: 'SUPER COMBO {n}!', frenzyMult: 'SUPER MULTIPLIER x{n}!', multEnded: 'MULTIPLIER OVER', killNotice: 'KILL!', level: 'Level', levelUp: 'LEVEL UP!',
   shield: 'SHIELD', bonusSpeed: 'SPEED', bonusCoin: 'GOLD',
   patSolid: 'Solid', patCandy: 'Candy', patFreckles: 'Freckles', patStripes: 'Stripes', patDots: 'Dots',
   flagWord: 'Flag', cTR: 'Turkey', cAZ: 'Azerbaijan', cDE: 'Germany', cFR: 'France', cUS: 'USA', cBR: 'Brazil', cGB: 'UK', cIT: 'Italy',
@@ -142,7 +143,7 @@ const tr: Texts = {
   arenaAddr: 'ws:// veya wss:// ile biten /arena server adresi kullan.',
   arenaTls: 'HTTPS sayfalar güvenli wss:// arena serverı ister.',
   boostBtn: 'BOOST', arenaAria: 'Wormate arenası. Fare, ok tuşları, WASD veya dokunmatik sürükleme ile yönlendir. Hızlanmak için Space basılı tut.',
-  frenzyCombo: 'SÜPER KOMBO {n}!', frenzyMult: 'SÜPER ÇARPAN x{n}!', multEnded: 'ÇARPAN BİTTİ', killNotice: 'AVLADIN!',
+  frenzyCombo: 'SÜPER KOMBO {n}!', frenzyMult: 'SÜPER ÇARPAN x{n}!', multEnded: 'ÇARPAN BİTTİ', killNotice: 'AVLADIN!', level: 'Seviye', levelUp: 'SEVİYE ATLADIN!',
   shield: 'KALKAN', bonusSpeed: 'HIZ', bonusCoin: 'ALTIN',
   patSolid: 'Sade', patCandy: 'Şeker', patFreckles: 'Benekli', patStripes: 'Çizgili', patDots: 'Puantiye',
   flagWord: 'Bayrak', cTR: 'Türkiye', cAZ: 'Azerbaycan', cDE: 'Almanya', cFR: 'Fransa', cUS: 'ABD', cBR: 'Brezilya', cGB: 'İngiltere', cIT: 'İtalya',
@@ -187,7 +188,7 @@ const es: Texts = {
   arenaAddr: 'Usa una dirección ws:// o wss:// que termine en /arena.',
   arenaTls: 'Las páginas HTTPS requieren un servidor wss:// seguro.',
   boostBtn: 'TURBO', arenaAria: 'Arena Wormate. Dirige con el ratón, flechas, WASD o arrastra en táctil. Mantén Espacio para turbo.',
-  frenzyCombo: '¡SUPERCOMBO {n}!', frenzyMult: '¡SUPER MULTIPLICADOR x{n}!', multEnded: 'MULTIPLICADOR TERMINADO', killNotice: '¡CAZADO!',
+  frenzyCombo: '¡SUPERCOMBO {n}!', frenzyMult: '¡SUPER MULTIPLICADOR x{n}!', multEnded: 'MULTIPLICADOR TERMINADO', killNotice: '¡CAZADO!', level: 'Nivel', levelUp: '¡SUBISTE DE NIVEL!',
   shield: 'ESCUDO', bonusSpeed: 'VELOCIDAD', bonusCoin: 'ORO',
   patSolid: 'Sólido', patCandy: 'Caramelo', patFreckles: 'Pecas', patStripes: 'Rayas', patDots: 'Puntos',
   flagWord: 'Bandera', cTR: 'Turquía', cAZ: 'Azerbaiyán', cDE: 'Alemania', cFR: 'Francia', cUS: 'EE. UU.', cBR: 'Brasil', cGB: 'Reino Unido', cIT: 'Italia',
@@ -232,7 +233,7 @@ const fr: Texts = {
   arenaAddr: 'Utilise une adresse ws:// ou wss:// se terminant par /arena.',
   arenaTls: 'Les pages HTTPS exigent un serveur wss:// sécurisé.',
   boostBtn: 'TURBO', arenaAria: "Arène Wormate. Dirige à la souris, flèches, ZQSD ou glisser tactile. Maintiens Espace pour le turbo.",
-  frenzyCombo: 'SUPER COMBO {n} !', frenzyMult: 'SUPER MULTIPLICATEUR x{n} !', multEnded: 'MULTIPLICATEUR TERMINÉ', killNotice: 'CHASSÉ !',
+  frenzyCombo: 'SUPER COMBO {n} !', frenzyMult: 'SUPER MULTIPLICATEUR x{n} !', multEnded: 'MULTIPLICATEUR TERMINÉ', killNotice: 'CHASSÉ !', level: 'Niveau', levelUp: 'NIVEAU SUPÉRIEUR !',
   shield: 'BOUCLIER', bonusSpeed: 'VITESSE', bonusCoin: 'OR',
   patSolid: 'Uni', patCandy: 'Bonbon', patFreckles: 'Taches', patStripes: 'Rayures', patDots: 'Pois',
   flagWord: 'Drapeau', cTR: 'Turquie', cAZ: 'Azerbaïdjan', cDE: 'Allemagne', cFR: 'France', cUS: 'USA', cBR: 'Brésil', cGB: 'Royaume-Uni', cIT: 'Italie',
@@ -277,7 +278,7 @@ const de: Texts = {
   arenaAddr: 'Nutze eine ws://- oder wss://-Adresse, die auf /arena endet.',
   arenaTls: 'HTTPS-Seiten brauchen einen sicheren wss://-Server.',
   boostBtn: 'BOOST', arenaAria: 'Wormate-Arena. Steuern mit Maus, Pfeilen, WASD oder Touch-Drag. Leertaste halten für Boost.',
-  frenzyCombo: 'SUPER-KOMBO {n}!', frenzyMult: 'SUPER-MULTI x{n}!', multEnded: 'MULTI VORBEI', killNotice: 'ERLEGT!',
+  frenzyCombo: 'SUPER-KOMBO {n}!', frenzyMult: 'SUPER-MULTI x{n}!', multEnded: 'MULTI VORBEI', killNotice: 'ERLEGT!', level: 'Level', levelUp: 'LEVELAUFSTIEG!',
   shield: 'SCHILD', bonusSpeed: 'SPEED', bonusCoin: 'GOLD',
   patSolid: 'Einfarbig', patCandy: 'Candy', patFreckles: 'Sommersprossen', patStripes: 'Streifen', patDots: 'Punkte',
   flagWord: 'Flagge', cTR: 'Türkei', cAZ: 'Aserbaidschan', cDE: 'Deutschland', cFR: 'Frankreich', cUS: 'USA', cBR: 'Brasilien', cGB: 'Großbritannien', cIT: 'Italien',
@@ -322,7 +323,7 @@ const pt: Texts = {
   arenaAddr: 'Use um endereço ws:// ou wss:// terminado em /arena.',
   arenaTls: 'Páginas HTTPS exigem um servidor wss:// seguro.',
   boostBtn: 'TURBO', arenaAria: 'Arena Wormate. Dirija com mouse, setas, WASD ou arraste no toque. Segure Espaço para turbo.',
-  frenzyCombo: 'SUPERCOMBO {n}!', frenzyMult: 'SUPER MULTIPLICADOR x{n}!', multEnded: 'MULTIPLICADOR ACABOU', killNotice: 'CAÇADO!',
+  frenzyCombo: 'SUPERCOMBO {n}!', frenzyMult: 'SUPER MULTIPLICADOR x{n}!', multEnded: 'MULTIPLICADOR ACABOU', killNotice: 'CAÇADO!', level: 'Nível', levelUp: 'SUBIU DE NÍVEL!',
   shield: 'ESCUDO', bonusSpeed: 'VELOCIDADE', bonusCoin: 'OURO',
   patSolid: 'Sólido', patCandy: 'Doce', patFreckles: 'Sardas', patStripes: 'Listras', patDots: 'Bolinhas',
   flagWord: 'Bandeira', cTR: 'Turquia', cAZ: 'Azerbaijão', cDE: 'Alemanha', cFR: 'França', cUS: 'EUA', cBR: 'Brasil', cGB: 'Reino Unido', cIT: 'Itália',

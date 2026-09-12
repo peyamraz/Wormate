@@ -47,6 +47,11 @@ export const TREATS = [
   { kind: 'cupcake', size: 1.1, value: 3 },
   { kind: 'candy', size: 0.95, value: 1 },
   { kind: 'icecream', size: 1.1, value: 2 },
+  { kind: 'watermelon', size: 1.1, value: 2 },
+  { kind: 'gingerbread', size: 1.15, value: 3 },
+  { kind: 'berry', size: 0.95, value: 2 },
+  { kind: 'orange', size: 1.0, value: 2 },
+  { kind: 'croissant', size: 1.1, value: 3 },
 ] as const;
 
 export type TreatKind = typeof TREATS[number]['kind'];

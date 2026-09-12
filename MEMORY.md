@@ -121,9 +121,13 @@ profil/seviye, yem çeşitliliği, korsan şapka+göz bandı takan solucanlar).
   skor + AVLADIN bildirimi + sesi, %100 altın düşer. Minimap artı çizgisi. Test: 41/41 (`tsc` temiz, build OK).
 - Faz 2 (TAMAM — 2026-09-12): Giyim — 4 göz + 3 ağız stili, altınla, online senkronlu
   (style mesajı + snapshot + validasyon). Test: 42/42 (`tsc` temiz, build OK).
+- Faz 3 (TAMAM — 2026-09-12): Seviye/XP — toplam skordan üçgensel eşik, menüde profil
+  + XP barı, atlayınca kutlama + 25×seviye altın. Test: 44/44 (`tsc` temiz, build OK).
 - Faz 2: Giyim sekmesi — göz stilleri + ağız stilleri (sadece drawFace, altınla, protokol yok).
 - Faz 3: Seviye/XP — toplam skordan seviye, menüde rozet + bar.
-- Faz 4: Yem çeşitliliği — karpuz/zencefilli/böğürtlen gibi yeni TREATS.
+- Faz 4 (TAMAM — 2026-09-12): 5 yeni tatlı — karpuz, zencefilli kurabiye adam, böğürtlen,
+  portakal, kruvasan (9→14 çeşit). Değer dengesi korunur, validasyon otomatik.
+  Test: 44/44 (`tsc` temiz, build OK).
 - HARİÇ: gerçek parayla coin (Madeni paralar IAP) — web hobby'de yok. İsim Wormate kalıyor.
 
 ## Kararlar / notlar

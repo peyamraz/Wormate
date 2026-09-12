@@ -359,6 +359,92 @@ function icecream(ctx: Context, p: Palette, variant: number) {
   sprinkles(ctx, [[-10, -12, -0.4], [2, -20, 0.8], [10, -12, -0.3], [1, -8, 0.6]], variant);
 }
 
+function watermelon(ctx: Context) {
+  ellipse(ctx, 0, 0, 22, 22, gradient(ctx, '#3aa655', '#1e6e38', -22, 22));
+  ellipse(ctx, 0, 0, 19, 19, '#e8f3d8');
+  ellipse(ctx, 0, -1, 16.5, 16.5, gradient(ctx, '#ff8d9a', '#e63e5c', -16, 16));
+  ctx.fillStyle = '#3b1e2a';
+  for (let i = 0; i < 7; i++) {
+    const a = i / 7 * TAU + 0.4;
+    ellipse(ctx, Math.cos(a) * 9.5, -1 + Math.sin(a) * 9.5, 1.5, 2.2, '#3b1e2a', a);
+  }
+  ellipse(ctx, -7, -11, 6, 3, '#ffffff40', -0.5);
+}
+
+function gingerbread(ctx: Context) {
+  ctx.fillStyle = '#b06a35';
+  ellipse(ctx, 0, -16, 10, 10, '#b06a35');
+  roundedRect(ctx, -9, -8, 18, 24, 8, '#b06a35');
+  roundedRect(ctx, -21, -6, 13, 7, 3.5, '#a05e2d');
+  roundedRect(ctx, 8, -6, 13, 7, 3.5, '#a05e2d');
+  roundedRect(ctx, -9, 13, 8, 13, 4, '#a05e2d');
+  roundedRect(ctx, 1, 13, 8, 13, 4, '#a05e2d');
+  // Krema süsler
+  ctx.fillStyle = '#fff6e8';
+  ellipse(ctx, -3.5, -18, 1.8, 1.8, '#fff6e8');
+  ellipse(ctx, 3.5, -18, 1.8, 1.8, '#fff6e8');
+  ctx.strokeStyle = '#fff6e8';
+  ctx.lineWidth = 1.6;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(0, -14, 3.4, 0.3, Math.PI - 0.3);
+  ctx.stroke();
+  ellipse(ctx, -4, 2, 2.2, 2.2, '#e63956');
+  ellipse(ctx, 4, 10, 2.2, 2.2, '#e63956');
+  ellipse(ctx, -13, 17, 3, 1.6, '#ffffff50', -0.4);
+}
+
+function berry(ctx: Context, p: Palette) {
+  const grapes: [number, number][] = [[-8, -4], [8, -4], [0, 3], [-9, 7], [9, 7], [0, -10]];
+  for (const [x, y] of grapes) {
+    const g = ctx.createRadialGradient(x - 2, y - 3, 0.5, x, y, 8);
+    g.addColorStop(0, p.light);
+    g.addColorStop(0.55, p.main);
+    g.addColorStop(1, p.dark);
+    ellipse(ctx, x, y, 7, 7, g);
+  }
+  ellipse(ctx, 11, -15, 6, 3, '#4caf50', 0.5);
+  ctx.strokeStyle = '#3c7a3c';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(6, -12);
+  ctx.quadraticCurveTo(10, -18, 15, -19);
+  ctx.stroke();
+  ellipse(ctx, -6, -12, 4, 2.2, '#ffffff45', -0.5);
+}
+
+function orange(ctx: Context) {
+  ellipse(ctx, 0, 0, 21, 21, gradient(ctx, '#f0962e', '#c86a12', -21, 21));
+  ellipse(ctx, 0, 0, 18, 18, '#ffe3ae');
+  ellipse(ctx, 0, 0, 15.5, 15.5, gradient(ctx, '#ffd06e', '#ff9d2e', -15, 15));
+  ctx.strokeStyle = '#e8821e';
+  ctx.lineWidth = 1.6;
+  for (let i = 0; i < 6; i++) {
+    const a = i / 6 * TAU;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * 3, Math.sin(a) * 3);
+    ctx.lineTo(Math.cos(a) * 14.5, Math.sin(a) * 14.5);
+    ctx.stroke();
+  }
+  ellipse(ctx, 0, 0, 3, 3, '#fff3d0');
+  ellipse(ctx, -8, -10, 5, 2.6, '#ffffff50', -0.6);
+}
+
+function croissant(ctx: Context) {
+  ellipse(ctx, -13, 5, 9.5, 7.5, gradient(ctx, '#e0a558', '#9e5f22', -22, 12));
+  ellipse(ctx, 13, 5, 9.5, 7.5, gradient(ctx, '#e0a558', '#9e5f22', 4, 22));
+  ellipse(ctx, 0, -1, 11, 10, gradient(ctx, '#ffd48f', '#c07f2e', -11, 9));
+  ctx.strokeStyle = 'rgba(140,80,20,0.55)';
+  ctx.lineWidth = 1.8;
+  for (const x of [-6, 0, 6]) {
+    ctx.beginPath();
+    ctx.moveTo(x - 2, -9);
+    ctx.quadraticCurveTo(x + 2, 0, x - 2, 8);
+    ctx.stroke();
+  }
+  ellipse(ctx, -4, -7, 6, 2.6, '#ffffff50', -0.3);
+}
+
 export function getTreatSprite(kind: TreatKind, variant: number) {
   const key = `${kind}:${variant}`;
   let cached = sweets.get(key);
@@ -382,6 +468,11 @@ export function getTreatSprite(kind: TreatKind, variant: number) {
       case 'cupcake': cupcake(ctx, palette, variant); break;
       case 'candy': candy(ctx, palette); break;
       case 'icecream': icecream(ctx, palette, variant); break;
+      case 'watermelon': watermelon(ctx); break;
+      case 'gingerbread': gingerbread(ctx); break;
+      case 'berry': berry(ctx, palette); break;
+      case 'orange': orange(ctx); break;
+      case 'croissant': croissant(ctx); break;
     }
   });
   sweets.set(key, cached);
